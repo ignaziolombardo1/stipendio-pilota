@@ -241,19 +241,26 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <h2 id="nm-title"></h2>
     <p class="hint" id="nm-text"></p>
     <label class="f" for="nm-salary">Quanto hai preso questo mese? (€)<input id="nm-salary" type="text" inputmode="decimal" autocomplete="off"></label>
+    <label class="chk" id="nm-fund-l"><input type="checkbox" id="nm-fund" checked><span id="nm-fund-t"></span></label>
     <button class="primary" id="nm-start" type="button"></button>
   </section>
 
   <!-- HOME -->
   <main class="view" id="v-home">
+    <div class="notice info" id="bk-warn" hidden><span>Non fai un backup da un po'. Se perdi il telefono o cancelli i dati dal browser perdi lo storico.</span><button class="primary" type="button" id="bk-go">Fai un backup</button></div>
     <section data-sub="home" class="card" aria-labelledby="sal-label">
       <div class="line">
         <div><div class="salary-label" id="sal-label"></div><div class="salary-big num" id="sal-big"></div></div>
         <button class="primary" id="edit-sal" type="button">Modifica</button>
       </div>
       <div class="notice info" id="example" hidden>
-        <span>Stai vedendo valori di esempio. Vai su Profilo, inserisci i tuoi dati e premi Salva.</span>
-        <button class="primary" id="go-profile" type="button">Vai al Profilo</button>
+        <b>Benvenuto! Impostiamo il tuo piano in un minuto.</b>
+        <span>Ora vedi valori di esempio. Scrivi tre numeri e il piano si calcola da solo: il resto lo regoli dopo nelle Impostazioni.</span>
+        <label class="f" for="ob-sal" style="width:100%">Stipendio netto al mese (€)<input id="ob-sal" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="ob-rent" style="width:100%">Affitto al mese, la tua parte (€)<input id="ob-rent" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="ob-ins" style="width:100%">Rata dell'assicurazione al mese (€)<input id="ob-ins" type="text" inputmode="decimal" autocomplete="off"></label>
+        <button class="primary" id="ob-go" type="button">Calcola il mio piano</button>
+        <button class="link" id="go-profile" type="button">Preferisco le impostazioni complete</button>
       </div>
       <div id="warn" class="notice" hidden></div>
       <p class="headline" id="headline"></p>
@@ -262,6 +269,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <section data-sub="home" class="card" aria-labelledby="t-pk">
       <h2 id="t-pk">In tasca adesso</h2>
       <div class="pocket"><span>Dopo fisse pagate e spese</span><b class="num" id="hm-pocket">0</b></div>
+      <p class="small muted" id="hm-day"></p>
       <p class="small muted" id="hm-due" hidden></p>
       <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
     </section>
@@ -459,7 +467,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     </section>
     <section data-sub="auto" class="card" aria-labelledby="t-p3">
       <h2 id="t-p3">Tragitto casa-lavoro</h2>
-      <p class="hint">Saponara → Taormina. Km e pedaggio sono stime: correggili con quello che paghi davvero. Andata e ritorno si contano da soli.</p>
+      <p class="hint">Saponara → Taormina. Il pedaggio di partenza (3,30 € a tratta) è la somma delle tariffe 2026 classe A del Consorzio Autostrade Siciliane: A20 Villafranca–Messina Nord 1,20 € e A18 Messina Sud–Taormina 2,10 €. Controlla il tuo percorso e il tuo Telepass e correggilo. I km sono una stima. Andata e ritorno si contano da soli.</p>
       <div class="fields">
         <label class="f" for="days">Giorni di lavoro al mese<input id="days" type="text" inputmode="numeric" autocomplete="off"></label>
         <label class="f" for="kmOne">Km solo andata<input id="kmOne" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -517,10 +525,16 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="costPct">Costi e bollo ogni anno (%)<input id="costPct" type="text" inputmode="decimal" autocomplete="off"><span class="help">Costo del fondo, del broker e imposta di bollo (circa 0,2%)</span></label>
       </div>
     </section>
+    <section data-sub="dati" class="card" aria-labelledby="t-th">
+      <h2 id="t-th">Aspetto e installazione</h2>
+      <label class="f" for="theme">Tema<select id="theme"><option value="auto">Come il telefono</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select></label>
+      <p class="hint">Per averla come app: su iPhone apri il sito in Safari, tocca Condividi e poi "Aggiungi alla schermata Home". Su Android apri il menu ⋮ di Chrome e scegli "Installa app".</p>
+      <button type="button" class="primary" id="install" hidden>Installa l'app</button>
+    </section>
     <section data-sub="dati" class="card" aria-labelledby="t-bk">
       <h2 id="t-bk">Backup e condivisione</h2>
       <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per usare l'app anche su un altro telefono, o darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Non c'è sincronizzazione automatica.</p>
-      <div class="btnrow"><button type="button" id="bk-dl">Scarica backup</button><button type="button" id="bk-copy">Copia codice</button></div>
+      <div class="btnrow"><button type="button" id="bk-dl">Scarica backup</button><button type="button" id="bk-copy">Copia codice</button><button type="button" id="bk-csv">Spese in CSV</button></div>
       <label class="f" for="bk-text">Codice di backup<textarea id="bk-text" spellcheck="false" placeholder="Qui compare il codice, oppure incollalo qui per ripristinare"></textarea></label>
       <label class="f" for="bk-file">Oppure scegli un file di backup<input id="bk-file" type="file" accept="application/json,.json"></label>
       <button type="button" id="bk-restore">Ripristina da codice</button>
@@ -549,8 +563,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, spesaPct: 15, svagoPct: 8,
-    days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, spesaPct: 15, svagoPct: 8,
+    days: 22, kmOne: 70, tollOne: 3.3, commuteCar: "diesel",
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
   var PROFILES = {
@@ -586,8 +600,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   if (!S.extra || typeof S.extra !== "object") S.extra = {};
   if (!S.history || typeof S.history !== "object") S.history = {};
   if (!S.monthKey) S.monthKey = CUR;
+  if (!S.dv || S.dv < 2) { if (S.tollOne === 4) S.tollOne = 3.3; S.dv = 2; }
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
-  function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  var warned = false;
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function txt(n) { return String(n).replace(".", ","); }
@@ -670,13 +686,16 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   }
 
   /* ---------- nuovo mese ---------- */
+  function fundAdd(m) { return m.n > 0 ? Math.max(0, Math.min(m.plannedSave, Math.round(m.realSaved))) : m.plannedSave; }
+  function monthGap(a, b) { var x = a.split("-"), y = b.split("-"); return (+y[0] - +x[0]) * 12 + (+y[1] - +x[1]); }
   function renderPending() {
     var box = $("newmonth");
     box.hidden = !pending;
     if (!pending) return;
     var m = liveMonth(), v = verdict(m);
     $("nm-title").textContent = "È iniziato " + mlabel(pending);
-    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. " + recap(m) + " Controlla lo stipendio e avvia.";
+    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. " + recap(m) + (monthGap(S.monthKey, pending) > 1 ? " Sono passati " + monthGap(S.monthKey, pending) + " mesi dall'ultimo aggiornamento: quelli in mezzo non entrano nello storico." : "") + " Controlla lo stipendio e avvia.";
+    var fa = fundAdd(m); $("nm-fund-l").hidden = !(fa > 0); $("nm-fund-t").textContent = "Aggiungi " + eur.format(fa) + " al fondo di sicurezza";
     if (!$("nm-salary").value) $("nm-salary").value = txt(S.salary);
     $("nm-start").textContent = "Avvia " + mname(pending);
   }
@@ -684,6 +703,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var n = pnum($("nm-salary").value);
     if (!(n > 0)) { toast("Scrivi quanto hai preso questo mese"); $("nm-salary").focus(); return; }
     var m = liveMonth(); S.history[m.key] = m; // chiude il mese vecchio
+    if ($("nm-fund").checked && fundAdd(m) > 0) S.savedNow = Math.round((S.savedNow + fundAdd(m)) * 100) / 100;
     S.monthKey = pending; S.salary = n; S.saved = true; pending = null;
     $("nm-salary").value = "";
     persist(); renderAll(); location.hash = "#home"; showView();
@@ -696,6 +716,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
     $("sal-big").textContent = eur.format(p.sal);
     $("example").hidden = !!S.saved;
+    var nsp = Object.keys(S.spent).reduce(function (a, k) { return a + S.spent[k].length; }, 0);
+    $("bk-warn").hidden = !(S.saved && (nsp >= 10 || Object.keys(S.history).length) && (!S.lastBackup || Date.now() - S.lastBackup > 30 * 864e5));
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
       must: p.fixed.map(function (f) { return [f.name, f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Fisso ogni mese", f.amt]; }),
@@ -758,12 +780,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     else if (un.length) { nd.className = "small muted"; var d0 = dueInfo(un[0]).diff; nd.textContent = "Prossima scadenza: " + un[0].name + (d0 === 0 ? " oggi." : " tra " + d0 + (d0 === 1 ? " giorno." : " giorni.")); }
     var cp = $("couple"); cp.hidden = !(S.sal2 > 0);
     if (S.sal2 > 0) {
-      var tot = S.sal + S.sal2, full = Math.round(p.fixed.reduce(function (a, f) { return a + f.full; }, 0)), mine = p.fixedTot;
+      var tot = S.salary + S.sal2, full = Math.round(p.fixed.reduce(function (a, f) { return a + f.full; }, 0)), mine = p.fixedTot;
       $("cp-tot").textContent = eur.format(tot); $("cp-full").textContent = eur.format(full); $("cp-mine").textContent = eur.format(mine);
-      $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.sal / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
+      $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.salary / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
     }
 
     $("hm-pocket").textContent = $("pocket").textContent; $("hm-pocket").style.color = $("pocket").style.color;
+    var mm = liveMonth(), lf = mm.V - mm.A;
+    $("hm-day").textContent = lf < 0 ? "Il budget di spesa, carburante e tempo libero è finito: hai superato di " + eur.format(-lf) + "."
+      : S.monthKey === CUR ? "Per spesa, carburante e tempo libero ti restano " + eur.format(lf) + ": circa " + eur.format(lf / DAYS_LEFT) + " al giorno fino a fine mese." : "Budget di spesa, carburante e tempo libero: " + eur.format(lf) + " rimasti.";
     var hd = $("hm-due"); hd.hidden = nd.hidden; hd.className = nd.className; hd.textContent = nd.textContent;
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
@@ -878,7 +903,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var evaluated = closed.filter(function (m) { return m.n > 0; });
     var tot = evaluated.reduce(function (a, m) { return a + m.realSaved; }, 0);
     $("st-sub").textContent = closed.length
-      ? "Mesi chiusi: " + closed.length + ". Bilancio ok in " + okN + " su " + evaluated.length + (evaluated.length ? ", risparmiato in tutto " + eur.format(tot) + "." : ".")
+      ? "Mesi chiusi: " + closed.length + ". Bilancio ok in " + okN + " su " + evaluated.length + (evaluated.length ? ", risparmiato in tutto " + eur.format(tot) + " (" + Math.round(tot / Math.max(1, evaluated.reduce(function (a, m) { return a + m.salary + (m.extra || 0); }, 0)) * 100) + "% delle entrate)." : ".")
       : "Quando finisce il mese, qui trovi com'è andato. Per ora vedi quello in corso.";
     var html = monthCard(liveMonth(), true);
     closed.forEach(function (m) { html += monthCard(m, false); });
@@ -1123,16 +1148,35 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- backup ---------- */
   var armed = false;
   function backupText() { return JSON.stringify(S); }
+  function applyTheme() { var t = S.theme; if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
+  var deferred = null;
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; $("install").hidden = false; });
   function setupBackup() {
+    $("theme").onchange = function () { S.theme = this.value; persist(); applyTheme(); };
+    $("install").onclick = function () { if (deferred) { deferred.prompt(); deferred = null; $("install").hidden = true; } };
     $("bk-dl").onclick = function () {
       try {
         var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([backupText()], { type: "application/json" }));
         a.download = "stipendio-pilota-backup-" + CUR + ".json"; document.body.appendChild(a); a.click(); a.remove();
-        toast("Backup scaricato ✓");
+        S.lastBackup = Date.now(); persist(); renderHome(); toast("Backup scaricato ✓");
       } catch (e) { toast("Download non riuscito: usa Copia codice"); }
+    };
+    $("bk-csv").onclick = function () {
+      var rows = ["Data;Categoria;Nota;Importo"];
+      Object.keys(S.spent).sort().forEach(function (k) {
+        S.spent[k].slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).forEach(function (e) {
+          var c = CATS.filter(function (x) { return x.id === e.cat; })[0] || CATS[3];
+          rows.push([ymd(new Date(e.date)), c.name, '"' + String(e.note || "").replace(/"/g, '""') + '"', String(e.amount).replace(".", ",")].join(";"));
+        });
+      });
+      try {
+        var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + rows.join("\n")], { type: "text/csv" }));
+        a.download = "stipendio-pilota-spese-" + CUR + ".csv"; document.body.appendChild(a); a.click(); a.remove(); toast("CSV scaricato ✓");
+      } catch (e) { toast("Download non riuscito"); }
     };
     $("bk-copy").onclick = function () {
       var t = $("bk-text"); t.value = backupText(); t.focus(); t.select();
+      S.lastBackup = Date.now(); persist(); renderHome();
       var ok = function () { toast("Codice copiato ✓"); }, ko = function () { toast("Codice pronto: tienilo premuto e copia"); };
       try { navigator.clipboard.writeText(t.value).then(ok, ko); } catch (e) { ko(); }
     };
@@ -1196,6 +1240,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("hm-fix").onclick = function () { location.hash = "#spese/fisse"; };
+  $("bk-go").onclick = function () { location.hash = "#profilo/dati"; };
+  $("ob-go").onclick = function () {
+    var a = pnum($("ob-sal").value), b = pnum($("ob-rent").value), c = pnum($("ob-ins").value);
+    if (!(a > 0)) { toast("Scrivi quanto prendi al mese"); $("ob-sal").focus(); return; }
+    S.salary = a;
+    S.fixedList = S.fixedList.map(function (f) { return f.id === "rent" && b >= 0 ? Object.assign({}, f, { amount: b }) : f.id === "ins" && c >= 0 ? Object.assign({}, f, { amount: c }) : f; });
+    S.saved = true; persist(); renderAll(); toast("Piano calcolato ✓");
+  };
   $("go-profile").onclick = function () { location.hash = "#profilo/io"; };
   $("go-spese").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("save").onclick = saveForm;
@@ -1214,6 +1266,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   document.querySelectorAll('input[type="text"]').forEach(function (i) { i.addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); }); });
 
   (function () { var h = "", d = new Date(NOW.getFullYear(), NOW.getMonth(), 1); for (var i = 1; i <= 48; i++) { var dd = new Date(d.getFullYear(), d.getMonth() + i, 1), k = mkOf(dd); h += '<option value="' + k + '">' + mlabel(k) + "</option>"; } $("g-when").innerHTML = h; $("g-when").value = mkOf(new Date(d.getFullYear(), d.getMonth() + 12, 1)); })();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
   renderAll(); showView();
 })();
