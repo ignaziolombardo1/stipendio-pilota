@@ -171,6 +171,11 @@ textarea { font: inherit; font-size: 13px; color: var(--ink); background: var(--
 textarea:focus { outline: none; border-color: var(--accent); }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .btnrow button { flex: 1 1 auto; }
+.fxe { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.chk { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+.chk input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
+.entry.e4 { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+.entry .ed { font-size: 16px; }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 
 /* storico */
@@ -192,8 +197,8 @@ details.month summary:focus-visible { outline: 2px solid var(--accent); outline-
 @media (max-width: 480px) { .fields { grid-template-columns: minmax(0, 1fr); } }
 label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500; }
 label.f span.help { color: var(--muted); font-weight: 400; font-size: 12.5px; }
-input[type="text"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 13px 14px; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; }
-input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+input[type="text"], input[type="date"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 13px 14px; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; }
+input[type="text"]:focus, input[type="date"]:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 38px; }
 .big-input input { font-family: var(--font-head); font-size: 30px; font-weight: 700; padding: 12px 14px; }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
@@ -254,7 +259,20 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div id="fix-list"></div>
       <p class="small" id="next-due" hidden></p>
       <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
-      <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio − fisse pagate − spese segnate.</p>
+      <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio + extra − fisse pagate − spese segnate.</p>
+    </section>
+
+    <section class="card" aria-labelledby="t-ex">
+      <h2 id="t-ex">Entrate extra</h2>
+      <p class="hint">Tredicesima, bonus, rimborsi. Si aggiungono a quello che avanza e il piano li divide tra risparmio e investimenti.</p>
+      <div id="extra-list"></div>
+      <form id="extra-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="x-name">Cosa<input id="x-name" type="text" autocomplete="off" placeholder="Per esempio tredicesima"></label>
+          <label class="f" for="x-amt">Importo (€)<input id="x-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <button class="primary" type="submit">Aggiungi entrata</button>
+      </form>
     </section>
 
     <section class="card" id="couple" aria-labelledby="t-cp" hidden>
@@ -302,6 +320,23 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div id="funds"></div>
       <p class="small muted" id="proj"></p>
     </section>
+    <section class="card" aria-labelledby="t-iv">
+      <h2 id="t-iv">Quanto hai investito davvero</h2>
+      <div class="stats">
+        <div class="stat"><span>Previsto</span><b class="num" id="iv-plan">0</b></div>
+        <div class="stat"><span>Versato ora</span><b class="num" id="iv-month">0</b></div>
+        <div class="stat"><span>Totale</span><b class="num" id="iv-tot">0</b></div>
+      </div>
+      <p class="small muted" id="iv-text"></p>
+      <form id="iv-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="iv-fund">Fondo<select id="iv-fund"><option value="eq">Azioni (VWCE)</option><option value="bond">Obbligazioni</option></select></label>
+          <label class="f" for="iv-amt">Quanto hai versato (€)<input id="iv-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <button class="primary" type="submit">Segna versamento</button>
+      </form>
+      <div id="iv-list"></div>
+    </section>
     <p class="disclaimer">Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista. Pedaggio, km e prezzi dei carburanti sono stime da correggere con i tuoi dati.</p>
   </main>
 
@@ -324,7 +359,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="exp-amount">Quanto hai speso? (€)<input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
         <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
         <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+        <label class="f" for="exp-date">Data<input id="exp-date" type="date"></label>
         <button class="primary" type="submit" id="exp-add">Aggiungi</button>
+        <button type="button" id="exp-cancel" hidden>Annulla modifica</button>
       </form>
     </section>
 
@@ -410,22 +447,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     </section>
 
     <section class="card" aria-labelledby="t-p2">
-      <h2 id="t-p2">Casa</h2>
-      <div class="fields">
-        <label class="f" for="rent">Affitto al mese (€)<input id="rent" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="ins">Assicurazione, rata mensile (€)<input id="ins" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="bills">Bollette e abbonamenti (€)<input id="bills" type="text" inputmode="decimal" autocomplete="off"><span class="help">Luce, gas, internet, telefono, Netflix…</span></label>
-      </div>
-    </section>
-
-    <section class="card" aria-labelledby="t-pd">
-      <h2 id="t-pd">Scadenze</h2>
-      <p class="hint">Che giorno del mese paghi ogni spesa fissa. In Home ti dico quale scade prima.</p>
-      <div class="fields">
-        <label class="f" for="dueRent">Affitto, giorno<input id="dueRent" type="text" inputmode="numeric" autocomplete="off"></label>
-        <label class="f" for="dueBills">Bollette, giorno<input id="dueBills" type="text" inputmode="numeric" autocomplete="off"></label>
-        <label class="f" for="dueIns">Assicurazione, giorno<input id="dueIns" type="text" inputmode="numeric" autocomplete="off"></label>
-      </div>
+      <h2 id="t-p2">Spese fisse</h2>
+      <p class="hint">Affitto, assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota qui sotto.</p>
+      <div id="fx-edit"></div>
+      <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
     </section>
 
     <section class="card" aria-labelledby="t-pc">
@@ -433,7 +458,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p class="hint">Facoltativo. Se dividi affitto e bollette, scrivi quanta parte paghi tu: il piano userà solo la tua quota.</p>
       <div class="fields">
         <label class="f" for="sal2">Stipendio di lei/lui (€)<input id="sal2" type="text" inputmode="decimal" autocomplete="off"><span class="help">Lascia 0 se non serve</span></label>
-        <label class="f" for="share">Quota delle fisse che paghi tu (%)<input id="share" type="text" inputmode="decimal" autocomplete="off"><span class="help">Affitto, bollette e assicurazione sono i totali, qui metti la tua parte</span></label>
+        <label class="f" for="share">Quota delle fisse che paghi tu (%)<input id="share" type="text" inputmode="decimal" autocomplete="off"><span class="help">Gli importi delle spese fisse sono i totali: qui metti la tua parte. La quota vale per le voci con la spunta "Diviso in coppia"</span></label>
       </div>
       <button type="button" id="split-prop">Dividi in proporzione agli stipendi</button>
     </section>
@@ -498,6 +523,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p class="hint" id="profile-note"></p>
       <label class="f" for="years">Per quanto tempo investi
         <select id="years"><option value="10">10 anni</option><option value="20">20 anni</option><option value="30">30 anni</option></select></label>
+      <div class="fields">
+        <label class="f" for="taxPct">Tasse sui guadagni (%)<input id="taxPct" type="text" inputmode="decimal" autocomplete="off"><span class="help">Su azioni ed ETF in Italia di solito 26%</span></label>
+        <label class="f" for="costPct">Costi e bollo ogni anno (%)<input id="costPct" type="text" inputmode="decimal" autocomplete="off"><span class="help">Costo del fondo, del broker e imposta di bollo (circa 0,2%)</span></label>
+      </div>
     </section>
 
     <section class="card" aria-labelledby="t-bk">
@@ -532,7 +561,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, spesaPct: 15, svagoPct: 8,
     days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -551,16 +580,22 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["ins", "ins", 0, 1e6], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["dueRent", "dueRent", 1, 31], ["dueBills", "dueBills", 1, 31], ["dueIns", "dueIns", 1, 31], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
+  var FIELDS = [["salary", "salary", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5],  ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
     ["tollOne", "tollOne", 0, 500], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
-  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" });
-  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") S = Object.assign(S, st); } catch (e) {}
+  function mkFixed(o) {
+    function g(k) { return typeof o[k] === "number" ? o[k] : DEFAULTS[k]; }
+    return [{ id: "rent", name: "Affitto", amount: g("rent"), due: g("dueRent"), split: true }, { id: "bills", name: "Bollette e abbonamenti", amount: g("bills"), due: g("dueBills"), split: true }, { id: "ins", name: "Assicurazione", amount: g("ins"), due: g("dueIns"), split: true }];
+  }
+  DEFAULTS.fixedList = mkFixed({});
+  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, extra: {}, invested: [], fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" });
+  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") { if (!Array.isArray(st.fixedList)) st.fixedList = mkFixed(st); S = Object.assign(S, st); } } catch (e) {}
   if (!S.spent || typeof S.spent !== "object") S.spent = {};
   if (!S.paid || typeof S.paid !== "object") S.paid = {};
-  ["fuel", "goals", "annual"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+  ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+  if (!S.extra || typeof S.extra !== "object") S.extra = {};
   if (!S.history || typeof S.history !== "object") S.history = {};
   if (!S.monthKey) S.monthKey = CUR;
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
@@ -580,7 +615,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   function plan() {
     var sal = S.salary;
     var sh = Math.min(100, Math.max(1, S.share)) / 100;
-    var rent = Math.round(S.rent * sh), bills = Math.round(S.bills * sh), ins = Math.round(S.ins * sh);
+    var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0);
+    var fixed = S.fixedList.map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split }; });
+    var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
     var spesa = Math.round(sal * S.spesaPct / 100);
     var commuteKm = S.days * 2 * S.kmOne;
     var toll = Math.round(S.days * 2 * S.tollOne);
@@ -590,18 +627,19 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var fuelB = Math.round(litB * S.priceB), fuelD = Math.round(litD * S.priceD);
     var svago = Math.round(sal * S.svagoPct / 100);
     var annualM = Math.round(S.annual.reduce(function (a, x) { return a + x.amount; }, 0) / 12);
-    var spend = rent + bills + ins + annualM + spesa + toll + fuelB + fuelD + svago;
-    var left = Math.max(0, sal - spend);
+    var spend = fixedTot + annualM + spesa + toll + fuelB + fuelD + svago;
+    var left = Math.max(0, sal + E - spend);
     var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
     var inv = left - toSave;
-    var essentials = rent + bills + ins + spesa + toll + fuelB + fuelD;
-    return { sal: sal, rent: rent, bills: bills, ins: ins, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
-      svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal };
+    var essentials = fixedTot + spesa + toll + fuelB + fuelD;
+    return { sal: sal, extra: E, fixed: fixed, fixedTot: fixedTot, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+      svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal - E };
   }
   function project(monthly, years, ann) {
-    var r = Math.pow(1 + ann / 100, 1 / 12) - 1, v = 0;
+    var r = Math.pow(1 + (ann - S.costPct) / 100, 1 / 12) - 1, v = 0;
     for (var m = 0; m < years * 12; m++) v = (v + monthly) * (1 + r);
-    return v;
+    var c = monthly * 12 * years;
+    return v - Math.max(0, v - c) * S.taxPct / 100;
   }
   // Situazione del mese attivo: budget, speso e bilancio
   function liveMonth() {
@@ -611,9 +649,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 };
     var V = bud.spesa + bud.carb + bud.svago, A = by.spesa + by.carb + by.svago + by.altro;
     var pd = S.paid[S.monthKey] || {};
-    var fixed = [{ id: "rent", name: "Affitto", amt: p.rent, due: S.dueRent }, { id: "bills", name: "Bollette e abbonamenti", amt: p.bills, due: S.dueBills }, { id: "ins", name: "Assicurazione", amt: p.ins, due: S.dueIns }];
-    var fixTot = 0, paidSum = 0; fixed.forEach(function (f) { fixTot += f.amt; if (pd[f.id]) paidSum += f.amt; });
-    return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal - paidSum - A, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
+    var fixed = p.fixed, invM = S.invested.filter(function (x) { return x.monthKey === S.monthKey; }).reduce(function (a, x) { return a + x.amount; }, 0);
+    var fixTot = p.fixedTot, paidSum = 0; fixed.forEach(function (f) { if (pd[f.id]) paidSum += f.amt; });
+    return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal + p.extra - paidSum - A, extra: p.extra, invested: invM, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
   }
   function dueInfo(f) {
     var d = Math.min(f.due, DIM);
@@ -622,6 +660,20 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     if (diff < 0) return { t: "Scaduta da " + (-diff) + (diff === -1 ? " giorno" : " giorni"), diff: diff };
     if (diff === 0) return { t: "Scade oggi", diff: 0 };
     return { t: "Scade il " + d + " · tra " + diff + (diff === 1 ? " giorno" : " giorni"), diff: diff };
+  }
+  function recap(m) {
+    if (!m.n) return "";
+    var out = [], over = [];
+    CATS.slice(0, 3).forEach(function (c) { var b = m.bud[c.id] || 0, x = m.by[c.id] || 0; if (b > 0 && x > b) over.push(c.name.toLowerCase() + " +" + eur.format(x - b)); });
+    out.push(m.A <= m.V ? "Hai speso " + eur.format(m.V - m.A) + " meno del budget." : "Hai sforato di " + eur.format(m.A - m.V) + " (" + over.join(", ") + ").");
+    if (typeof m.invested === "number" && m.plannedInv > 0) out.push("Investiti " + eur.format(m.invested) + " su " + eur.format(m.plannedInv) + " previsti.");
+    var older = Object.keys(S.history).filter(function (k) { return k < m.key && k !== S.monthKey; }).sort().reverse().slice(0, 3).map(function (k) { return S.history[k]; });
+    var win = [m].concat(older).filter(function (x) { return x.n > 0; });
+    CATS.slice(0, 3).forEach(function (c) {
+      var cnt = win.filter(function (x) { return (x.bud[c.id] || 0) > 0 && (x.by[c.id] || 0) > x.bud[c.id]; }).length;
+      if (win.length >= 3 && cnt >= 3) out.push(c.name + " è sforata in " + cnt + " degli ultimi " + win.length + " mesi: alza il budget nel Profilo oppure taglia.");
+    });
+    return out.join(" ");
   }
   function verdict(m) {
     if (m.n === 0) return { cls: "none", text: "Nessuna spesa segnata" };
@@ -636,7 +688,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     if (!pending) return;
     var m = liveMonth(), v = verdict(m);
     $("nm-title").textContent = "È iniziato " + mlabel(pending);
-    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. Controlla lo stipendio e avvia.";
+    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. " + recap(m) + " Controlla lo stipendio e avvia.";
     if (!$("nm-salary").value) $("nm-salary").value = txt(S.salary);
     $("nm-start").textContent = "Avvia " + mname(pending);
   }
@@ -653,12 +705,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- Home ---------- */
   function renderHome() {
     var p = plan();
-    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey);
+    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
     $("sal-big").textContent = eur.format(p.sal);
     $("example").hidden = !!S.saved;
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
-      must: [["Affitto", (S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Fisso ogni mese"), p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills], ["Assicurazione", "Rata mensile", p.ins]],
+      must: p.fixed.map(function (f) { return [f.name, f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Fisso ogni mese", f.amt]; }),
       move: [["Pedaggio Saponara-Taormina", S.days + " giorni × andata e ritorno × " + eur2.format(S.tollOne), p.toll],
              ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
              ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]],
@@ -718,7 +770,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     else if (un.length) { nd.className = "small muted"; var d0 = dueInfo(un[0]).diff; nd.textContent = "Prossima scadenza: " + un[0].name + (d0 === 0 ? " oggi." : " tra " + d0 + (d0 === 1 ? " giorno." : " giorni.")); }
     var cp = $("couple"); cp.hidden = !(S.sal2 > 0);
     if (S.sal2 > 0) {
-      var tot = S.sal + S.sal2, full = Math.round(S.rent + S.bills + S.ins), mine = p.rent + p.bills + p.ins;
+      var tot = S.sal + S.sal2, full = Math.round(p.fixed.reduce(function (a, f) { return a + f.full; }, 0)), mine = p.fixedTot;
       $("cp-tot").textContent = eur.format(tot); $("cp-full").textContent = eur.format(full); $("cp-mine").textContent = eur.format(mine);
       $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.sal / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
     }
@@ -733,11 +785,11 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
     var P = PROFILES[S.profile] || PROFILES.bilanciato;
     $("inv-amt").textContent = eur.format(p.inv);
-    $("inv-text").textContent = "In " + S.years + " anni versi " + eur.format(p.inv * 12 * S.years) + " e potresti arrivare a circa " + eur.format(project(p.inv, S.years, P.ret)) + ".";
+    $("inv-text").textContent = "In " + S.years + " anni versi " + eur.format(p.inv * 12 * S.years) + " e potresti arrivare a circa " + eur.format(project(p.inv, S.years, P.ret)) + " al netto di costi e tasse.";
     $("where-sub").textContent = "Profilo " + S.profile + ", " + S.years + " anni. " + P.note + " Puoi cambiarli nel Profilo.";
     function fund(f, share) { return '<div class="fund"><b>' + f.name + '</b><span class="amt num">' + eur.format(p.inv * share / 100) + '</span><small>' + f.meta + '</small><small class="share num">' + share + "% al mese</small></div>"; }
     $("funds").innerHTML = fund(FUNDS.eq, P.eq) + fund(FUNDS.bond, 100 - P.eq);
-    $("proj").textContent = "Stima con un rendimento di " + nf.format(P.ret) + "% all'anno, costante. Nella realtà cambia ogni anno.";
+    $("proj").textContent = "Stima con rendimento lordo " + nf.format(P.ret) + "% all'anno, meno costi " + nf.format(S.costPct) + "% e " + nf.format(S.taxPct) + "% di tasse sui guadagni. Nella realtà il rendimento cambia ogni anno.";
   }
 
   /* ---------- Spese ---------- */
@@ -769,31 +821,47 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       var right = c.id === "altro" ? eur2.format(s) + " (non previsto)" : eur2.format(s) + " di " + eur.format(b);
       return '<div class="catrow"><div class="top2"><span><span class="dot" style="background:' + c.color + ';margin-right:8px"></span>' + c.name + '</span><span class="num">' + right + '</span></div><div class="meter' + (over ? " over" : "") + '"><div style="width:' + w + '%"></div></div></div>';
     }).join("");
-    var list = (S.spent[S.monthKey] || []).slice().reverse();
+    var list = (S.spent[S.monthKey] || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+    var dt = $("exp-date"), mp = S.monthKey.split("-"), lastD = new Date(+mp[0], +mp[1], 0).getDate();
+    dt.min = S.monthKey + "-01"; dt.max = S.monthKey + "-" + String(lastD).padStart(2, "0");
+    if (!dt.value || dt.value < dt.min || dt.value > dt.max) dt.value = S.monthKey === CUR ? ymd(NOW) : dt.max;
     var box = $("exp-list"); box.innerHTML = "";
     if (!list.length) { box.innerHTML = '<p class="empty">Ancora nessuna spesa. Segna la prima qui sopra.</p>'; return; }
     list.forEach(function (e) {
       var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3];
       var d = new Date(e.date);
-      var row = document.createElement("div"); row.className = "entry";
-      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x" aria-label="Elimina spesa">×</button>';
-      row.querySelector("button").onclick = function () {
+      var row = document.createElement("div"); row.className = "entry e4";
+      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x ed" aria-label="Modifica spesa">✎</button><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      row.querySelector(".del").onclick = function () {
         S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== e.id; });
+        if (editId === e.id) resetExpForm();
         persist(); renderAll(); toast("Spesa eliminata");
+      };
+      row.querySelector(".ed").onclick = function () {
+        editId = e.id; $("exp-amount").value = txt(e.amount); $("exp-note").value = e.note || ""; S.cat = e.cat; renderChips();
+        $("exp-date").value = ymd(new Date(e.date)); $("exp-add").textContent = "Salva modifica"; $("exp-cancel").hidden = false;
+        try { $("exp-amount").scrollIntoView({ block: "center" }); } catch (x) {} $("exp-amount").focus();
       };
       box.appendChild(row);
     });
   }
+  var editId = null;
+  function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function resetExpForm() { editId = null; $("exp-amount").value = ""; $("exp-note").value = ""; $("exp-date").value = ""; $("exp-add").textContent = "Aggiungi"; $("exp-cancel").hidden = true; }
   function addExpense(ev) {
     ev.preventDefault();
     if (pending) { toast("Prima avvia il nuovo mese qui sopra"); return; }
     var n = pnum($("exp-amount").value);
     if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("exp-amount").focus(); return; }
+    var dv = $("exp-date").value;
+    if (dv && dv.slice(0, 7) !== S.monthKey) { toast("La data deve essere in " + mlabel(S.monthKey)); return; }
+    var when = dv ? new Date(dv + "T12:00:00") : new Date(), note = $("exp-note").value.trim().slice(0, 60);
     var list = (S.spent[S.monthKey] || []).slice();
-    list.push({ id: S.nextId++, amount: n, cat: S.cat, note: $("exp-note").value.trim().slice(0, 60), date: new Date().toISOString() });
-    S.spent[S.monthKey] = list; persist();
-    $("exp-amount").value = ""; $("exp-note").value = "";
-    renderAll(); toast("Spesa aggiunta ✓");
+    if (editId) list = list.map(function (x) { return x.id === editId ? Object.assign({}, x, { amount: n, cat: S.cat, note: note, date: when.toISOString() }) : x; });
+    else list.push({ id: S.nextId++, amount: n, cat: S.cat, note: note, date: when.toISOString() });
+    var was = !!editId;
+    S.spent[S.monthKey] = list; persist(); resetExpForm();
+    renderAll(); toast(was ? "Spesa modificata ✓" : "Spesa aggiunta ✓");
   }
 
   /* ---------- Storico ---------- */
@@ -808,9 +876,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var saved = m.n === 0 ? "—" : eur.format(m.realSaved);
     var fx = m.fixTot ? ' Spese fisse pagate: ' + eur.format(m.paidSum) + ' su ' + eur.format(m.fixTot) + '.' : '';
     var det = m.n === 0 ? "Per questo mese non hai segnato spese, quindi non si può dire come è andata." + fx
-      : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".") + fx;
+      : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".") + fx + " " + recap(m);
     return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? ' <small style="text-transform:none;font-weight:500;color:var(--muted)">· in corso</small>' : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
-      + '<div class="mnums"><div><span>Stipendio</span><b class="num">' + eur.format(m.salary) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
+      + '<div class="mnums"><div><span>Entrate</span><b class="num">' + eur.format(m.salary + (m.extra || 0)) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
       + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
   }
   function renderStorico() {
@@ -832,6 +900,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- Profilo ---------- */
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
+    renderFixedEditor(src.fixedList);
     $("commuteCar").value = src.commuteCar;
     $("years").value = String(src.years);
     document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.checked = r.value === src.profile; });
@@ -859,12 +928,76 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     next.commuteCar = $("commuteCar").value;
     next.years = parseInt($("years").value, 10);
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
-    next.profile = pr; next.saved = true;
+    next.profile = pr; next.saved = true; next.fixedList = readFixedEditor();
     Object.assign(S, next); persist(); renderAll(); fillForm(S);
     location.hash = "#home"; showView();
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
   }
 
+
+  /* ---------- editor spese fisse ---------- */
+  function renderFixedEditor(list) {
+    var box = $("fx-edit"); box.innerHTML = "";
+    (list || []).forEach(function (f) {
+      var d = document.createElement("div"); d.className = "fxe"; d.setAttribute("data-id", f.id);
+      d.innerHTML = '<label class="f">Nome<input type="text" class="fx-name" autocomplete="off" value="' + esc(f.name) + '"></label>'
+        + '<div class="fields"><label class="f">Importo (€)<input type="text" class="fx-amt" inputmode="decimal" autocomplete="off" value="' + txt(f.amount) + '"></label>'
+        + '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>'
+        + '<label class="chk"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>'
+        + '<button type="button" class="link fx-del">Elimina questa voce</button>';
+      d.querySelector(".fx-del").onclick = function () { var cur = readFixedEditor().filter(function (x) { return x.id !== f.id; }); renderFixedEditor(cur); };
+      box.appendChild(d);
+    });
+  }
+  function readFixedEditor() {
+    var out = [];
+    document.querySelectorAll("#fx-edit .fxe").forEach(function (d) {
+      var amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
+      out.push({ id: d.getAttribute("data-id"), name: d.querySelector(".fx-name").value.trim().slice(0, 40) || "Spesa fissa", amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked });
+    });
+    return out;
+  }
+
+  /* ---------- entrate extra e versamenti ---------- */
+  function renderExtra() {
+    var box = $("extra-list"); box.innerHTML = "";
+    var list = S.extra[S.monthKey] || [];
+    if (!list.length) box.innerHTML = '<p class="empty">Nessuna entrata extra questo mese.</p>';
+    list.forEach(function (x) {
+      var row = document.createElement("div"); row.className = "entry";
+      row.innerHTML = '<div class="t">' + esc(x.name) + '</div><b class="num">+' + eur2.format(x.amount) + '</b><button type="button" class="x" aria-label="Elimina entrata">×</button>';
+      row.querySelector("button").onclick = function () { S.extra[S.monthKey] = (S.extra[S.monthKey] || []).filter(function (y) { return y.id !== x.id; }); persist(); renderAll(); toast("Entrata eliminata"); };
+      box.appendChild(row);
+    });
+  }
+  function addExtra(ev) {
+    ev.preventDefault();
+    var name = $("x-name").value.trim().slice(0, 40) || "Entrata extra", n = pnum($("x-amt").value);
+    if (!(n > 0)) { toast("Scrivi l'importo"); $("x-amt").focus(); return; }
+    S.extra[S.monthKey] = (S.extra[S.monthKey] || []).concat([{ id: S.nextId++, name: name, amount: n }]);
+    persist(); $("x-name").value = ""; $("x-amt").value = ""; renderAll(); toast("Entrata aggiunta ✓");
+  }
+  function renderInvested() {
+    var p = plan(), m = liveMonth(), tot = S.invested.reduce(function (a, x) { return a + x.amount; }, 0);
+    $("iv-plan").textContent = eur.format(p.inv); $("iv-month").textContent = eur.format(m.invested); $("iv-tot").textContent = eur.format(tot);
+    var d = p.inv - m.invested;
+    $("iv-text").textContent = p.inv <= 0 ? "Questo mese non è previsto nessun investimento."
+      : d > 0 ? "Questo mese mancano ancora " + eur.format(d) + " per arrivare a quanto previsto." : "Hai investito quanto previsto per questo mese. 👍";
+    var box = $("iv-list"); box.innerHTML = "";
+    S.invested.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 5).forEach(function (x) {
+      var row = document.createElement("div"); row.className = "entry";
+      row.innerHTML = '<div class="t">' + (x.fund === "bond" ? "Obbligazioni" : "Azioni (VWCE)") + "<small>" + dfDay.format(new Date(x.date)) + '</small></div><b class="num">' + eur2.format(x.amount) + '</b><button type="button" class="x" aria-label="Elimina versamento">×</button>';
+      row.querySelector("button").onclick = function () { S.invested = S.invested.filter(function (y) { return y.id !== x.id; }); persist(); renderAll(); toast("Versamento eliminato"); };
+      box.appendChild(row);
+    });
+  }
+  function addInvested(ev) {
+    ev.preventDefault();
+    var n = pnum($("iv-amt").value);
+    if (!(n > 0)) { toast("Scrivi quanto hai versato"); $("iv-amt").focus(); return; }
+    S.invested.push({ id: S.nextId++, fund: $("iv-fund").value, amount: n, date: new Date().toISOString(), monthKey: S.monthKey });
+    persist(); $("iv-amt").value = ""; renderAll(); toast("Versamento segnato ✓");
+  }
 
   /* ---------- rifornimenti ---------- */
   function fuelStats(car) {
@@ -1023,9 +1156,11 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       if (!o || typeof o !== "object" || !(o.salary > 0)) { toast("Il codice non è valido"); armed = false; btn.textContent = "Ripristina da codice"; return; }
       if (!armed) { armed = true; btn.textContent = "Conferma: sostituisce i dati di questa app"; return; }
       armed = false; btn.textContent = "Ripristina da codice";
-      S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" }, o);
+      if (!Array.isArray(o.fixedList)) o.fixedList = mkFixed(o);
+      S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, extra: {}, invested: [], fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" }, o);
       ["spent", "history", "paid"].forEach(function (k) { if (!S[k] || typeof S[k] !== "object") S[k] = {}; });
-      ["fuel", "goals", "annual"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+      ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+      if (!S.extra || typeof S.extra !== "object") S.extra = {};
       if (!S.monthKey) S.monthKey = CUR;
       pending = S.monthKey < CUR ? CUR : null;
       persist(); renderAll(); fillForm(S); $("bk-text").value = ""; toast("Dati ripristinati ✓");
@@ -1052,7 +1187,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     if (h === "profilo") fillForm(S);
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("go-profile").onclick = function () { location.hash = "#profilo"; };
@@ -1063,6 +1198,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("fu-form").onsubmit = addFuel;
   $("goal-form").onsubmit = addGoal;
   $("annual-form").onsubmit = addAnnual;
+  $("extra-form").onsubmit = addExtra;
+  $("iv-form").onsubmit = addInvested;
+  $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
+  $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   setupBackup();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
