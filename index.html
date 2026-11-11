@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
 <style>
-/* Layout: due schermate. Home (solo lettura: stipendio, piano del mese, futuro, fondi) e Profilo (stipendio e regole da modificare, con il pulsante Salva fisso in basso). */
+/* Layout: quattro schermate (Home, Spese, Storico, Profilo) scelte da un selettore in alto. Il Profilo ha il pulsante Salva fisso in basso. Ogni mese un riquadro chiede il nuovo stipendio. */
 :root {
   --bg: #f4f6f4;
   --surface: #ffffff;
@@ -28,11 +28,15 @@
   --accent-ink: #ffffff;
   --warn: #a8500a;
   --warn-bg: #fdf0dc;
+  --ok-bg: #dcf2ec;
+  --bad: #b03a12;
+  --bad-bg: #fde6df;
   --toast-bg: #16221f;
   --toast-ink: #ffffff;
   --c-must: #7d8ca6;
   --c-move: #9674d4;
   --c-daily: #e3a336;
+  --c-fun: #d4608f;
   --c-save: #4a82e0;
   --c-invest: #14a58f;
   --font-head: "Space Grotesk", system-ui, sans-serif;
@@ -41,15 +45,17 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
-    --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --toast-bg: #e9f1ef; --toast-ink: #0e1514;
-    --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-save: #6f9ef0; --c-invest: #3fcab5;
+    --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
+    --toast-bg: #e9f1ef; --toast-ink: #0e1514;
+    --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
-  --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --toast-bg: #e9f1ef; --toast-ink: #0e1514;
-  --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-save: #6f9ef0; --c-invest: #3fcab5;
+  --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
+  --toast-bg: #e9f1ef; --toast-ink: #0e1514;
+  --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -71,12 +77,13 @@ p { margin: 0; }
 .mark { width: 36px; height: 36px; border-radius: 9px; flex: none; }
 .top .name { font-family: var(--font-head); font-weight: 700; font-size: 17px; }
 .top .month { margin-left: auto; color: var(--muted); font-size: 13px; text-transform: capitalize; }
-.tabs { display: flex; background: var(--soft); border-radius: 14px; padding: 4px; gap: 4px; }
-.tabs a { flex: 1; text-align: center; padding: 11px 8px; border-radius: 10px; font-weight: 600; color: var(--muted); text-decoration: none; }
+.tabs { display: flex; background: var(--soft); border-radius: 14px; padding: 4px; gap: 2px; }
+.tabs a { flex: 1; text-align: center; padding: 11px 2px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; min-width: 0; }
 .tabs a.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
 .tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card.hl { border-color: var(--accent); }
 .line { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .salary-label { font-size: 14px; color: var(--muted); }
 .salary-big { font-family: var(--font-head); font-size: 42px; font-weight: 700; line-height: 1.1; }
@@ -87,15 +94,20 @@ p { margin: 0; }
 button { font: inherit; font-weight: 600; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 11px 16px; cursor: pointer; }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.x { border: 0; background: transparent; color: var(--muted); padding: 6px 10px; font-size: 20px; line-height: 1; }
 .bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--soft); gap: 2px; }
 .bar div { min-width: 0; }
 @media (prefers-reduced-motion: no-preference) { .bar div, .meter div { transition: width .3s ease; } }
+.badge { display: inline-block; font-size: 13px; font-weight: 600; border-radius: 999px; padding: 4px 12px; }
+.badge.ok { background: var(--ok-bg); color: var(--accent); }
+.badge.over { background: var(--bad-bg); color: var(--bad); }
+.badge.none { background: var(--soft); color: var(--muted); }
 
 .group { display: flex; flex-direction: column; }
 .group-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 0 2px; }
 .row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
 .group .row:last-child { border-bottom: 0; }
-.dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+.dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; flex: none; }
 .rtxt { display: flex; flex-direction: column; min-width: 0; }
 .rtxt b { font-weight: 600; }
 .rtxt small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
@@ -110,7 +122,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tile.save .big { color: var(--c-save); }
 .tile.invest .big { color: var(--c-invest); }
 .meter { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
-.meter div { height: 100%; background: var(--c-save); border-radius: 4px; }
+.meter div { height: 100%; background: var(--accent); border-radius: 4px; }
+.meter.blue div { background: var(--c-save); }
+.meter.over div { background: var(--bad); }
 .fund { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .fund:last-of-type { border-bottom: 0; }
 .fund b { font-weight: 600; }
@@ -118,6 +132,39 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .fund small { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
 .fund .share { text-align: right; }
 .disclaimer { font-size: 12.5px; color: var(--muted); padding: 0 4px; }
+
+/* spese */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--soft); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; min-width: 0; }
+.stat span { font-size: 12px; color: var(--muted); }
+.stat b { font-family: var(--font-head); font-size: 20px; }
+.chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.chips label { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.chips input { position: absolute; opacity: 0; pointer-events: none; }
+.chips label.on { border-color: var(--accent); background: var(--soft); }
+.chips label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.catrow { display: flex; flex-direction: column; gap: 6px; }
+.catrow .top2 { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; }
+.catrow .top2 span:last-child { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.entry { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.entry:last-child { border-bottom: 0; }
+.entry .t { min-width: 0; overflow-wrap: anywhere; }
+.entry .t small { display: block; color: var(--muted); font-size: 13px; }
+.entry b { font-family: var(--font-head); }
+.empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+
+/* storico */
+details.month { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+details.month summary { list-style: none; cursor: pointer; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px; }
+details.month summary::-webkit-details-marker { display: none; }
+details.month summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 20px; }
+.mhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mhead b { font-family: var(--font-head); font-size: 18px; text-transform: capitalize; }
+.mnums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mnums div { display: flex; flex-direction: column; min-width: 0; }
+.mnums span { font-size: 12px; color: var(--muted); }
+.mnums b { font-family: var(--font-head); font-size: 16px; }
+.mbody { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 
 /* profilo */
 .hint { color: var(--muted); font-size: 14px; }
@@ -128,7 +175,7 @@ label.f span.help { color: var(--muted); font-weight: 400; font-size: 12.5px; }
 input[type="text"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 13px 14px; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; }
 input[type="text"]:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 38px; }
-.salary-input input { font-family: var(--font-head); font-size: 30px; font-weight: 700; padding: 12px 14px; }
+.big-input input { font-family: var(--font-head); font-size: 30px; font-weight: 700; padding: 12px 14px; }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { flex: 1; text-align: center; padding: 11px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -152,8 +199,18 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   <nav class="tabs" id="tabs" aria-label="Sezioni">
     <a href="#home" data-v="home">Home</a>
+    <a href="#spese" data-v="spese">Spese</a>
+    <a href="#storico" data-v="storico">Storico</a>
     <a href="#profilo" data-v="profilo">Profilo</a>
   </nav>
+
+  <!-- NUOVO MESE: compare quando inizia un mese nuovo -->
+  <section class="card hl" id="newmonth" aria-labelledby="nm-title" hidden>
+    <h2 id="nm-title"></h2>
+    <p class="hint" id="nm-text"></p>
+    <label class="f" for="nm-salary">Quanto hai preso questo mese? (€)<input id="nm-salary" type="text" inputmode="decimal" autocomplete="off"></label>
+    <button class="primary" id="nm-start" type="button"></button>
+  </section>
 
   <!-- HOME -->
   <main class="view" id="v-home">
@@ -171,6 +228,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div class="bar" id="bar" role="img" aria-label="Come si divide lo stipendio"></div>
     </section>
 
+    <section class="card" aria-labelledby="t-now">
+      <div class="line"><h2 id="t-now">Le tue spese di questo mese</h2><span class="badge none" id="now-badge"></span></div>
+      <p class="small muted" id="now-text"></p>
+      <div class="meter" id="now-meter" role="progressbar" aria-labelledby="t-now" aria-valuemin="0" aria-valuemax="100"><div id="now-fill" style="width:0%"></div></div>
+      <button class="primary" id="go-spese" type="button">Segna una spesa</button>
+    </section>
+
     <section class="card" aria-labelledby="t-plan">
       <h2 id="t-plan">Il tuo piano del mese</h2>
       <div id="plan"></div>
@@ -182,7 +246,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <div class="tile save">
           <span class="label"><span class="dot" style="background:var(--c-save)"></span>Da mettere da parte</span>
           <span class="big num" id="save-amt">0</span>
-          <div class="meter" role="progressbar" aria-label="Fondo di sicurezza" aria-valuemin="0" aria-valuemax="100" id="meter"><div id="meter-fill" style="width:0%"></div></div>
+          <div class="meter blue" role="progressbar" aria-label="Fondo di sicurezza" aria-valuemin="0" aria-valuemax="100" id="meter"><div id="meter-fill" style="width:0%"></div></div>
           <p class="small muted" id="save-text"></p>
         </div>
         <div class="tile invest">
@@ -202,6 +266,50 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <p class="disclaimer">Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista. Pedaggio, km e prezzi dei carburanti sono stime da correggere con i tuoi dati.</p>
   </main>
 
+  <!-- SPESE -->
+  <main class="view" id="v-spese" hidden>
+    <section class="card" aria-labelledby="t-sp">
+      <div class="line"><h2 id="t-sp">Quanto puoi ancora spendere</h2><span class="badge none" id="sp-badge"></span></div>
+      <div class="stats">
+        <div class="stat"><span>Budget</span><b class="num" id="sp-budget">0</b></div>
+        <div class="stat"><span>Speso</span><b class="num" id="sp-spent">0</b></div>
+        <div class="stat"><span>Resta</span><b class="num" id="sp-left">0</b></div>
+      </div>
+      <div class="meter" id="sp-meter" role="progressbar" aria-labelledby="t-sp" aria-valuemin="0" aria-valuemax="100"><div id="sp-fill" style="width:0%"></div></div>
+      <p class="small muted" id="sp-note"></p>
+    </section>
+
+    <section class="card" aria-labelledby="t-add">
+      <h2 id="t-add">Segna una spesa</h2>
+      <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
+        <label class="f" for="exp-amount">Quanto hai speso? (€)<input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
+        <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
+        <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+        <button class="primary" type="submit" id="exp-add">Aggiungi</button>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="t-cats">
+      <h2 id="t-cats">Per categoria</h2>
+      <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
+      <p class="small muted">Affitto, bollette e pedaggio sono già tolti dal piano, non serve segnarli.</p>
+    </section>
+
+    <section class="card" aria-labelledby="t-list">
+      <h2 id="t-list">Spese di questo mese</h2>
+      <div id="exp-list"></div>
+    </section>
+  </main>
+
+  <!-- STORICO -->
+  <main class="view" id="v-storico" hidden>
+    <div>
+      <h1>Storico</h1>
+      <p class="hint" id="st-sub"></p>
+    </div>
+    <div id="st-list" style="display:flex;flex-direction:column;gap:14px"></div>
+  </main>
+
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
     <div>
@@ -209,9 +317,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano nella Home si aggiorna da solo.</p>
     </div>
 
-    <section class="card salary-input" aria-labelledby="t-p1">
+    <section class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
-      <label class="f" for="salary">Stipendio netto al mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
     </section>
 
     <section class="card" aria-labelledby="t-p2">
@@ -297,6 +405,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
   var eur2 = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
   var nf = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+  var dfDay = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" });
+
+  var NOW = new Date();
+  function mkOf(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
+  function mlabel(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(new Date(+p[0], +p[1] - 1, 1)); }
+  function mname(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(new Date(+p[0], +p[1] - 1, 1)); }
+  var CUR = mkOf(NOW);
+  var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
+  var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
   var DEFAULTS = { salary: 1800, rent: 550, bills: 120, spesaPct: 15, svagoPct: 8,
     days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
@@ -311,19 +428,27 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     eq:   { name: "Vanguard FTSE All-World (VWCE)", meta: "Azioni di tutto il mondo · ISIN IE00BK5BQT80" },
     bond: { name: "iShares Core Global Aggregate Bond EUR Hedged", meta: "Obbligazioni globali · ISIN IE00BDBRDM35" }
   };
-  // [id, chiave, minimo, massimo]
+  var CATS = [
+    { id: "spesa", name: "Spesa alimentare", color: "var(--c-daily)" },
+    { id: "carb", name: "Carburante", color: "var(--c-move)" },
+    { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
+    { id: "altro", name: "Altro", color: "var(--c-must)" }
+  ];
   var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
     ["tollOne", "tollOne", 0, 500], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
-  var S = Object.assign({}, DEFAULTS);
+  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, nextId: 1, cat: "spesa" });
   try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") S = Object.assign(S, st); } catch (e) {}
+  if (!S.spent || typeof S.spent !== "object") S.spent = {};
+  if (!S.history || typeof S.history !== "object") S.history = {};
+  if (!S.monthKey) S.monthKey = CUR;
+  var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
   function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function txt(n) { return String(n).replace(".", ","); }
-  // Accetta 1800, 1.800, 1.800,50, 2,01 e 2.01
   function pnum(v) {
     var t = String(v).trim().replace(/\s|€/g, "");
     if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, "");
@@ -357,13 +482,46 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     for (var m = 0; m < years * 12; m++) v = (v + monthly) * (1 + r);
     return v;
   }
+  // Situazione del mese attivo: budget, speso e bilancio
+  function liveMonth() {
+    var p = plan(), list = S.spent[S.monthKey] || [];
+    var by = { spesa: 0, carb: 0, svago: 0, altro: 0 };
+    list.forEach(function (e) { by[e.cat] = (by[e.cat] || 0) + e.amount; });
+    var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 };
+    var V = bud.spesa + bud.carb + bud.svago, A = by.spesa + by.carb + by.svago + by.altro;
+    return { key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
+  }
+  function verdict(m) {
+    if (m.n === 0) return { cls: "none", text: "Nessuna spesa segnata" };
+    if (m.A <= m.V) return { cls: "ok", text: "Bilancio ok" };
+    return { cls: "over", text: "Sforato di " + eur.format(m.A - m.V) };
+  }
+
+  /* ---------- nuovo mese ---------- */
+  function renderPending() {
+    var box = $("newmonth");
+    box.hidden = !pending;
+    if (!pending) return;
+    var m = liveMonth(), v = verdict(m);
+    $("nm-title").textContent = "È iniziato " + mlabel(pending);
+    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. Controlla lo stipendio e avvia.";
+    if (!$("nm-salary").value) $("nm-salary").value = txt(S.salary);
+    $("nm-start").textContent = "Avvia " + mname(pending);
+  }
+  function startMonth() {
+    var n = pnum($("nm-salary").value);
+    if (!(n > 0)) { toast("Scrivi quanto hai preso questo mese"); $("nm-salary").focus(); return; }
+    var m = liveMonth(); S.history[m.key] = m; // chiude il mese vecchio
+    S.monthKey = pending; S.salary = n; S.saved = true; pending = null;
+    $("nm-salary").value = "";
+    persist(); renderAll(); location.hash = "#home"; showView();
+    toast("Nuovo mese avviato ✓");
+  }
 
   /* ---------- Home ---------- */
   function renderHome() {
     var p = plan();
-    var d = new Date();
-    var mese = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(d);
-    $("sal-label").textContent = "Stipendio di " + mese;
+    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey);
     $("sal-big").textContent = eur.format(p.sal);
     $("example").hidden = !!S.saved;
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
@@ -376,7 +534,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       future: [["Da parte", nf.format(S.saveShare) + "% di quello che avanza", p.toSave], ["Investimenti", nf.format(100 - Math.min(100, S.saveShare)) + "% di quello che avanza", p.inv]]
     };
     var meta = [["Cose da pagare", rows.must, ["var(--c-must)", "var(--c-must)"]], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
-                ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-daily)"]], ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
+                ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-fun)"]], ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
     var html = "", segs = [];
     meta.forEach(function (g) {
       html += '<div class="group"><div class="group-title">' + g[0] + "</div>";
@@ -397,6 +555,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("headline").innerHTML = p.left > 0 ? "Dopo le spese ti avanzano <b>" + eur.format(p.left) + "</b>: <b>" + eur.format(p.toSave) + "</b> da mettere da parte e <b>" + eur.format(p.inv) + "</b> da investire."
       : "Per questo mese non avanza nulla da risparmiare.";
 
+    var m = liveMonth(), v = verdict(m);
+    $("now-badge").className = "badge " + v.cls; $("now-badge").textContent = v.text;
+    $("now-text").textContent = "Speso " + eur.format(m.A) + " su " + eur.format(m.V) + " di budget (spesa, carburante e tempo libero).";
+    $("now-fill").style.width = Math.min(100, m.V > 0 ? m.A / m.V * 100 : (m.A > 0 ? 100 : 0)) + "%";
+    $("now-meter").className = "meter" + (m.A > m.V ? " over" : "");
+    $("now-meter").setAttribute("aria-valuenow", Math.round(m.V > 0 ? Math.min(100, m.A / m.V * 100) : 0));
+
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
     $("meter-fill").style.width = done + "%";
@@ -412,6 +577,92 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     function fund(f, share) { return '<div class="fund"><b>' + f.name + '</b><span class="amt num">' + eur.format(p.inv * share / 100) + '</span><small>' + f.meta + '</small><small class="share num">' + share + "% al mese</small></div>"; }
     $("funds").innerHTML = fund(FUNDS.eq, P.eq) + fund(FUNDS.bond, 100 - P.eq);
     $("proj").textContent = "Stima con un rendimento di " + nf.format(P.ret) + "% all'anno, costante. Nella realtà cambia ogni anno.";
+  }
+
+  /* ---------- Spese ---------- */
+  function renderChips() {
+    $("chips").innerHTML = CATS.map(function (c) {
+      return '<label class="' + (S.cat === c.id ? "on" : "") + '"><input type="radio" name="cat" value="' + c.id + '"' + (S.cat === c.id ? " checked" : "") + '><span class="dot" style="background:' + c.color + '"></span>' + c.name + "</label>";
+    }).join("");
+    document.querySelectorAll('input[name="cat"]').forEach(function (r) {
+      r.onchange = function () { S.cat = r.value; persist(); renderChips(); };
+    });
+  }
+  function renderSpese() {
+    var m = liveMonth(), v = verdict(m), left = m.V - m.A;
+    $("sp-badge").className = "badge " + v.cls; $("sp-badge").textContent = v.text;
+    $("sp-budget").textContent = eur.format(m.V);
+    $("sp-spent").textContent = eur2.format(m.A);
+    $("sp-left").textContent = eur2.format(left);
+    $("sp-left").style.color = left < 0 ? "var(--bad)" : "";
+    var pct = m.V > 0 ? Math.min(100, m.A / m.V * 100) : (m.A > 0 ? 100 : 0);
+    $("sp-fill").style.width = pct + "%";
+    $("sp-meter").className = "meter" + (m.A > m.V ? " over" : "");
+    $("sp-meter").setAttribute("aria-valuenow", Math.round(pct));
+    var isCur = S.monthKey === CUR;
+    $("sp-note").textContent = left < 0 ? "Hai superato il budget di " + eur2.format(-left) + ". Per questo mese conviene fermarsi con le spese non necessarie."
+      : isCur ? "Mancano " + DAYS_LEFT + (DAYS_LEFT === 1 ? " giorno" : " giorni") + " alla fine del mese: puoi spendere circa " + eur2.format(left / DAYS_LEFT) + " al giorno."
+      : "Budget del mese: spesa, carburante e tempo libero.";
+    $("cats").innerHTML = CATS.map(function (c) {
+      var b = m.bud[c.id], s = m.by[c.id], w = b > 0 ? Math.min(100, s / b * 100) : (s > 0 ? 100 : 0), over = c.id !== "altro" && s > b;
+      var right = c.id === "altro" ? eur2.format(s) + " (non previsto)" : eur2.format(s) + " di " + eur.format(b);
+      return '<div class="catrow"><div class="top2"><span><span class="dot" style="background:' + c.color + ';margin-right:8px"></span>' + c.name + '</span><span class="num">' + right + '</span></div><div class="meter' + (over ? " over" : "") + '"><div style="width:' + w + '%"></div></div></div>';
+    }).join("");
+    var list = (S.spent[S.monthKey] || []).slice().reverse();
+    var box = $("exp-list"); box.innerHTML = "";
+    if (!list.length) { box.innerHTML = '<p class="empty">Ancora nessuna spesa. Segna la prima qui sopra.</p>'; return; }
+    list.forEach(function (e) {
+      var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3];
+      var d = new Date(e.date);
+      var row = document.createElement("div"); row.className = "entry";
+      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x" aria-label="Elimina spesa">×</button>';
+      row.querySelector("button").onclick = function () {
+        S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== e.id; });
+        persist(); renderAll(); toast("Spesa eliminata");
+      };
+      box.appendChild(row);
+    });
+  }
+  function addExpense(ev) {
+    ev.preventDefault();
+    if (pending) { toast("Prima avvia il nuovo mese qui sopra"); return; }
+    var n = pnum($("exp-amount").value);
+    if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("exp-amount").focus(); return; }
+    var list = (S.spent[S.monthKey] || []).slice();
+    list.push({ id: S.nextId++, amount: n, cat: S.cat, note: $("exp-note").value.trim().slice(0, 60), date: new Date().toISOString() });
+    S.spent[S.monthKey] = list; persist();
+    $("exp-amount").value = ""; $("exp-note").value = "";
+    renderAll(); toast("Spesa aggiunta ✓");
+  }
+
+  /* ---------- Storico ---------- */
+  function monthCard(m, live) {
+    var v = verdict(m);
+    var cats = CATS.map(function (c) {
+      var s = m.by[c.id] || 0, b = m.bud[c.id] || 0;
+      if (c.id === "altro" && !s) return "";
+      return '<div class="catrow"><div class="top2"><span><span class="dot" style="background:' + c.color + ';margin-right:8px"></span>' + c.name + '</span><span class="num">' + eur2.format(s) + (c.id === "altro" ? "" : " di " + eur.format(b)) + "</span></div></div>";
+    }).join("");
+    var diff = m.realSaved - (m.plannedSave + m.plannedInv);
+    var saved = m.n === 0 ? "—" : eur.format(m.realSaved);
+    var det = m.n === 0 ? "Per questo mese non hai segnato spese, quindi non si può dire come è andata."
+      : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".");
+    return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? " · in corso" : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
+      + '<div class="mnums"><div><span>Stipendio</span><b class="num">' + eur.format(m.salary) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
+      + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
+  }
+  function renderStorico() {
+    var keys = Object.keys(S.history).sort().reverse().filter(function (k) { return k !== S.monthKey; });
+    var closed = keys.map(function (k) { return S.history[k]; });
+    var okN = closed.filter(function (m) { return m.n > 0 && m.A <= m.V; }).length;
+    var evaluated = closed.filter(function (m) { return m.n > 0; });
+    var tot = evaluated.reduce(function (a, m) { return a + m.realSaved; }, 0);
+    $("st-sub").textContent = closed.length
+      ? "Mesi chiusi: " + closed.length + ". Bilancio ok in " + okN + " su " + evaluated.length + (evaluated.length ? ", risparmiato in tutto " + eur.format(tot) + "." : ".")
+      : "Quando finisce il mese, qui trovi com'è andato. Per ora vedi quello in corso.";
+    var html = monthCard(liveMonth(), true);
+    closed.forEach(function (m) { html += monthCard(m, false); });
+    $("st-list").innerHTML = html;
   }
 
   /* ---------- Profilo ---------- */
@@ -445,17 +696,17 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     next.years = parseInt($("years").value, 10);
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
     next.profile = pr; next.saved = true;
-    Object.assign(S, next); persist(); renderHome(); fillForm(S);
-    location.hash = "#home";
+    Object.assign(S, next); persist(); renderAll(); fillForm(S);
+    location.hash = "#home"; showView();
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
   }
 
   /* ---------- navigazione ---------- */
+  var VIEWS = ["home", "spese", "storico", "profilo"];
   function showView() {
     var h = (location.hash || "").replace("#", "");
-    if (h !== "profilo") h = "home";
-    $("v-home").hidden = h !== "home";
-    $("v-profilo").hidden = h !== "profilo";
+    if (VIEWS.indexOf(h) < 0) h = "home";
+    VIEWS.forEach(function (v) { $("v-" + v).hidden = v !== h; });
     $("savebar").hidden = h !== "profilo";
     document.body.className = h === "profilo" ? "has-save" : "";
     document.querySelectorAll("#tabs a").forEach(function (a) {
@@ -465,16 +716,20 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     if (h === "profilo") fillForm(S);
     window.scrollTo(0, 0);
   }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("go-profile").onclick = function () { location.hash = "#profilo"; };
+  $("go-spese").onclick = function () { location.hash = "#spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("save").onclick = saveForm;
+  $("nm-start").onclick = startMonth;
+  $("exp-form").onsubmit = addExpense;
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
   document.querySelectorAll('input[type="text"]').forEach(function (i) { i.addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); }); });
 
-  $("month").textContent = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(new Date());
-  renderHome(); showView();
+  $("month").textContent = mlabel(CUR);
+  renderAll(); showView();
 })();
 </script>
 <script>if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
