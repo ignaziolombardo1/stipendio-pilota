@@ -78,7 +78,7 @@ p { margin: 0; }
 .top .name { font-family: var(--font-head); font-weight: 700; font-size: 17px; }
 .top .month { margin-left: auto; color: var(--muted); font-size: 13px; text-transform: capitalize; }
 .tabs { display: flex; background: var(--soft); border-radius: 14px; padding: 4px; gap: 2px; }
-.tabs a { flex: 1; text-align: center; padding: 11px 2px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted); text-decoration: none; min-width: 0; }
+.tabs a { flex: 1; text-align: center; padding: 11px 1px; border-radius: 10px; font-weight: 600; font-size: 12.5px; color: var(--muted); text-decoration: none; min-width: 0; }
 .tabs a.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
 .tabs a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
@@ -159,6 +159,18 @@ button.x { border: 0; background: transparent; color: var(--muted); padding: 6px
 .fx > b { font-family: var(--font-head); font-size: 18px; }
 .pocket { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--soft); border-radius: 14px; padding: 14px 16px; }
 .pocket b { font-family: var(--font-head); font-size: 26px; }
+.fx.late .t small, .late-t { color: var(--bad); font-weight: 600; }
+.goal { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.goal:last-child { border-bottom: 0; }
+.addrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.chartwrap { overflow-x: auto; }
+.chartwrap svg { display: block; min-width: 0; max-width: 100%; height: auto; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+textarea { font: inherit; font-size: 13px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 12px; width: 100%; min-height: 90px; resize: vertical; }
+textarea:focus { outline: none; border-color: var(--accent); }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.btnrow button { flex: 1 1 auto; }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 
 /* storico */
@@ -208,6 +220,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   <nav class="tabs" id="tabs" aria-label="Sezioni">
     <a href="#home" data-v="home">Home</a>
     <a href="#spese" data-v="spese">Spese</a>
+    <a href="#obiettivi" data-v="obiettivi">Obiettivi</a>
     <a href="#storico" data-v="storico">Storico</a>
     <a href="#profilo" data-v="profilo">Profilo</a>
   </nav>
@@ -239,8 +252,19 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <section class="card" aria-labelledby="t-fix">
       <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
       <div id="fix-list"></div>
+      <p class="small" id="next-due" hidden></p>
       <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
       <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio − fisse pagate − spese segnate.</p>
+    </section>
+
+    <section class="card" id="couple" aria-labelledby="t-cp" hidden>
+      <h2 id="t-cp">In due</h2>
+      <div class="stats">
+        <div class="stat"><span>Entrate insieme</span><b class="num" id="cp-tot">0</b></div>
+        <div class="stat"><span>Fisse totali</span><b class="num" id="cp-full">0</b></div>
+        <div class="stat"><span>La tua quota</span><b class="num" id="cp-mine">0</b></div>
+      </div>
+      <p class="small muted" id="cp-text"></p>
     </section>
 
     <section class="card" aria-labelledby="t-now">
@@ -304,6 +328,22 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </form>
     </section>
 
+    <section class="card" aria-labelledby="t-fu">
+      <h2 id="t-fu">Rifornimenti</h2>
+      <p class="hint">Segna ogni pieno: aggiungo la spesa al carburante e calcolo prezzo e consumo veri.</p>
+      <form id="fu-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="fu-car">Quale auto<select id="fu-car"><option value="benzina">Benzina</option><option value="diesel">Diesel</option></select></label>
+          <label class="f" for="fu-l">Litri<input id="fu-l" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="f" for="fu-t">Totale pagato (€)<input id="fu-t" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="f" for="fu-odo">Km sul contachilometri<input id="fu-odo" type="text" inputmode="decimal" autocomplete="off"><span class="help">Facoltativo, serve per il consumo (pieno a pieno)</span></label>
+        </div>
+        <button class="primary" type="submit">Aggiungi rifornimento</button>
+      </form>
+      <div id="fu-stats" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="fu-list"></div>
+    </section>
+
     <section class="card" aria-labelledby="t-cats">
       <h2 id="t-cats">Per categoria</h2>
       <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
@@ -316,12 +356,44 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     </section>
   </main>
 
+  <!-- OBIETTIVI -->
+  <main class="view" id="v-obiettivi" hidden>
+    <div><h1>Obiettivi</h1><p class="hint">Metti da parte per qualcosa di preciso e per le spese che arrivano una volta all'anno.</p></div>
+    <section class="card" aria-labelledby="t-g">
+      <h2 id="t-g">I tuoi obiettivi</h2>
+      <p class="small muted" id="goals-sum"></p>
+      <div id="goals-list"></div>
+      <form id="goal-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="g-name">Cosa vuoi comprare o fare<input id="g-name" type="text" autocomplete="off" placeholder="Per esempio viaggio"></label>
+          <label class="f" for="g-target">Quanto serve (€)<input id="g-target" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <label class="f" for="g-when">Entro quando<select id="g-when"></select></label>
+        <button class="primary" type="submit">Aggiungi obiettivo</button>
+      </form>
+    </section>
+    <section class="card" aria-labelledby="t-a">
+      <h2 id="t-a">Spese una volta all'anno</h2>
+      <p class="hint">Bollo, tagliando, revisione, vacanze. Ne metto da parte un dodicesimo ogni mese, così non ti sorprendono. La quota è già nel piano.</p>
+      <div id="annual-list"></div>
+      <p class="small muted" id="annual-sum"></p>
+      <form id="annual-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="a-name">Voce<input id="a-name" type="text" autocomplete="off" placeholder="Per esempio bollo auto"></label>
+          <label class="f" for="a-amt">Importo annuo (€)<input id="a-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+        </div>
+        <button class="primary" type="submit">Aggiungi voce</button>
+      </form>
+    </section>
+  </main>
+
   <!-- STORICO -->
   <main class="view" id="v-storico" hidden>
     <div>
       <h1>Storico</h1>
       <p class="hint" id="st-sub"></p>
     </div>
+    <div id="st-charts"></div>
     <div id="st-list" style="display:flex;flex-direction:column;gap:14px"></div>
   </main>
 
@@ -344,6 +416,26 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="ins">Assicurazione, rata mensile (€)<input id="ins" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="f" for="bills">Bollette e abbonamenti (€)<input id="bills" type="text" inputmode="decimal" autocomplete="off"><span class="help">Luce, gas, internet, telefono, Netflix…</span></label>
       </div>
+    </section>
+
+    <section class="card" aria-labelledby="t-pd">
+      <h2 id="t-pd">Scadenze</h2>
+      <p class="hint">Che giorno del mese paghi ogni spesa fissa. In Home ti dico quale scade prima.</p>
+      <div class="fields">
+        <label class="f" for="dueRent">Affitto, giorno<input id="dueRent" type="text" inputmode="numeric" autocomplete="off"></label>
+        <label class="f" for="dueBills">Bollette, giorno<input id="dueBills" type="text" inputmode="numeric" autocomplete="off"></label>
+        <label class="f" for="dueIns">Assicurazione, giorno<input id="dueIns" type="text" inputmode="numeric" autocomplete="off"></label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="t-pc">
+      <h2 id="t-pc">In coppia</h2>
+      <p class="hint">Facoltativo. Se dividi affitto e bollette, scrivi quanta parte paghi tu: il piano userà solo la tua quota.</p>
+      <div class="fields">
+        <label class="f" for="sal2">Stipendio di lei/lui (€)<input id="sal2" type="text" inputmode="decimal" autocomplete="off"><span class="help">Lascia 0 se non serve</span></label>
+        <label class="f" for="share">Quota delle fisse che paghi tu (%)<input id="share" type="text" inputmode="decimal" autocomplete="off"><span class="help">Affitto, bollette e assicurazione sono i totali, qui metti la tua parte</span></label>
+      </div>
+      <button type="button" id="split-prop">Dividi in proporzione agli stipendi</button>
     </section>
 
     <section class="card" aria-labelledby="t-p3">
@@ -408,6 +500,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <select id="years"><option value="10">10 anni</option><option value="20">20 anni</option><option value="30">30 anni</option></select></label>
     </section>
 
+    <section class="card" aria-labelledby="t-bk">
+      <h2 id="t-bk">Backup e condivisione</h2>
+      <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per usare l'app anche su un altro telefono, o darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Non c'è sincronizzazione automatica.</p>
+      <div class="btnrow"><button type="button" id="bk-dl">Scarica backup</button><button type="button" id="bk-copy">Copia codice</button></div>
+      <label class="f" for="bk-text">Codice di backup<textarea id="bk-text" spellcheck="false" placeholder="Qui compare il codice, oppure incollalo qui per ripristinare"></textarea></label>
+      <label class="f" for="bk-file">Oppure scegli un file di backup<input id="bk-file" type="file" accept="application/json,.json"></label>
+      <button type="button" id="bk-restore">Ripristina da codice</button>
+    </section>
+
     <button class="link" id="reset" type="button">Inserisci i valori di esempio</button>
   </main>
 </div>
@@ -431,7 +532,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, spesaPct: 15, svagoPct: 8,
     days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -450,15 +551,16 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["ins", "ins", 0, 1e6], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
+  var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["ins", "ins", 0, 1e6], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["dueRent", "dueRent", 1, 31], ["dueBills", "dueBills", 1, 31], ["dueIns", "dueIns", 1, 31], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
     ["tollOne", "tollOne", 0, 500], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
-  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, nextId: 1, cat: "spesa" });
+  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" });
   try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") S = Object.assign(S, st); } catch (e) {}
   if (!S.spent || typeof S.spent !== "object") S.spent = {};
   if (!S.paid || typeof S.paid !== "object") S.paid = {};
+  ["fuel", "goals", "annual"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
   if (!S.history || typeof S.history !== "object") S.history = {};
   if (!S.monthKey) S.monthKey = CUR;
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
@@ -477,7 +579,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- calcolo ---------- */
   function plan() {
     var sal = S.salary;
-    var rent = Math.round(S.rent), bills = Math.round(S.bills), ins = Math.round(S.ins);
+    var sh = Math.min(100, Math.max(1, S.share)) / 100;
+    var rent = Math.round(S.rent * sh), bills = Math.round(S.bills * sh), ins = Math.round(S.ins * sh);
     var spesa = Math.round(sal * S.spesaPct / 100);
     var commuteKm = S.days * 2 * S.kmOne;
     var toll = Math.round(S.days * 2 * S.tollOne);
@@ -486,12 +589,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var litB = S.kmlB > 0 ? kmB / S.kmlB : 0, litD = S.kmlD > 0 ? kmD / S.kmlD : 0;
     var fuelB = Math.round(litB * S.priceB), fuelD = Math.round(litD * S.priceD);
     var svago = Math.round(sal * S.svagoPct / 100);
-    var spend = rent + bills + ins + spesa + toll + fuelB + fuelD + svago;
+    var annualM = Math.round(S.annual.reduce(function (a, x) { return a + x.amount; }, 0) / 12);
+    var spend = rent + bills + ins + annualM + spesa + toll + fuelB + fuelD + svago;
     var left = Math.max(0, sal - spend);
     var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
     var inv = left - toSave;
     var essentials = rent + bills + ins + spesa + toll + fuelB + fuelD;
-    return { sal: sal, rent: rent, bills: bills, ins: ins, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+    return { sal: sal, rent: rent, bills: bills, ins: ins, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
       svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal };
   }
   function project(monthly, years, ann) {
@@ -507,9 +611,17 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 };
     var V = bud.spesa + bud.carb + bud.svago, A = by.spesa + by.carb + by.svago + by.altro;
     var pd = S.paid[S.monthKey] || {};
-    var fixed = [{ id: "rent", name: "Affitto", amt: p.rent }, { id: "bills", name: "Bollette e abbonamenti", amt: p.bills }, { id: "ins", name: "Assicurazione", amt: p.ins }];
+    var fixed = [{ id: "rent", name: "Affitto", amt: p.rent, due: S.dueRent }, { id: "bills", name: "Bollette e abbonamenti", amt: p.bills, due: S.dueBills }, { id: "ins", name: "Assicurazione", amt: p.ins, due: S.dueIns }];
     var fixTot = 0, paidSum = 0; fixed.forEach(function (f) { fixTot += f.amt; if (pd[f.id]) paidSum += f.amt; });
     return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal - paidSum - A, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
+  }
+  function dueInfo(f) {
+    var d = Math.min(f.due, DIM);
+    if (S.monthKey !== CUR) return { t: "Scade il " + d, diff: null };
+    var diff = d - NOW.getDate();
+    if (diff < 0) return { t: "Scaduta da " + (-diff) + (diff === -1 ? " giorno" : " giorni"), diff: diff };
+    if (diff === 0) return { t: "Scade oggi", diff: 0 };
+    return { t: "Scade il " + d + " · tra " + diff + (diff === 1 ? " giorno" : " giorni"), diff: diff };
   }
   function verdict(m) {
     if (m.n === 0) return { cls: "none", text: "Nessuna spesa segnata" };
@@ -546,14 +658,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("example").hidden = !!S.saved;
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
-      must: [["Affitto", "Fisso ogni mese", p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills], ["Assicurazione", "Rata mensile", p.ins]],
+      must: [["Affitto", (S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Fisso ogni mese"), p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills], ["Assicurazione", "Rata mensile", p.ins]],
       move: [["Pedaggio Saponara-Taormina", S.days + " giorni × andata e ritorno × " + eur2.format(S.tollOne), p.toll],
              ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
              ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]],
       daily: [["Spesa alimentare", nf.format(S.spesaPct) + "% dello stipendio", p.spesa], ["Tempo libero", nf.format(S.svagoPct) + "% dello stipendio", p.svago]],
       future: [["Da parte", nf.format(S.saveShare) + "% di quello che avanza", p.toSave], ["Investimenti", nf.format(100 - Math.min(100, S.saveShare)) + "% di quello che avanza", p.inv]]
     };
-    var meta = [["Cose da pagare", rows.must, ["var(--c-must)", "var(--c-must)", "var(--c-must)"]], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
+    if (p.annualM > 0) rows.must.push(["Spese annuali", S.annual.length + (S.annual.length === 1 ? " voce" : " voci") + " ÷ 12 mesi", p.annualM]);
+    var meta = [["Cose da pagare", rows.must, rows.must.map(function () { return "var(--c-must)"; })], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
                 ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-fun)"]], ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
     var html = "", segs = [];
     meta.forEach(function (g) {
@@ -587,8 +700,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("fix-list").innerHTML = "";
     m.fixed.forEach(function (f) {
       var on = !!m.pd[f.id], row = document.createElement("label");
-      row.className = "fx" + (on ? " done" : "");
-      row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + f.name + ' come pagato"><span class="t"><b>' + f.name + "</b><small>" + (on ? "Pagato" : "Da pagare") + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
+      var di = dueInfo(f); row.className = "fx" + (on ? " done" : "") + (!on && di.diff !== null && di.diff < 0 ? " late" : "");
+      row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + f.name + ' come pagato"><span class="t"><b>' + f.name + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
       row.querySelector("input").onchange = function () {
         var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
         S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
@@ -597,6 +710,18 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
     $("pocket").textContent = eur2.format(m.pocket);
     $("pocket").style.color = m.pocket < 0 ? "var(--bad)" : "";
+    var nd = $("next-due"), un = m.fixed.filter(function (f) { return !m.pd[f.id] && dueInfo(f).diff !== null; });
+    var late = un.filter(function (f) { return dueInfo(f).diff < 0; });
+    un = un.filter(function (f) { return dueInfo(f).diff >= 0; }).sort(function (a, b) { return dueInfo(a).diff - dueInfo(b).diff; });
+    nd.hidden = !(late.length || un.length);
+    if (late.length) { nd.className = "small late-t"; nd.textContent = "Attenzione: " + late.map(function (f) { return f.name; }).join(", ") + (late.length > 1 ? " sono scadute." : " è scaduta."); }
+    else if (un.length) { nd.className = "small muted"; var d0 = dueInfo(un[0]).diff; nd.textContent = "Prossima scadenza: " + un[0].name + (d0 === 0 ? " oggi." : " tra " + d0 + (d0 === 1 ? " giorno." : " giorni.")); }
+    var cp = $("couple"); cp.hidden = !(S.sal2 > 0);
+    if (S.sal2 > 0) {
+      var tot = S.sal + S.sal2, full = Math.round(S.rent + S.bills + S.ins), mine = p.rent + p.bills + p.ins;
+      $("cp-tot").textContent = eur.format(tot); $("cp-full").textContent = eur.format(full); $("cp-mine").textContent = eur.format(mine);
+      $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.sal / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
+    }
 
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
@@ -684,7 +809,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var fx = m.fixTot ? ' Spese fisse pagate: ' + eur.format(m.paidSum) + ' su ' + eur.format(m.fixTot) + '.' : '';
     var det = m.n === 0 ? "Per questo mese non hai segnato spese, quindi non si può dire come è andata." + fx
       : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".") + fx;
-    return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? " · in corso" : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
+    return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? ' <small style="text-transform:none;font-weight:500;color:var(--muted)">· in corso</small>' : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
       + '<div class="mnums"><div><span>Stipendio</span><b class="num">' + eur.format(m.salary) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
       + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
   }
@@ -700,6 +825,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var html = monthCard(liveMonth(), true);
     closed.forEach(function (m) { html += monthCard(m, false); });
     $("st-list").innerHTML = html;
+    var cm = closed.slice().reverse().concat([liveMonth()]).filter(function (m) { return m.n > 0; }).slice(-12);
+    $("st-charts").innerHTML = chartHtml(cm);
   }
 
   /* ---------- Profilo ---------- */
@@ -738,8 +865,180 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
   }
 
+
+  /* ---------- rifornimenti ---------- */
+  function fuelStats(car) {
+    var l = S.fuel.filter(function (c) { return c.car === car; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var last = l.slice(-5), tl = 0, tt = 0;
+    last.forEach(function (x) { tl += x.liters; tt += x.total; });
+    var odo = l.filter(function (x) { return x.odo > 0; }).sort(function (a, b) { return a.odo - b.odo; }), k = [];
+    for (var i = 1; i < odo.length; i++) { var d = odo[i].odo - odo[i - 1].odo; if (d > 0 && odo[i].liters > 0) k.push(d / odo[i].liters); }
+    return { n: l.length, price: tl > 0 ? tt / tl : null, kml: k.length ? k.reduce(function (a, b) { return a + b; }, 0) / k.length : null };
+  }
+  function renderFuel() {
+    var box = $("fu-stats"); box.innerHTML = "";
+    [["benzina", "Benzina", "priceB", "kmlB"], ["diesel", "Diesel", "priceD", "kmlD"]].forEach(function (c) {
+      var st = fuelStats(c[0]), row = document.createElement("div");
+      var bits = [];
+      if (st.price) bits.push("prezzo medio " + eur2.format(st.price) + "/l");
+      if (st.kml) bits.push("consumo " + nf.format(Math.round(st.kml * 10) / 10) + " km/l");
+      row.className = "notice info";
+      row.innerHTML = "<span><b>" + c[1] + "</b>: " + (st.n ? (bits.join(" · ") || "serve il contachilometri su due pieni per il consumo") : "ancora nessun rifornimento") + "</span>";
+      if (bits.length) {
+        var b = document.createElement("button"); b.type = "button"; b.textContent = "Usa questi dati nel piano";
+        b.onclick = function () {
+          if (st.price) S[c[2]] = Math.round(st.price * 1000) / 1000;
+          if (st.kml) S[c[3]] = Math.round(st.kml * 10) / 10;
+          persist(); renderAll(); toast("Piano aggiornato ✓");
+        };
+        row.appendChild(b);
+      }
+      box.appendChild(row);
+    });
+    var list = S.fuel.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 6);
+    var lb = $("fu-list"); lb.innerHTML = "";
+    list.forEach(function (x) {
+      var row = document.createElement("div"); row.className = "entry";
+      row.innerHTML = '<div class="t">' + (x.car === "diesel" ? "Diesel" : "Benzina") + " · " + nf.format(x.liters) + " l<small>" + dfDay.format(new Date(x.date)) + " · " + eur2.format(x.total / x.liters) + '/l</small></div><b class="num">' + eur2.format(x.total) + '</b><button type="button" class="x" aria-label="Elimina rifornimento">×</button>';
+      row.querySelector("button").onclick = function () {
+        S.fuel = S.fuel.filter(function (y) { return y.id !== x.id; });
+        Object.keys(S.spent).forEach(function (k) { S.spent[k] = S.spent[k].filter(function (e) { return e.id !== x.expId; }); });
+        persist(); renderAll(); toast("Rifornimento eliminato");
+      };
+      lb.appendChild(row);
+    });
+  }
+  function addFuel(ev) {
+    ev.preventDefault();
+    if (pending) { toast("Prima avvia il nuovo mese in alto"); return; }
+    var l = pnum($("fu-l").value), t = pnum($("fu-t").value), odo = pnum($("fu-odo").value), car = $("fu-car").value;
+    if (!(l > 0) || !(t > 0)) { toast("Scrivi litri e totale pagato"); return; }
+    var eid = S.nextId++, fid = S.nextId++, list = (S.spent[S.monthKey] || []).slice();
+    list.push({ id: eid, amount: t, cat: "carb", note: "Rifornimento " + car + " " + nf.format(l) + " l", date: new Date().toISOString() });
+    S.spent[S.monthKey] = list;
+    S.fuel.push({ id: fid, expId: eid, car: car, liters: l, total: t, odo: odo > 0 ? odo : 0, date: new Date().toISOString() });
+    persist(); ["fu-l", "fu-t", "fu-odo"].forEach(function (i) { $(i).value = ""; });
+    renderAll(); toast("Rifornimento aggiunto ✓");
+  }
+
+  /* ---------- obiettivi e spese annuali ---------- */
+  function monthsTo(key) { var a = CUR.split("-"), b = key.split("-"); return Math.max(1, (+b[0] - +a[0]) * 12 + (+b[1] - +a[1])); }
+  function renderGoals() {
+    var p = plan(), box = $("goals-list"); box.innerHTML = "";
+    var need = 0;
+    S.goals.forEach(function (g) {
+      var left = Math.max(0, g.target - g.saved), mo = monthsTo(g.when), per = left / mo; need += per;
+      var pct = g.target > 0 ? Math.min(100, g.saved / g.target * 100) : 0;
+      var d = document.createElement("div"); d.className = "goal";
+      d.innerHTML = '<div class="line"><b>' + esc(g.name) + '</b><button type="button" class="x" aria-label="Elimina obiettivo">×</button></div>'
+        + '<div class="meter blue" role="progressbar" aria-label="' + esc(g.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>'
+        + '<p class="small muted">' + eur.format(g.saved) + " di " + eur.format(g.target) + " · entro " + mlabel(g.when) + (left > 0 ? " · servono circa " + eur.format(Math.ceil(per)) + " al mese" : " · raggiunto 🎉") + '</p>'
+        + '<div class="addrow"><input type="text" inputmode="decimal" autocomplete="off" placeholder="Quanto versi (€)" aria-label="Versamento per ' + esc(g.name) + '"><button type="button">Versa</button></div>';
+      d.querySelector(".x").onclick = function () { S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); persist(); renderAll(); toast("Obiettivo eliminato"); };
+      var inp = d.querySelector("input");
+      d.querySelector(".addrow button").onclick = function () {
+        var n = pnum(inp.value); if (!(n > 0)) { toast("Scrivi quanto versi"); inp.focus(); return; }
+        g.saved += n; persist(); renderAll(); toast("Versamento aggiunto ✓");
+      };
+      box.appendChild(d);
+    });
+    $("goals-sum").textContent = !S.goals.length ? "Ancora nessun obiettivo. Aggiungine uno qui sotto."
+      : "Per tutti gli obiettivi servono circa " + eur.format(Math.ceil(need)) + " al mese. Dal tuo piano ne metti da parte " + eur.format(p.toSave) + (need <= p.toSave ? ": ci stai dentro." : ": non bastano, aumenta la quota da parte nel Profilo o allunga le scadenze.");
+    var ab = $("annual-list"); ab.innerHTML = "";
+    S.annual.forEach(function (a) {
+      var row = document.createElement("div"); row.className = "entry";
+      row.innerHTML = '<div class="t">' + esc(a.name) + "<small>" + eur2.format(a.amount / 12) + ' al mese</small></div><b class="num">' + eur.format(a.amount) + '</b><button type="button" class="x" aria-label="Elimina voce">×</button>';
+      row.querySelector("button").onclick = function () { S.annual = S.annual.filter(function (x) { return x.id !== a.id; }); persist(); renderAll(); toast("Voce eliminata"); };
+      ab.appendChild(row);
+    });
+    $("annual-sum").textContent = S.annual.length ? "Quota mensile da accantonare: " + eur.format(p.annualM) + "." : "Ancora nessuna voce.";
+  }
+  function addGoal(ev) {
+    ev.preventDefault();
+    var name = $("g-name").value.trim().slice(0, 40), t = pnum($("g-target").value);
+    if (!name || !(t > 0)) { toast("Scrivi cosa vuoi e quanto serve"); return; }
+    S.goals.push({ id: S.nextId++, name: name, target: t, saved: 0, when: $("g-when").value });
+    persist(); $("g-name").value = ""; $("g-target").value = ""; renderAll(); toast("Obiettivo aggiunto ✓");
+  }
+  function addAnnual(ev) {
+    ev.preventDefault();
+    var name = $("a-name").value.trim().slice(0, 40), n = pnum($("a-amt").value);
+    if (!name || !(n > 0)) { toast("Scrivi la voce e l'importo"); return; }
+    S.annual.push({ id: S.nextId++, name: name, amount: n });
+    persist(); $("a-name").value = ""; $("a-amt").value = ""; renderAll(); toast("Voce aggiunta ✓");
+  }
+
+  /* ---------- grafici ---------- */
+  function sh3(key) { return mname(key).slice(0, 3); }
+  function chartHtml(ms) {
+    if (!ms.length) return "";
+    var G = 54, W = Math.max(300, ms.length * G + 10), H = 130, top = 12, bot = 18, ph = H - top - bot;
+    var mx = 1; ms.forEach(function (m) { mx = Math.max(mx, m.V, m.A); });
+    var s1 = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" role="img" aria-label="Budget e speso per mese">', i;
+    ms.forEach(function (m, i) {
+      var x = 8 + i * G, hv = m.V / mx * ph, ha = m.A / mx * ph, over = m.A > m.V;
+      s1 += '<rect x="' + x + '" y="' + (top + ph - hv) + '" width="18" height="' + hv + '" rx="3" style="fill:var(--c-must);opacity:.45"/>';
+      s1 += '<rect x="' + (x + 20) + '" y="' + (top + ph - ha) + '" width="18" height="' + ha + '" rx="3" style="fill:' + (over ? "var(--bad)" : "var(--accent)") + '"/>';
+      s1 += '<text x="' + (x + 19) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="11" style="fill:var(--muted)">' + sh3(m.key) + "</text>";
+    });
+    s1 += "</svg>";
+    var vals = ms.map(function (m) { return m.realSaved; }), tp = Math.max(0, Math.max.apply(null, vals)), bt = Math.min(0, Math.min.apply(null, vals));
+    var rng = (tp - bt) || 1, sc = (ph - 28) / rng, y0 = top + 12 + tp * sc;
+    var s2 = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" role="img" aria-label="Risparmiato per mese">';
+    s2 += '<line x1="0" x2="' + W + '" y1="' + y0 + '" y2="' + y0 + '" style="stroke:var(--line)" stroke-width="1"/>';
+    ms.forEach(function (m, i) {
+      var x = 8 + i * G + 10, v = m.realSaved, h = Math.abs(v) * sc, y = v >= 0 ? y0 - h : y0;
+      s2 += '<rect x="' + x + '" y="' + y + '" width="28" height="' + Math.max(1, h) + '" rx="3" style="fill:' + (v >= 0 ? "var(--c-save)" : "var(--bad)") + '"/>';
+      s2 += '<text x="' + (x + 14) + '" y="' + (v >= 0 ? y - 3 : y + h + 11) + '" text-anchor="middle" font-size="10" style="fill:var(--muted)">' + Math.round(v) + "</text>";
+      s2 += '<text x="' + (x + 14) + '" y="' + (H - 4) + '" text-anchor="middle" font-size="11" style="fill:var(--muted)">' + sh3(m.key) + "</text>";
+    });
+    s2 += "</svg>";
+    return '<section class="card"><h2>Budget e speso</h2><div class="legend"><span><i style="background:var(--c-must);opacity:.45"></i>Budget</span><span><i style="background:var(--accent)"></i>Speso</span><span><i style="background:var(--bad)"></i>Sforato</span></div><div class="chartwrap">' + s1 + '</div>'
+      + '<h2>Risparmiato (€)</h2><div class="chartwrap">' + s2 + "</div></section>";
+  }
+
+  /* ---------- backup ---------- */
+  var armed = false;
+  function backupText() { return JSON.stringify(S); }
+  function setupBackup() {
+    $("bk-dl").onclick = function () {
+      try {
+        var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([backupText()], { type: "application/json" }));
+        a.download = "stipendio-pilota-backup-" + CUR + ".json"; document.body.appendChild(a); a.click(); a.remove();
+        toast("Backup scaricato ✓");
+      } catch (e) { toast("Download non riuscito: usa Copia codice"); }
+    };
+    $("bk-copy").onclick = function () {
+      var t = $("bk-text"); t.value = backupText(); t.focus(); t.select();
+      var ok = function () { toast("Codice copiato ✓"); }, ko = function () { toast("Codice pronto: tienilo premuto e copia"); };
+      try { navigator.clipboard.writeText(t.value).then(ok, ko); } catch (e) { ko(); }
+    };
+    $("bk-file").onchange = function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      var rd = new FileReader(); rd.onload = function () { $("bk-text").value = String(rd.result); toast("File caricato: premi Ripristina"); }; rd.readAsText(f);
+    };
+    $("bk-restore").onclick = function () {
+      var btn = this, o;
+      try { o = JSON.parse($("bk-text").value); } catch (e) { o = null; }
+      if (!o || typeof o !== "object" || !(o.salary > 0)) { toast("Il codice non è valido"); armed = false; btn.textContent = "Ripristina da codice"; return; }
+      if (!armed) { armed = true; btn.textContent = "Conferma: sostituisce i dati di questa app"; return; }
+      armed = false; btn.textContent = "Ripristina da codice";
+      S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" }, o);
+      ["spent", "history", "paid"].forEach(function (k) { if (!S[k] || typeof S[k] !== "object") S[k] = {}; });
+      ["fuel", "goals", "annual"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+      if (!S.monthKey) S.monthKey = CUR;
+      pending = S.monthKey < CUR ? CUR : null;
+      persist(); renderAll(); fillForm(S); $("bk-text").value = ""; toast("Dati ripristinati ✓");
+    };
+    $("split-prop").onclick = function () {
+      var a = pnum($("salary").value), b = pnum($("sal2").value);
+      if (!(a > 0) || !(b > 0)) { toast("Scrivi prima i due stipendi"); return; }
+      $("share").value = txt(Math.round(a / (a + b) * 100)); toast("Quota calcolata: premi Salva");
+    };
+  }
+
   /* ---------- navigazione ---------- */
-  var VIEWS = ["home", "spese", "storico", "profilo"];
+  var VIEWS = ["home", "spese", "obiettivi", "storico", "profilo"];
   function showView() {
     var h = (location.hash || "").replace("#", "");
     if (VIEWS.indexOf(h) < 0) h = "home";
@@ -753,7 +1052,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     if (h === "profilo") fillForm(S);
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("go-profile").onclick = function () { location.hash = "#profilo"; };
@@ -761,10 +1060,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("save").onclick = saveForm;
   $("nm-start").onclick = startMonth;
   $("exp-form").onsubmit = addExpense;
+  $("fu-form").onsubmit = addFuel;
+  $("goal-form").onsubmit = addGoal;
+  $("annual-form").onsubmit = addAnnual;
+  setupBackup();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
   document.querySelectorAll('input[type="text"]').forEach(function (i) { i.addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); }); });
 
+  (function () { var h = "", d = new Date(NOW.getFullYear(), NOW.getMonth(), 1); for (var i = 1; i <= 48; i++) { var dd = new Date(d.getFullYear(), d.getMonth() + i, 1), k = mkOf(dd); h += '<option value="' + k + '">' + mlabel(k) + "</option>"; } $("g-when").innerHTML = h; $("g-when").value = mkOf(new Date(d.getFullYear(), d.getMonth() + 12, 1)); })();
   $("month").textContent = mlabel(CUR);
   renderAll(); showView();
 })();
