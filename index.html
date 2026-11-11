@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stipendio Pilota</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0a2624">
+<meta name="application-name" content="Stipendio Pilota">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stipendio Pilota">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: una sola colonna stretta. Stipendio in alto, piano del mese in tre gruppi, poi futuro (da parte e investimenti), poi regole personalizzabili. */
+:root {
+  --bg: #f4f6f4;
+  --surface: #ffffff;
+  --ink: #16221f;
+  --muted: #637370;
+  --line: #e4e9e7;
+  --soft: #eef3f1;
+  --accent: #0e7c6b;
+  --accent-ink: #ffffff;
+  --warn: #a8500a;
+  --warn-bg: #fdf0dc;
+  --c-must: #7d8ca6;
+  --c-daily: #e3a336;
+  --c-save: #4a82e0;
+  --c-invest: #14a58f;
+  --c-move: #9674d4;
+  --font-head: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
+    --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f;
+    --c-must: #93a3bd; --c-daily: #eab04a; --c-save: #6f9ef0; --c-invest: #3fcab5; --c-move: #b794f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
+  --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f;
+  --c-must: #93a3bd; --c-daily: #eab04a; --c-save: #6f9ef0; --c-invest: #3fcab5; --c-move: #b794f0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-top: calc(28px + env(safe-area-inset-top, 0px)); padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.page { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 { font-size: 28px; line-height: 1.2; }
+h2 { font-size: 18px; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.num { font-variant-numeric: tabular-nums; }
+.top { display: flex; align-items: center; gap: 12px; }
+.mark { width: 36px; height: 36px; border-radius: 9px; flex: none; }
+.top span { font-family: var(--font-head); font-weight: 700; font-size: 17px; }
+.top .month { margin-left: auto; color: var(--muted); font-size: 13px; text-transform: capitalize; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.salary-label { font-size: 15px; color: var(--muted); }
+.salary-box { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+.salary-box:focus-within { border-color: var(--accent); }
+.salary-box span { font-family: var(--font-head); font-size: 34px; color: var(--muted); }
+.salary-box input[type="number"] { font-family: var(--font-head); font-size: 44px; font-weight: 700; color: var(--ink); background: transparent; border: 0; outline: 0; border-radius: 0; width: 100%; min-width: 0; padding: 0; }
+.headline { font-size: 17px; line-height: 1.45; }
+.headline b { font-family: var(--font-head); }
+.notice { background: var(--warn-bg); color: var(--warn); border-radius: 12px; padding: 12px 14px; font-size: 14px; font-weight: 500; }
+
+.bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--soft); gap: 2px; }
+.bar div { min-width: 0; }
+@media (prefers-reduced-motion: no-preference) { .bar div, .meter div { transition: width .3s ease; } }
+
+.group { display: flex; flex-direction: column; }
+.group-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 0 2px; }
+.row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.group .row:last-child { border-bottom: 0; }
+.dot { width: 12px; height: 12px; border-radius: 4px; }
+.rtxt { display: flex; flex-direction: column; min-width: 0; }
+.rtxt b { font-weight: 600; }
+.rtxt small { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.ramt { text-align: right; display: flex; flex-direction: column; }
+.ramt b { font-family: var(--font-head); font-size: 19px; }
+.ramt small { color: var(--muted); font-size: 12px; }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 560px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+.tile { border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; background: var(--soft); }
+.tile .label { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.tile .big { font-family: var(--font-head); font-size: 34px; font-weight: 700; line-height: 1.1; }
+.tile.save .big { color: var(--c-save); }
+.tile.invest .big { color: var(--c-invest); }
+.meter { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.meter div { height: 100%; background: var(--c-save); border-radius: 4px; }
+
+.seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg label { flex: 1; text-align: center; padding: 9px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.seg label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fund { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.fund:last-of-type { border-bottom: 0; }
+.fund b { font-weight: 600; }
+.fund .amt { font-family: var(--font-head); font-weight: 700; font-size: 18px; text-align: right; }
+.fund small { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
+.fund .share { text-align: right; }
+select, input[type="number"] { font: inherit; color: var(--ink); background: var(--soft); border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; width: 100%; min-width: 0; }
+select:focus-visible, input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.line { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.line select { width: auto; }
+
+details.custom { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+details.custom summary { list-style: none; cursor: pointer; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; font-family: var(--font-head); font-weight: 700; font-size: 18px; }
+details.custom summary::-webkit-details-marker { display: none; }
+details.custom summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 20px; }
+details.custom summary .chev { color: var(--muted); transition: transform .2s; }
+details.custom[open] summary .chev { transform: rotate(180deg); }
+.custom-body { padding: 0 24px 24px; display: flex; flex-direction: column; gap: 22px; }
+.fs { display: flex; flex-direction: column; gap: 10px; }
+.fs h3 { font-size: 14px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 480px) { .fields { grid-template-columns: minmax(0, 1fr); } }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); font-weight: 500; }
+button.reset { font: inherit; font-weight: 600; color: var(--muted); background: transparent; border: 0; padding: 6px 0; cursor: pointer; text-align: left; }
+button.reset:focus-visible { outline: 2px solid var(--accent); }
+.disclaimer { font-size: 12.5px; color: var(--muted); padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12443f"/><stop offset="1" stop-color="#071a18"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#gm)"/><g fill="none" stroke-width="48" stroke-linecap="round" transform="rotate(-90 256 256)"><circle cx="256" cy="256" r="140" stroke="#7d8ca6" stroke-dasharray="201.89 677.75" stroke-dashoffset="-31.00"/><circle cx="256" cy="256" r="140" stroke="#e3a336" stroke-dasharray="157.91 721.73" stroke-dashoffset="-294.89"/><circle cx="256" cy="256" r="140" stroke="#d4608f" stroke-dasharray="25.96 853.68" stroke-dashoffset="-514.81"/><circle cx="256" cy="256" r="140" stroke="#4a82e0" stroke-dasharray="25.96 853.68" stroke-dashoffset="-602.77"/><circle cx="256" cy="256" r="140" stroke="#2fd4bb" stroke-dasharray="157.91 721.73" stroke-dashoffset="-690.73"/></g><g fill="none" stroke="#f1fbf8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M196 300 L238 258 L266 286 L322 226"/><path d="M290 226 H322 V258"/></g></svg>
+    <span>Stipendio Pilota</span>
+    <span class="month" id="month"></span>
+  </div>
+
+  <section class="card" aria-labelledby="t-sal">
+    <h1 id="t-sal">Ciao! Quanto hai preso questo mese?</h1>
+    <div>
+      <div class="salary-label">Stipendio netto</div>
+      <div class="salary-box"><span>€</span><input id="salary" type="number" inputmode="decimal" min="0" step="10" aria-label="Stipendio netto del mese in euro"></div>
+    </div>
+    <div id="warn" class="notice" hidden></div>
+    <p class="headline" id="headline"></p>
+    <div class="bar" id="bar" role="img" aria-label="Come si divide lo stipendio"></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-plan">
+    <h2 id="t-plan">Il tuo piano del mese</h2>
+    <div id="plan"></div>
+  </section>
+
+  <section class="card" aria-labelledby="t-fut">
+    <h2 id="t-fut">Per il tuo futuro</h2>
+    <div class="tiles">
+      <div class="tile save">
+        <span class="label"><span class="dot" style="background:var(--c-save)"></span>Da mettere da parte</span>
+        <span class="big num" id="save-amt">0</span>
+        <div class="meter" role="progressbar" aria-label="Fondo di sicurezza" aria-valuemin="0" aria-valuemax="100" id="meter"><div id="meter-fill" style="width:0%"></div></div>
+        <p class="small muted" id="save-text"></p>
+      </div>
+      <div class="tile invest">
+        <span class="label"><span class="dot" style="background:var(--c-invest)"></span>Da investire</span>
+        <span class="big num" id="inv-amt">0</span>
+        <p class="small muted" id="inv-text"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-where">
+    <div class="line"><h2 id="t-where">Dove investirli</h2>
+      <select id="years" aria-label="Orizzonte in anni"><option value="10">10 anni</option><option value="20">20 anni</option><option value="30">30 anni</option></select>
+    </div>
+    <div class="seg" id="profile" role="radiogroup" aria-label="Quanto rischio vuoi prendere">
+      <label data-p="prudente"><input type="radio" name="profile" value="prudente">Prudente</label>
+      <label data-p="bilanciato"><input type="radio" name="profile" value="bilanciato">Bilanciato</label>
+      <label data-p="dinamico"><input type="radio" name="profile" value="dinamico">Dinamico</label>
+    </div>
+    <p class="small muted" id="profile-note"></p>
+    <div id="funds"></div>
+    <p class="small muted" id="proj"></p>
+  </section>
+
+  <details class="custom" id="custom">
+    <summary>Personalizza le regole <span class="chev" aria-hidden="true">▾</span></summary>
+    <div class="custom-body">
+      <div class="fs"><h3>Casa</h3>
+        <div class="fields">
+          <label class="f" for="rent">Affitto al mese (€)<input id="rent" type="number" inputmode="decimal" min="0" step="10"></label>
+          <label class="f" for="bills">Bollette e abbonamenti (€)<input id="bills" type="number" inputmode="decimal" min="0" step="5"></label>
+        </div>
+        <p class="small muted">Nelle bollette metti luce, gas, internet, telefono, assicurazione, Netflix e simili.</p>
+      </div>
+      <div class="fs"><h3>Tragitto casa-lavoro (Saponara → Taormina)</h3>
+        <div class="fields">
+          <label class="f" for="days">Giorni di lavoro al mese<input id="days" type="number" inputmode="numeric" min="0" max="31" step="1"></label>
+          <label class="f" for="kmOne">Km solo andata<input id="kmOne" type="number" inputmode="decimal" min="0" step="1"></label>
+          <label class="f" for="tollOne">Pedaggio solo andata (€)<input id="tollOne" type="number" inputmode="decimal" min="0" step="0.1"></label>
+          <label class="f" for="commuteCar">Auto che usi per andare al lavoro
+            <select id="commuteCar"><option value="diesel">Diesel</option><option value="benzina">Benzina</option></select></label>
+        </div>
+        <p class="small muted">Km e pedaggio sono stime: correggili con quello che paghi davvero al casello (andata e ritorno si contano da soli).</p>
+      </div>
+      <div class="fs"><h3>Auto a benzina</h3>
+        <div class="fields">
+          <label class="f" for="kmlB">Consumo (km con 1 litro)<input id="kmlB" type="number" inputmode="decimal" min="1" step="0.5"></label>
+          <label class="f" for="priceB">Prezzo benzina (€/litro)<input id="priceB" type="number" inputmode="decimal" min="0" step="0.01"></label>
+          <label class="f" for="extraB">Altri km al mese (oltre al lavoro)<input id="extraB" type="number" inputmode="decimal" min="0" step="50"></label>
+        </div>
+      </div>
+      <div class="fs"><h3>Auto diesel</h3>
+        <div class="fields">
+          <label class="f" for="kmlD">Consumo (km con 1 litro)<input id="kmlD" type="number" inputmode="decimal" min="1" step="0.5"></label>
+          <label class="f" for="priceD">Prezzo gasolio (€/litro)<input id="priceD" type="number" inputmode="decimal" min="0" step="0.01"></label>
+          <label class="f" for="extraD">Altri km al mese (oltre al lavoro)<input id="extraD" type="number" inputmode="decimal" min="0" step="50"></label>
+        </div>
+        <p class="small muted">Prezzi di partenza: media nazionale self del 1° novembre 2026 (benzina 2,010 €/l, gasolio 2,241 €/l, dati Mimit). In Sicilia o in autostrada possono essere diversi: aggiornali quando fai il pieno.</p>
+      </div>
+      <div class="fs"><h3>Percentuali dello stipendio</h3>
+        <div class="fields">
+          <label class="f" for="spesaPct">Spesa alimentare (%)<input id="spesaPct" type="number" inputmode="decimal" min="0" max="100"></label>
+          <label class="f" for="svagoPct">Tempo libero (%)<input id="svagoPct" type="number" inputmode="decimal" min="0" max="100"></label>
+        </div>
+      </div>
+      <div class="fs"><h3>Quello che avanza</h3>
+        <div class="fields">
+          <label class="f" for="saveShare">Quota da mettere da parte (%)<input id="saveShare" type="number" inputmode="decimal" min="0" max="100"></label>
+        </div>
+        <p class="small muted">Il resto va negli investimenti.</p>
+      </div>
+      <div class="fs"><h3>Fondo di sicurezza</h3>
+        <div class="fields">
+          <label class="f" for="savedNow">Quanto hai già da parte (€)<input id="savedNow" type="number" inputmode="decimal" min="0" step="50"></label>
+          <label class="f" for="months">Mesi di spese da coprire<input id="months" type="number" inputmode="decimal" min="1" max="24" step="1"></label>
+        </div>
+      </div>
+      <button class="reset" id="reset" type="button">Ripristina i valori di esempio</button>
+    </div>
+  </details>
+
+  <p class="disclaimer">I valori iniziali sono esempi o stime (pedaggio e km compresi): cambiali con i tuoi. Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista.</p>
+</div>
+
+<script>
+(function () {
+  var KEY = "stipendio-pilota-v4";
+  var eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+  var eur2 = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var nf = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, spesaPct: 15, svagoPct: 8,
+    days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
+    kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
+    saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20 };
+  var PROFILES = {
+    prudente:   { ret: 2.5, eq: 30, note: "Poche azioni e molte obbligazioni. Si muove poco, cresce piano." },
+    bilanciato: { ret: 4.5, eq: 60, note: "Un po' e un po'. Va bene se non ti serve il denaro per 10 anni o più." },
+    dinamico:   { ret: 6.0, eq: 90, note: "Quasi tutto azioni. Nei crolli può perdere anche 30-40%, ma nel lungo periodo rende di più." }
+  };
+  var FUNDS = {
+    eq:   { name: "Vanguard FTSE All-World (VWCE)", meta: "Azioni di tutto il mondo · ISIN IE00BK5BQT80" },
+    bond: { name: "iShares Core Global Aggregate Bond EUR Hedged", meta: "Obbligazioni globali · ISIN IE00BDBRDM35" }
+  };
+
+  var S = Object.assign({}, DEFAULTS);
+  try { var saved = JSON.parse(localStorage.getItem(KEY)); if (saved && typeof saved === "object") S = Object.assign(S, saved); } catch (e) {}
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function $(id) { return document.getElementById(id); }
+  function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) && n > 0 ? n : 0; }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function plan() {
+    var sal = S.salary;
+    var rent = Math.round(S.rent), bills = Math.round(S.bills);
+    var spesa = Math.round(sal * S.spesaPct / 100);
+    var commuteKm = S.days * 2 * S.kmOne;
+    var toll = Math.round(S.days * 2 * S.tollOne);
+    var kmB = S.extraB + (S.commuteCar === "benzina" ? commuteKm : 0);
+    var kmD = S.extraD + (S.commuteCar === "diesel" ? commuteKm : 0);
+    var litB = S.kmlB > 0 ? kmB / S.kmlB : 0, litD = S.kmlD > 0 ? kmD / S.kmlD : 0;
+    var fuelB = Math.round(litB * S.priceB), fuelD = Math.round(litD * S.priceD);
+    var svago = Math.round(sal * S.svagoPct / 100);
+    var spend = rent + bills + spesa + toll + fuelB + fuelD + svago;
+    var left = Math.max(0, sal - spend);
+    var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
+    var inv = left - toSave;
+    var essentials = rent + bills + spesa + toll + fuelB + fuelD;
+    var target = S.months * essentials;
+    return { sal: sal, rent: rent, bills: bills, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+      commuteKm: commuteKm, svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: target, over: spend - sal };
+  }
+
+  function project(monthly, years, ann) {
+    var r = Math.pow(1 + ann / 100, 1 / 12) - 1, v = 0;
+    for (var m = 0; m < years * 12; m++) v = (v + monthly) * (1 + r);
+    return v;
+  }
+
+  function render() {
+    var p = plan(), sal = Math.max(p.sal, 1);
+    function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
+
+    var rows = {
+      must: [["Affitto", "Fisso ogni mese", p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills]],
+      move: [["Pedaggio Saponara-Taormina", S.days + " giorni × andata e ritorno × " + eur2.format(S.tollOne), p.toll],
+             ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
+             ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]],
+      daily: [["Spesa alimentare", S.spesaPct + "% dello stipendio", p.spesa],
+              ["Tempo libero", S.svagoPct + "% dello stipendio", p.svago]],
+      future: [["Da parte", S.saveShare + "% di quello che avanza", p.toSave], ["Investimenti", (100 - Math.min(100, S.saveShare)) + "% di quello che avanza", p.inv]]
+    };
+    var meta = [["Cose da pagare", rows.must, ["var(--c-must)", "var(--c-must)"]],
+                ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
+                ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-daily)"]],
+                ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
+    var html = "", segs = [];
+    meta.forEach(function (g) {
+      html += '<div class="group"><div class="group-title">' + g[0] + "</div>";
+      g[1].forEach(function (r, i) {
+        html += '<div class="row"><span class="dot" style="background:' + g[2][i] + '"></span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
+        segs.push([r[2], g[2][i]]);
+      });
+      html += "</div>";
+    });
+    $("plan").innerHTML = html;
+    var tot = Math.max(p.sal, p.spend, 1);
+    $("bar").innerHTML = segs.filter(function (s) { return s[0] > 0; }).map(function (s) { return '<div style="width:' + (s[0] / tot * 100) + '%;background:' + s[1] + '"></div>'; }).join("");
+
+    var w = $("warn");
+    if (p.over > 0) { w.hidden = false; w.textContent = "Le spese superano lo stipendio di " + eur.format(p.over) + ". Apri “Personalizza le regole” e riduci qualcosa."; }
+    else if (p.sal > 0 && p.left < p.sal * 0.1) { w.hidden = false; w.textContent = "Ti avanza meno del 10% dello stipendio. Prova a ridurre il tempo libero o la spesa per risparmiare di più."; }
+    else w.hidden = true;
+    $("headline").innerHTML = p.sal <= 0 ? "Inserisci il tuo stipendio per vedere il piano."
+      : p.left > 0 ? "Dopo le spese ti avanzano <b>" + eur.format(p.left) + "</b>: <b>" + eur.format(p.toSave) + "</b> da mettere da parte e <b>" + eur.format(p.inv) + "</b> da investire."
+      : "Per questo mese non avanza nulla da risparmiare.";
+
+    $("save-amt").textContent = eur.format(p.toSave);
+    var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
+    $("meter-fill").style.width = done + "%";
+    $("meter").setAttribute("aria-valuenow", Math.round(done));
+    var gap = Math.max(0, p.target - S.savedNow);
+    $("save-text").textContent = gap <= 0 ? "Il fondo di sicurezza è completo (" + eur.format(p.target) + "). Puoi spostare questa quota sugli investimenti."
+      : "Obiettivo " + eur.format(p.target) + " (" + S.months + " mesi di spese). Ne hai " + eur.format(S.savedNow) + (p.toSave > 0 ? ", ci arrivi in circa " + Math.ceil(gap / p.toSave) + " mesi." : ".");
+
+    var P = PROFILES[S.profile];
+    $("inv-amt").textContent = eur.format(p.inv);
+    var fv = project(p.inv, S.years, P.ret), paid = p.inv * 12 * S.years;
+    $("inv-text").textContent = "In " + S.years + " anni versi " + eur.format(paid) + " e potresti arrivare a circa " + eur.format(fv) + ".";
+    document.querySelectorAll("#profile label").forEach(function (l) { l.className = l.getAttribute("data-p") === S.profile ? "on" : ""; });
+    $("profile-note").textContent = P.note;
+    function fund(f, share) { return '<div class="fund"><b>' + f.name + '</b><span class="amt num">' + eur.format(p.inv * share / 100) + '</span><small>' + f.meta + '</small><small class="share num">' + share + "% al mese</small></div>"; }
+    $("funds").innerHTML = fund(FUNDS.eq, P.eq) + fund(FUNDS.bond, 100 - P.eq);
+    $("proj").textContent = "Stima con un rendimento di " + nf.format(P.ret) + "% all'anno, costante. Nella realtà cambia ogni anno.";
+    save();
+  }
+
+  var FIELDS = ["rent", "bills", "days", "kmOne", "tollOne", "kmlB", "priceB", "extraB", "kmlD", "priceD", "extraD", "spesaPct", "svagoPct", "saveShare", "savedNow", "months"];
+  function bind() {
+    $("salary").value = S.salary;
+    FIELDS.forEach(function (k) { $(k).value = S[k]; });
+    $("years").value = String(S.years);
+    $("commuteCar").value = S.commuteCar;
+    document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.checked = r.value === S.profile; });
+  }
+  $("salary").oninput = function () { S.salary = num(this.value); render(); };
+  FIELDS.forEach(function (k) { $(k).oninput = function () { S[k] = num(this.value); if (k === "months") S[k] = Math.max(1, S[k]); render(); }; });
+  $("commuteCar").onchange = function () { S.commuteCar = this.value; render(); };
+  $("years").onchange = function () { S.years = parseInt(this.value, 10); render(); };
+  document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = function () { S.profile = r.value; render(); }; });
+  var armed = false;
+  $("reset").onclick = function () {
+    var b = this;
+    if (!armed) { armed = true; b.textContent = "Tocca ancora per confermare"; setTimeout(function () { armed = false; b.textContent = "Ripristina i valori di esempio"; }, 3000); return; }
+    armed = false; b.textContent = "Ripristina i valori di esempio";
+    S = Object.assign({}, DEFAULTS); bind(); render();
+  };
+  $("month").textContent = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(new Date());
+  bind(); render();
+})();
+</script>
+<script>if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
+</body>
+</html>

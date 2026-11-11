@@ -1,0 +1,10 @@
+STIPENDIO PILOTA - web app installabile
+
+Contenuto della cartella:
+  index.html            l'app
+  manifest.webmanifest  nome, colori e icone per l'installazione
+  sw.js                 la fa funzionare anche senza connessione
+  icons/                le icone
+
+Come metterla online (gratis): vedi le istruzioni nella chat.
+Importante: tieni tutti i file insieme, nella stessa cartella.
