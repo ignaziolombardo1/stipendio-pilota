@@ -21,10 +21,10 @@
   --bg: #f4f6f4;
   --surface: #ffffff;
   --ink: #16221f;
-  --muted: #637370;
+  --muted: #586865;
   --line: #e4e9e7;
   --soft: #eef3f1;
-  --accent: #0e7c6b;
+  --accent: #0b7060;
   --accent-ink: #ffffff;
   --warn: #a8500a;
   --warn-bg: #fdf0dc;
@@ -364,6 +364,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <h2 id="t-plan">Il tuo piano del mese</h2>
       <div id="plan"></div>
     </section>
+    <section data-sub="mese" class="card" aria-labelledby="t-rule">
+      <h2 id="t-rule">La regola 50/30/20</h2>
+      <p class="hint">Una guida classica: 50% alle cose necessarie, 30% ai desideri, 20% a risparmio e investimenti.</p>
+      <div id="rule" style="display:flex;flex-direction:column;gap:14px"></div>
+      <p class="small muted" id="rule-text"></p>
+    </section>
     <section data-sub="investire" class="card" aria-labelledby="t-fut">
       <h2 id="t-fut">Per il tuo futuro</h2>
       <div class="tiles">
@@ -379,6 +385,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
           <p class="small muted" id="inv-text"></p>
         </div>
       </div>
+          <p class="small muted">Il fondo di sicurezza tienilo su un conto separato e facile da prelevare (conto deposito svincolabile o un conto a parte), non investito in azioni.</p>
     </section>
     <section data-sub="investire" class="card" aria-labelledby="t-where">
       <h2 id="t-where">Dove investirli</h2>
@@ -573,8 +580,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     dinamico:   { ret: 6.0, eq: 90, note: "Quasi tutto azioni. Nei crolli può perdere anche 30-40%, ma nel lungo periodo rende di più." }
   };
   var FUNDS = {
-    eq:   { name: "Vanguard FTSE All-World (VWCE)", meta: "Azioni di tutto il mondo · ISIN IE00BK5BQT80" },
-    bond: { name: "iShares Core Global Aggregate Bond EUR Hedged", meta: "Obbligazioni globali · ISIN IE00BDBRDM35" }
+    eq:   { name: "Vanguard FTSE All-World (VWCE)", meta: "Azioni di tutto il mondo · ad accumulo · costo 0,19% l'anno · ISIN IE00BK5BQT80" },
+    bond: { name: "iShares Core Global Aggregate Bond EUR Hedged", meta: "Obbligazioni globali, coperte dal cambio · ad accumulo · costo 0,10% l'anno · ISIN IE00BDBRDM35" }
   };
   var CATS = [
     { id: "spesa", name: "Spesa alimentare", color: "var(--c-daily)" },
@@ -785,6 +792,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.salary / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
     }
 
+    var inc = Math.max(1, p.sal + p.extra), needs = p.fixedTot + p.annualM + p.spesa + p.toll + p.fuelB + p.fuelD;
+    var RU = [["Necessarie", needs / inc * 100, 50, "var(--c-must)", false], ["Desideri", p.svago / inc * 100, 30, "var(--c-fun)", false], ["Risparmio e investimenti", p.left / inc * 100, 20, "var(--c-invest)", true]];
+    $("rule").innerHTML = RU.map(function (x) {
+      var bad = x[4] ? x[1] < x[2] : x[1] > x[2];
+      return '<div class="catrow"><div class="top2"><span><span class="dot" style="background:' + x[3] + ';margin-right:8px"></span>' + x[0] + '</span><span class="num">' + Math.round(x[1]) + "% · consigliato " + x[2] + '%</span></div><div class="meter' + (bad ? " over" : "") + '"><div style="width:' + Math.min(100, x[1]) + '%;background:' + (bad ? "" : x[3]) + '"></div></div></div>';
+    }).join("");
+    $("rule-text").textContent = needs / inc * 100 > 50 ? "Le cose necessarie sono " + Math.round(needs / inc * 100) + "% delle entrate, più del 50% consigliato. Sono fisse, carburante e spesa le voci su cui puoi incidere. È una guida, non una regola: con affitto e auto alti è normale stare sopra."
+      : p.left / inc * 100 >= 20 ? "Sei in linea con la regola: ti avanza almeno il 20%." : "Le necessarie sono nei limiti ma ti avanza meno del 20%: guarda il tempo libero.";
     $("hm-pocket").textContent = $("pocket").textContent; $("hm-pocket").style.color = $("pocket").style.color;
     var mm = liveMonth(), lf = mm.V - mm.A;
     $("hm-day").textContent = lf < 0 ? "Il budget di spesa, carburante e tempo libero è finito: hai superato di " + eur.format(-lf) + "."
@@ -850,7 +865,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       row.querySelector(".del").onclick = function () {
         S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== e.id; });
         if (editId === e.id) resetExpForm();
-        persist(); renderAll(); toast("Spesa eliminata");
+        var mk = S.monthKey;
+        persist(); renderAll();
+        toast("Spesa eliminata", "Annulla", function () { S.spent[mk] = (S.spent[mk] || []).concat([e]); persist(); renderAll(); });
       };
       row.querySelector(".ed").onclick = function () {
         editId = e.id; $("exp-amount").value = txt(e.amount); $("exp-note").value = e.note || ""; S.cat = e.cat; renderChips();
@@ -928,9 +945,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("profile-note").textContent = PROFILES[cur].note;
   }
   var tt;
-  function toast(msg) {
-    var t = $("toast"); t.textContent = msg; t.hidden = false;
-    clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, 2600);
+  function toast(msg, label, fn) {
+    var t = $("toast"); t.textContent = msg;
+    if (label) { var bt = document.createElement("button"); bt.type = "button"; bt.textContent = label; bt.style.cssText = "margin-left:12px;padding:6px 12px"; bt.onclick = function () { t.hidden = true; fn(); }; t.appendChild(bt); }
+    t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, label ? 6000 : 2600);
   }
   function saveForm() {
     var next = {}, bad = 0;

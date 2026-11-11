@@ -1,5 +1,5 @@
 // Fa funzionare l'app anche senza connessione. I file dell'app si aggiornano da soli quando c'è rete.
-var CACHE = "stipendio-pilota-v8";
+var CACHE = "stipendio-pilota-v9";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
