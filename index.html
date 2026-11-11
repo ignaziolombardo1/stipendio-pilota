@@ -151,6 +151,14 @@ button.x { border: 0; background: transparent; color: var(--muted); padding: 6px
 .entry .t { min-width: 0; overflow-wrap: anywhere; }
 .entry .t small { display: block; color: var(--muted); font-size: 13px; }
 .entry b { font-family: var(--font-head); }
+.fx { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.fx:last-child { border-bottom: 0; }
+.fx input { width: 24px; height: 24px; accent-color: var(--accent); margin: 0; }
+.fx .t small { display: block; color: var(--muted); font-size: 13px; }
+.fx.done .t b { text-decoration: line-through; color: var(--muted); }
+.fx > b { font-family: var(--font-head); font-size: 18px; }
+.pocket { display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--soft); border-radius: 14px; padding: 14px 16px; }
+.pocket b { font-family: var(--font-head); font-size: 26px; }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 
 /* storico */
@@ -228,6 +236,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div class="bar" id="bar" role="img" aria-label="Come si divide lo stipendio"></div>
     </section>
 
+    <section class="card" aria-labelledby="t-fix">
+      <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
+      <div id="fix-list"></div>
+      <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
+      <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio − fisse pagate − spese segnate.</p>
+    </section>
+
     <section class="card" aria-labelledby="t-now">
       <div class="line"><h2 id="t-now">Le tue spese di questo mese</h2><span class="badge none" id="now-badge"></span></div>
       <p class="small muted" id="now-text"></p>
@@ -292,7 +307,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <section class="card" aria-labelledby="t-cats">
       <h2 id="t-cats">Per categoria</h2>
       <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
-      <p class="small muted">Affitto, bollette e pedaggio sono già tolti dal piano, non serve segnarli.</p>
+      <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
     </section>
 
     <section class="card" aria-labelledby="t-list">
@@ -326,6 +341,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <h2 id="t-p2">Casa</h2>
       <div class="fields">
         <label class="f" for="rent">Affitto al mese (€)<input id="rent" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="ins">Assicurazione, rata mensile (€)<input id="ins" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="f" for="bills">Bollette e abbonamenti (€)<input id="bills" type="text" inputmode="decimal" autocomplete="off"><span class="help">Luce, gas, internet, telefono, Netflix…</span></label>
       </div>
     </section>
@@ -415,7 +431,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, spesaPct: 15, svagoPct: 8,
     days: 22, kmOne: 70, tollOne: 4, commuteCar: "diesel",
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -434,14 +450,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
+  var FIELDS = [["salary", "salary", 0, 1e7], ["rent", "rent", 0, 1e6], ["bills", "bills", 0, 1e6], ["ins", "ins", 0, 1e6], ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
     ["tollOne", "tollOne", 0, 500], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
-  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, nextId: 1, cat: "spesa" });
+  var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, nextId: 1, cat: "spesa" });
   try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") S = Object.assign(S, st); } catch (e) {}
   if (!S.spent || typeof S.spent !== "object") S.spent = {};
+  if (!S.paid || typeof S.paid !== "object") S.paid = {};
   if (!S.history || typeof S.history !== "object") S.history = {};
   if (!S.monthKey) S.monthKey = CUR;
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
@@ -460,7 +477,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- calcolo ---------- */
   function plan() {
     var sal = S.salary;
-    var rent = Math.round(S.rent), bills = Math.round(S.bills);
+    var rent = Math.round(S.rent), bills = Math.round(S.bills), ins = Math.round(S.ins);
     var spesa = Math.round(sal * S.spesaPct / 100);
     var commuteKm = S.days * 2 * S.kmOne;
     var toll = Math.round(S.days * 2 * S.tollOne);
@@ -469,12 +486,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var litB = S.kmlB > 0 ? kmB / S.kmlB : 0, litD = S.kmlD > 0 ? kmD / S.kmlD : 0;
     var fuelB = Math.round(litB * S.priceB), fuelD = Math.round(litD * S.priceD);
     var svago = Math.round(sal * S.svagoPct / 100);
-    var spend = rent + bills + spesa + toll + fuelB + fuelD + svago;
+    var spend = rent + bills + ins + spesa + toll + fuelB + fuelD + svago;
     var left = Math.max(0, sal - spend);
     var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
     var inv = left - toSave;
-    var essentials = rent + bills + spesa + toll + fuelB + fuelD;
-    return { sal: sal, rent: rent, bills: bills, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+    var essentials = rent + bills + ins + spesa + toll + fuelB + fuelD;
+    return { sal: sal, rent: rent, bills: bills, ins: ins, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
       svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal };
   }
   function project(monthly, years, ann) {
@@ -489,7 +506,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     list.forEach(function (e) { by[e.cat] = (by[e.cat] || 0) + e.amount; });
     var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 };
     var V = bud.spesa + bud.carb + bud.svago, A = by.spesa + by.carb + by.svago + by.altro;
-    return { key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
+    var pd = S.paid[S.monthKey] || {};
+    var fixed = [{ id: "rent", name: "Affitto", amt: p.rent }, { id: "bills", name: "Bollette e abbonamenti", amt: p.bills }, { id: "ins", name: "Assicurazione", amt: p.ins }];
+    var fixTot = 0, paidSum = 0; fixed.forEach(function (f) { fixTot += f.amt; if (pd[f.id]) paidSum += f.amt; });
+    return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal - paidSum - A, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
   }
   function verdict(m) {
     if (m.n === 0) return { cls: "none", text: "Nessuna spesa segnata" };
@@ -526,14 +546,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("example").hidden = !!S.saved;
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
-      must: [["Affitto", "Fisso ogni mese", p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills]],
+      must: [["Affitto", "Fisso ogni mese", p.rent], ["Bollette e abbonamenti", "Luce, gas, internet, telefono, Netflix", p.bills], ["Assicurazione", "Rata mensile", p.ins]],
       move: [["Pedaggio Saponara-Taormina", S.days + " giorni × andata e ritorno × " + eur2.format(S.tollOne), p.toll],
              ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
              ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]],
       daily: [["Spesa alimentare", nf.format(S.spesaPct) + "% dello stipendio", p.spesa], ["Tempo libero", nf.format(S.svagoPct) + "% dello stipendio", p.svago]],
       future: [["Da parte", nf.format(S.saveShare) + "% di quello che avanza", p.toSave], ["Investimenti", nf.format(100 - Math.min(100, S.saveShare)) + "% di quello che avanza", p.inv]]
     };
-    var meta = [["Cose da pagare", rows.must, ["var(--c-must)", "var(--c-must)"]], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
+    var meta = [["Cose da pagare", rows.must, ["var(--c-must)", "var(--c-must)", "var(--c-must)"]], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
                 ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-fun)"]], ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
     var html = "", segs = [];
     meta.forEach(function (g) {
@@ -561,6 +581,22 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("now-fill").style.width = Math.min(100, m.V > 0 ? m.A / m.V * 100 : (m.A > 0 ? 100 : 0)) + "%";
     $("now-meter").className = "meter" + (m.A > m.V ? " over" : "");
     $("now-meter").setAttribute("aria-valuenow", Math.round(m.V > 0 ? Math.min(100, m.A / m.V * 100) : 0));
+
+    $("fix-badge").className = "badge " + (m.paidSum >= m.fixTot && m.fixTot > 0 ? "ok" : "none");
+    $("fix-badge").textContent = "Pagato " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
+    $("fix-list").innerHTML = "";
+    m.fixed.forEach(function (f) {
+      var on = !!m.pd[f.id], row = document.createElement("label");
+      row.className = "fx" + (on ? " done" : "");
+      row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + f.name + ' come pagato"><span class="t"><b>' + f.name + "</b><small>" + (on ? "Pagato" : "Da pagare") + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
+      row.querySelector("input").onchange = function () {
+        var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
+        S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
+      };
+      $("fix-list").appendChild(row);
+    });
+    $("pocket").textContent = eur2.format(m.pocket);
+    $("pocket").style.color = m.pocket < 0 ? "var(--bad)" : "";
 
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
@@ -645,8 +681,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     }).join("");
     var diff = m.realSaved - (m.plannedSave + m.plannedInv);
     var saved = m.n === 0 ? "—" : eur.format(m.realSaved);
-    var det = m.n === 0 ? "Per questo mese non hai segnato spese, quindi non si può dire come è andata."
-      : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".");
+    var fx = m.fixTot ? ' Spese fisse pagate: ' + eur.format(m.paidSum) + ' su ' + eur.format(m.fixTot) + '.' : '';
+    var det = m.n === 0 ? "Per questo mese non hai segnato spese, quindi non si può dire come è andata." + fx
+      : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".") + fx;
     return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? " · in corso" : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
       + '<div class="mnums"><div><span>Stipendio</span><b class="num">' + eur.format(m.salary) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
       + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
