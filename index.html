@@ -33,6 +33,7 @@
   --bad-bg: #fde6df;
   --toast-bg: #16221f;
   --toast-ink: #ffffff;
+  --nav-h: calc(60px + env(safe-area-inset-bottom, 0px));
   --c-must: #7d8ca6;
   --c-move: #9674d4;
   --c-daily: #e3a336;
@@ -60,9 +61,9 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
-  padding-top: calc(24px + env(safe-area-inset-top, 0px)); padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+  padding-top: calc(24px + env(safe-area-inset-top, 0px)); padding-bottom: calc(var(--nav-h) + 28px);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-body.has-save { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
+body.has-save { padding-bottom: calc(var(--nav-h) + 100px); }
 .page { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
 .view { display: flex; flex-direction: column; gap: 18px; }
 h1, h2, h3 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
@@ -172,10 +173,21 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .btnrow button { flex: 1 1 auto; }
 .fxe { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.fxe .fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .chk { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
 .chk input { width: 22px; height: 22px; accent-color: var(--accent); margin: 0; }
 .entry.e4 { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 .entry .ed { font-size: 16px; }
+.sub-off { display: none !important; }
+.subtabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 15; background: var(--bg); display: flex; gap: 8px; overflow-x: auto; padding: 6px 0 8px; scrollbar-width: none; }
+.subtabs::-webkit-scrollbar { display: none; }
+.subtabs a { flex: 0 0 auto; padding: 9px 18px; border-radius: 999px; background: var(--soft); color: var(--muted); font-weight: 600; font-size: 14px; text-decoration: none; }
+.subtabs a.on { background: var(--accent); color: var(--accent-ink); }
+.subtabs a:focus-visible, .bnav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; background: var(--surface); border-top: 1px solid var(--line); display: flex; padding-bottom: env(safe-area-inset-bottom, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.bnav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px 8px; font-size: 11px; font-weight: 600; color: var(--muted); text-decoration: none; min-width: 0; }
+.bnav a svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.bnav a.on { color: var(--accent); }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 
 /* storico */
@@ -207,11 +219,11 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .seg label.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
 .seg label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 button.link { background: transparent; border: 0; color: var(--muted); padding: 8px 0; text-align: left; font-weight: 600; }
-.savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
-  padding-top: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.savebar { position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
+  padding-top: 12px; padding-bottom: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .savebar .in { max-width: 720px; margin: 0 auto; }
 .savebar button { width: 100%; font-size: 17px; padding: 15px 16px; }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 30; background: var(--toast-bg); color: var(--toast-ink); padding: 12px 18px; border-radius: 12px; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 84px); z-index: 30; background: var(--toast-bg); color: var(--toast-ink); padding: 12px 18px; border-radius: 12px; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }
 </style>
 </head>
 <body>
@@ -222,13 +234,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <span class="month" id="month"></span>
   </div>
 
-  <nav class="tabs" id="tabs" aria-label="Sezioni">
-    <a href="#home" data-v="home">Home</a>
-    <a href="#spese" data-v="spese">Spese</a>
-    <a href="#obiettivi" data-v="obiettivi">Obiettivi</a>
-    <a href="#storico" data-v="storico">Storico</a>
-    <a href="#profilo" data-v="profilo">Profilo</a>
-  </nav>
+  <div class="subtabs" id="subtabs" hidden></div>
 
   <!-- NUOVO MESE: compare quando inizia un mese nuovo -->
   <section class="card hl" id="newmonth" aria-labelledby="nm-title" hidden>
@@ -240,7 +246,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   <!-- HOME -->
   <main class="view" id="v-home">
-    <section class="card" aria-labelledby="sal-label">
+    <section data-sub="home" class="card" aria-labelledby="sal-label">
       <div class="line">
         <div><div class="salary-label" id="sal-label"></div><div class="salary-big num" id="sal-big"></div></div>
         <button class="primary" id="edit-sal" type="button">Modifica</button>
@@ -253,16 +259,60 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p class="headline" id="headline"></p>
       <div class="bar" id="bar" role="img" aria-label="Come si divide lo stipendio"></div>
     </section>
+    <section data-sub="home" class="card" aria-labelledby="t-pk">
+      <h2 id="t-pk">In tasca adesso</h2>
+      <div class="pocket"><span>Dopo fisse pagate e spese</span><b class="num" id="hm-pocket">0</b></div>
+      <p class="small muted" id="hm-due" hidden></p>
+      <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
+    </section>
+    <section data-sub="home" class="card" aria-labelledby="t-now">
+      <div class="line"><h2 id="t-now">Le tue spese di questo mese</h2><span class="badge none" id="now-badge"></span></div>
+      <p class="small muted" id="now-text"></p>
+      <div class="meter" id="now-meter" role="progressbar" aria-labelledby="t-now" aria-valuemin="0" aria-valuemax="100"><div id="now-fill" style="width:0%"></div></div>
+      <button class="primary" id="go-spese" type="button">Segna una spesa</button>
+    </section>
+  </main>
 
-    <section class="card" aria-labelledby="t-fix">
+  <!-- SPESE -->
+  <main class="view" id="v-spese" hidden>
+    <section data-sub="spese" class="card" aria-labelledby="t-sp">
+      <div class="line"><h2 id="t-sp">Quanto puoi ancora spendere</h2><span class="badge none" id="sp-badge"></span></div>
+      <div class="stats">
+        <div class="stat"><span>Budget</span><b class="num" id="sp-budget">0</b></div>
+        <div class="stat"><span>Speso</span><b class="num" id="sp-spent">0</b></div>
+        <div class="stat"><span>Resta</span><b class="num" id="sp-left">0</b></div>
+      </div>
+      <div class="meter" id="sp-meter" role="progressbar" aria-labelledby="t-sp" aria-valuemin="0" aria-valuemax="100"><div id="sp-fill" style="width:0%"></div></div>
+      <p class="small muted" id="sp-note"></p>
+    </section>
+    <section data-sub="spese" class="card" aria-labelledby="t-add">
+      <h2 id="t-add">Segna una spesa</h2>
+      <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
+        <label class="f" for="exp-amount">Quanto hai speso? (€)<input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
+        <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
+        <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+        <label class="f" for="exp-date">Data<input id="exp-date" type="date"></label>
+        <button class="primary" type="submit" id="exp-add">Aggiungi</button>
+        <button type="button" id="exp-cancel" hidden>Annulla modifica</button>
+      </form>
+    </section>
+    <section data-sub="spese" class="card" aria-labelledby="t-list">
+      <h2 id="t-list">Spese di questo mese</h2>
+      <div id="exp-list"></div>
+    </section>
+    <section data-sub="spese" class="card" aria-labelledby="t-cats">
+      <h2 id="t-cats">Per categoria</h2>
+      <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
+      <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
+    </section>
+    <section data-sub="fisse" class="card" aria-labelledby="t-fix">
       <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
       <div id="fix-list"></div>
       <p class="small" id="next-due" hidden></p>
       <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
       <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio + extra − fisse pagate − spese segnate.</p>
     </section>
-
-    <section class="card" aria-labelledby="t-ex">
+    <section data-sub="fisse" class="card" aria-labelledby="t-ex">
       <h2 id="t-ex">Entrate extra</h2>
       <p class="hint">Tredicesima, bonus, rimborsi. Si aggiungono a quello che avanza e il piano li divide tra risparmio e investimenti.</p>
       <div id="extra-list"></div>
@@ -274,8 +324,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <button class="primary" type="submit">Aggiungi entrata</button>
       </form>
     </section>
-
-    <section class="card" id="couple" aria-labelledby="t-cp" hidden>
+    <section data-sub="fisse" class="card" id="couple" aria-labelledby="t-cp" hidden>
       <h2 id="t-cp">In due</h2>
       <div class="stats">
         <div class="stat"><span>Entrate insieme</span><b class="num" id="cp-tot">0</b></div>
@@ -284,20 +333,30 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
       <p class="small muted" id="cp-text"></p>
     </section>
-
-    <section class="card" aria-labelledby="t-now">
-      <div class="line"><h2 id="t-now">Le tue spese di questo mese</h2><span class="badge none" id="now-badge"></span></div>
-      <p class="small muted" id="now-text"></p>
-      <div class="meter" id="now-meter" role="progressbar" aria-labelledby="t-now" aria-valuemin="0" aria-valuemax="100"><div id="now-fill" style="width:0%"></div></div>
-      <button class="primary" id="go-spese" type="button">Segna una spesa</button>
+    <section data-sub="auto" class="card" aria-labelledby="t-fu">
+      <h2 id="t-fu">Rifornimenti</h2>
+      <p class="hint">Segna ogni pieno: aggiungo la spesa al carburante e calcolo prezzo e consumo veri.</p>
+      <form id="fu-form" style="display:flex;flex-direction:column;gap:12px">
+        <div class="fields">
+          <label class="f" for="fu-car">Quale auto<select id="fu-car"><option value="benzina">Benzina</option><option value="diesel">Diesel</option></select></label>
+          <label class="f" for="fu-l">Litri<input id="fu-l" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="f" for="fu-t">Totale pagato (€)<input id="fu-t" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="f" for="fu-odo">Km sul contachilometri<input id="fu-odo" type="text" inputmode="decimal" autocomplete="off"><span class="help">Facoltativo, serve per il consumo (pieno a pieno)</span></label>
+        </div>
+        <button class="primary" type="submit">Aggiungi rifornimento</button>
+      </form>
+      <div id="fu-stats" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="fu-list"></div>
     </section>
+  </main>
 
-    <section class="card" aria-labelledby="t-plan">
+  <!-- PIANO -->
+  <main class="view" id="v-piano" hidden>
+    <section data-sub="mese" class="card" aria-labelledby="t-plan">
       <h2 id="t-plan">Il tuo piano del mese</h2>
       <div id="plan"></div>
     </section>
-
-    <section class="card" aria-labelledby="t-fut">
+    <section data-sub="investire" class="card" aria-labelledby="t-fut">
       <h2 id="t-fut">Per il tuo futuro</h2>
       <div class="tiles">
         <div class="tile save">
@@ -313,14 +372,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         </div>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-where">
+    <section data-sub="investire" class="card" aria-labelledby="t-where">
       <h2 id="t-where">Dove investirli</h2>
       <p class="small muted" id="where-sub"></p>
       <div id="funds"></div>
       <p class="small muted" id="proj"></p>
     </section>
-    <section class="card" aria-labelledby="t-iv">
+    <section data-sub="investire" class="card" aria-labelledby="t-iv">
       <h2 id="t-iv">Quanto hai investito davvero</h2>
       <div class="stats">
         <div class="stat"><span>Previsto</span><b class="num" id="iv-plan">0</b></div>
@@ -337,66 +395,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </form>
       <div id="iv-list"></div>
     </section>
-    <p class="disclaimer">Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista. Pedaggio, km e prezzi dei carburanti sono stime da correggere con i tuoi dati.</p>
-  </main>
-
-  <!-- SPESE -->
-  <main class="view" id="v-spese" hidden>
-    <section class="card" aria-labelledby="t-sp">
-      <div class="line"><h2 id="t-sp">Quanto puoi ancora spendere</h2><span class="badge none" id="sp-badge"></span></div>
-      <div class="stats">
-        <div class="stat"><span>Budget</span><b class="num" id="sp-budget">0</b></div>
-        <div class="stat"><span>Speso</span><b class="num" id="sp-spent">0</b></div>
-        <div class="stat"><span>Resta</span><b class="num" id="sp-left">0</b></div>
-      </div>
-      <div class="meter" id="sp-meter" role="progressbar" aria-labelledby="t-sp" aria-valuemin="0" aria-valuemax="100"><div id="sp-fill" style="width:0%"></div></div>
-      <p class="small muted" id="sp-note"></p>
-    </section>
-
-    <section class="card" aria-labelledby="t-add">
-      <h2 id="t-add">Segna una spesa</h2>
-      <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
-        <label class="f" for="exp-amount">Quanto hai speso? (€)<input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
-        <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
-        <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
-        <label class="f" for="exp-date">Data<input id="exp-date" type="date"></label>
-        <button class="primary" type="submit" id="exp-add">Aggiungi</button>
-        <button type="button" id="exp-cancel" hidden>Annulla modifica</button>
-      </form>
-    </section>
-
-    <section class="card" aria-labelledby="t-fu">
-      <h2 id="t-fu">Rifornimenti</h2>
-      <p class="hint">Segna ogni pieno: aggiungo la spesa al carburante e calcolo prezzo e consumo veri.</p>
-      <form id="fu-form" style="display:flex;flex-direction:column;gap:12px">
-        <div class="fields">
-          <label class="f" for="fu-car">Quale auto<select id="fu-car"><option value="benzina">Benzina</option><option value="diesel">Diesel</option></select></label>
-          <label class="f" for="fu-l">Litri<input id="fu-l" type="text" inputmode="decimal" autocomplete="off"></label>
-          <label class="f" for="fu-t">Totale pagato (€)<input id="fu-t" type="text" inputmode="decimal" autocomplete="off"></label>
-          <label class="f" for="fu-odo">Km sul contachilometri<input id="fu-odo" type="text" inputmode="decimal" autocomplete="off"><span class="help">Facoltativo, serve per il consumo (pieno a pieno)</span></label>
-        </div>
-        <button class="primary" type="submit">Aggiungi rifornimento</button>
-      </form>
-      <div id="fu-stats" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div id="fu-list"></div>
-    </section>
-
-    <section class="card" aria-labelledby="t-cats">
-      <h2 id="t-cats">Per categoria</h2>
-      <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
-      <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
-    </section>
-
-    <section class="card" aria-labelledby="t-list">
-      <h2 id="t-list">Spese di questo mese</h2>
-      <div id="exp-list"></div>
-    </section>
-  </main>
-
-  <!-- OBIETTIVI -->
-  <main class="view" id="v-obiettivi" hidden>
-    <div><h1>Obiettivi</h1><p class="hint">Metti da parte per qualcosa di preciso e per le spese che arrivano una volta all'anno.</p></div>
-    <section class="card" aria-labelledby="t-g">
+    <p data-sub="investire" class="disclaimer">Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista. Pedaggio, km e prezzi dei carburanti sono stime da correggere con i tuoi dati.</p>
+    <p data-sub="obiettivi" class="hint">Metti da parte per qualcosa di preciso e per le spese che arrivano una volta all'anno.</p>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-g">
       <h2 id="t-g">I tuoi obiettivi</h2>
       <p class="small muted" id="goals-sum"></p>
       <div id="goals-list"></div>
@@ -409,7 +410,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <button class="primary" type="submit">Aggiungi obiettivo</button>
       </form>
     </section>
-    <section class="card" aria-labelledby="t-a">
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-a">
       <h2 id="t-a">Spese una volta all'anno</h2>
       <p class="hint">Bollo, tagliando, revisione, vacanze. Ne metto da parte un dodicesimo ogni mese, così non ti sorprendono. La quota è già nel piano.</p>
       <div id="annual-list"></div>
@@ -436,24 +437,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
-    <div>
-      <h1>Il tuo profilo</h1>
-      <p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano nella Home si aggiorna da solo.</p>
-    </div>
-
-    <section class="card big-input" aria-labelledby="t-p1">
+    <div><h1>Impostazioni</h1><p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano si aggiorna da solo.</p></div>
+    <section data-sub="io" class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
       <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
     </section>
-
-    <section class="card" aria-labelledby="t-p2">
-      <h2 id="t-p2">Spese fisse</h2>
-      <p class="hint">Affitto, assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota qui sotto.</p>
-      <div id="fx-edit"></div>
-      <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
-    </section>
-
-    <section class="card" aria-labelledby="t-pc">
+    <section data-sub="io" class="card" aria-labelledby="t-pc">
       <h2 id="t-pc">In coppia</h2>
       <p class="hint">Facoltativo. Se dividi affitto e bollette, scrivi quanta parte paghi tu: il piano userà solo la tua quota.</p>
       <div class="fields">
@@ -462,8 +451,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
       <button type="button" id="split-prop">Dividi in proporzione agli stipendi</button>
     </section>
-
-    <section class="card" aria-labelledby="t-p3">
+    <section data-sub="casa" class="card" aria-labelledby="t-p2">
+      <h2 id="t-p2">Spese fisse</h2>
+      <p class="hint">Affitto, assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota qui sotto.</p>
+      <div id="fx-edit"></div>
+      <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
+    </section>
+    <section data-sub="auto" class="card" aria-labelledby="t-p3">
       <h2 id="t-p3">Tragitto casa-lavoro</h2>
       <p class="hint">Saponara → Taormina. Km e pedaggio sono stime: correggili con quello che paghi davvero. Andata e ritorno si contano da soli.</p>
       <div class="fields">
@@ -474,8 +468,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
           <select id="commuteCar"><option value="diesel">Diesel</option><option value="benzina">Benzina</option></select></label>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-p4">
+    <section data-sub="auto" class="card" aria-labelledby="t-p4">
       <h2 id="t-p4">Auto a benzina</h2>
       <div class="fields">
         <label class="f" for="kmlB">Consumo (km con 1 litro)<input id="kmlB" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -483,8 +476,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="extraB">Altri km al mese<input id="extraB" type="text" inputmode="decimal" autocomplete="off"><span class="help">Oltre al tragitto per il lavoro</span></label>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-p5">
+    <section data-sub="auto" class="card" aria-labelledby="t-p5">
       <h2 id="t-p5">Auto diesel</h2>
       <div class="fields">
         <label class="f" for="kmlD">Consumo (km con 1 litro)<input id="kmlD" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -493,16 +485,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
       <p class="hint">Prezzi di partenza: media nazionale self del 1° novembre 2026 (benzina 2,010 €/l, gasolio 2,241 €/l, dati Mimit). In Sicilia o in autostrada possono essere diversi.</p>
     </section>
-
-    <section class="card" aria-labelledby="t-p6">
+    <section data-sub="budget" class="card" aria-labelledby="t-p6">
       <h2 id="t-p6">Spese di ogni giorno</h2>
       <div class="fields">
         <label class="f" for="spesaPct">Spesa alimentare (% dello stipendio)<input id="spesaPct" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="f" for="svagoPct">Tempo libero (% dello stipendio)<input id="svagoPct" type="text" inputmode="decimal" autocomplete="off"></label>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-p7">
+    <section data-sub="budget" class="card" aria-labelledby="t-p7">
       <h2 id="t-p7">Risparmio</h2>
       <div class="fields">
         <label class="f" for="saveShare">Da mettere da parte (% di quello che avanza)<input id="saveShare" type="text" inputmode="decimal" autocomplete="off"><span class="help">Il resto va negli investimenti</span></label>
@@ -510,8 +500,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="months">Mesi di spese da coprire<input id="months" type="text" inputmode="numeric" autocomplete="off"><span class="help">Il tuo fondo di sicurezza</span></label>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-p8">
+    <section data-sub="investi" class="card" aria-labelledby="t-p8">
       <h2 id="t-p8">Investimenti</h2>
       <div class="f"><span style="font-weight:500">Quanto rischio vuoi prendere</span>
         <div class="seg" id="profile" role="radiogroup" aria-label="Profilo di rischio">
@@ -528,8 +517,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <label class="f" for="costPct">Costi e bollo ogni anno (%)<input id="costPct" type="text" inputmode="decimal" autocomplete="off"><span class="help">Costo del fondo, del broker e imposta di bollo (circa 0,2%)</span></label>
       </div>
     </section>
-
-    <section class="card" aria-labelledby="t-bk">
+    <section data-sub="dati" class="card" aria-labelledby="t-bk">
       <h2 id="t-bk">Backup e condivisione</h2>
       <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per usare l'app anche su un altro telefono, o darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Non c'è sincronizzazione automatica.</p>
       <div class="btnrow"><button type="button" id="bk-dl">Scarica backup</button><button type="button" id="bk-copy">Copia codice</button></div>
@@ -537,13 +525,13 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <label class="f" for="bk-file">Oppure scegli un file di backup<input id="bk-file" type="file" accept="application/json,.json"></label>
       <button type="button" id="bk-restore">Ripristina da codice</button>
     </section>
-
-    <button class="link" id="reset" type="button">Inserisci i valori di esempio</button>
+    <button data-sub="dati" class="link" id="reset" type="button">Inserisci i valori di esempio</button>
   </main>
 </div>
 
 <div class="savebar" id="savebar" hidden><div class="in"><button class="primary" id="save" type="button">Salva</button></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
+<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profilo</a></nav>
 
 <script>
 (function () {
@@ -775,6 +763,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.sal / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
     }
 
+    $("hm-pocket").textContent = $("pocket").textContent; $("hm-pocket").style.color = $("pocket").style.color;
+    var hd = $("hm-due"); hd.hidden = nd.hidden; hd.className = nd.className; hd.textContent = nd.textContent;
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
     $("meter-fill").style.width = done + "%";
@@ -1173,25 +1163,41 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   }
 
   /* ---------- navigazione ---------- */
-  var VIEWS = ["home", "spese", "obiettivi", "storico", "profilo"];
+  var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["obiettivi", "Obiettivi"]], storico: [],
+    profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Auto"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
+  var lastSub = {}, curView = "";
   function showView() {
-    var h = (location.hash || "").replace("#", "");
+    var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
+    if (h === "obiettivi") { h = "piano"; sub = "obiettivi"; }
     if (VIEWS.indexOf(h) < 0) h = "home";
+    var subs = SUBS[h] || [];
+    if (subs.length) {
+      if (!subs.some(function (x) { return x[0] === sub; })) sub = lastSub[h] || subs[0][0];
+      lastSub[h] = sub;
+    } else sub = "";
     VIEWS.forEach(function (v) { $("v-" + v).hidden = v !== h; });
-    $("savebar").hidden = h !== "profilo";
-    document.body.className = h === "profilo" ? "has-save" : "";
+    document.querySelectorAll("#v-" + h + " [data-sub]").forEach(function (el) { el.classList.toggle("sub-off", !!sub && el.getAttribute("data-sub") !== sub && h !== "home"); });
+    var st = $("subtabs"); st.hidden = !subs.length;
+    st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
+    var showSave = h === "profilo" && sub !== "dati";
+    $("savebar").hidden = !showSave;
+    document.body.className = showSave ? "has-save" : "";
     document.querySelectorAll("#tabs a").forEach(function (a) {
       var on = a.getAttribute("data-v") === h; a.className = on ? "on" : "";
       if (on) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
-    if (h === "profilo") fillForm(S);
+    if (h === "profilo" && curView !== "profilo") fillForm(S);
+    curView = h;
     window.scrollTo(0, 0);
   }
   function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); }
   window.addEventListener("hashchange", showView);
-  $("edit-sal").onclick = function () { location.hash = "#profilo"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
-  $("go-profile").onclick = function () { location.hash = "#profilo"; };
-  $("go-spese").onclick = function () { location.hash = "#spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
+  $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
+  $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
+  $("hm-fix").onclick = function () { location.hash = "#spese/fisse"; };
+  $("go-profile").onclick = function () { location.hash = "#profilo/io"; };
+  $("go-spese").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("save").onclick = saveForm;
   $("nm-start").onclick = startMonth;
   $("exp-form").onsubmit = addExpense;
