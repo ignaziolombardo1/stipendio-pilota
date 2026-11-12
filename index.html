@@ -244,10 +244,19 @@ details.month summary:focus-visible { outline: 2px solid var(--accent); outline-
 @media (max-width: 480px) { .fields { grid-template-columns: minmax(0, 1fr); } }
 label.f { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 500; }
 label.f span.help { color: var(--muted); font-weight: 400; font-size: 12.5px; }
-input[type="text"], input[type="date"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 13px 14px; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; }
-input[type="text"]:focus, input[type="date"]:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
+input[type="text"], input[type="date"], input[type="month"], select { font: inherit; font-size: 16px; color: var(--ink); background: var(--soft); border: 2px solid transparent; border-radius: 12px; padding: 13px 14px; width: 100%; min-width: 0; -webkit-appearance: none; appearance: none; }
+input[type="text"]:focus, input[type="date"]:focus, input[type="month"]:focus, select:focus { outline: none; border-color: var(--accent); background: var(--surface); }
 select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 20px) 55%, calc(100% - 14px) 55%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: 38px; }
 .big-input input { font-family: var(--font-head); font-size: 30px; font-weight: 700; padding: 12px 14px; }
+.wds { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.wds label { text-align: center; padding: 10px 0; border-radius: 10px; border: 1.5px solid var(--line); font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; background: var(--soft); }
+.wds input { position: absolute; opacity: 0; pointer-events: none; }
+.wds label.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.wds label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hero .hello { margin: 0 0 4px; color: var(--hero-muted); font-weight: 600; text-align: center; }
+.tdrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.tdrow small { display: block; color: var(--muted); font-size: 12px; }
+#td-date { width: auto; padding: 9px 12px; }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { flex: 1; text-align: center; padding: 11px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -293,6 +302,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <button class="link" id="go-profile" type="button">Preferisco le impostazioni complete</button>
       </div>
     <section data-sub="home" class="hero" aria-labelledby="t-pk">
+      <p class="hello" id="hero-hi" hidden></p>
       <h2 id="t-pk" class="sr-only">In tasca adesso</h2>
       <div class="ringbox">
         <svg id="ring" viewBox="0 0 220 220" aria-hidden="true"></svg>
@@ -302,6 +312,17 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p id="hm-day"></p>
       <p id="hm-due" hidden></p>
       <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
+    </section>
+    <section data-sub="home" class="card hl" id="complete" aria-labelledby="t-cmp" hidden>
+      <h2 id="t-cmp">Completa il tuo profilo</h2>
+      <p class="hint" id="cmp-text"></p>
+      <button class="primary" type="button" id="cmp-go">Completa ora</button>
+    </section>
+    <section data-sub="home" class="card" id="today" aria-labelledby="t-today" hidden>
+      <div class="line"><h2 id="t-today">I tuoi viaggi</h2><input type="date" id="td-date" aria-label="Giorno da modificare"></div>
+      <p class="hint">Spunta quello che hai fatto davvero nel giorno scelto. Carburante e pedaggi del piano si aggiornano da soli.</p>
+      <div id="td-list"></div>
+      <p class="small muted" id="td-sum"></p>
     </section>
     <section data-sub="home" class="card" aria-labelledby="sal-label">
       <div class="line">
@@ -459,6 +480,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <section data-sub="consulente" class="card" aria-labelledby="t-pac">
       <h2 id="t-pac">Il tuo piano d'accumulo</h2>
       <p class="hint">Versi ogni mese la stessa cifra, anche piccola. Con il tempo gli interessi lavorano per te.</p>
+      <div class="btnrow" id="adv-presets" role="group" aria-label="Rate di esempio"><button type="button" data-v="50">50 €</button><button type="button" data-v="100">100 €</button><button type="button" data-v="150">150 €</button><button type="button" data-v="200">200 €</button><button type="button" data-v="300">300 €</button></div>
       <div class="fields">
         <label class="f" for="adv-rata">Rata mensile (€)<input id="adv-rata" type="text" inputmode="decimal" autocomplete="off"><span class="help">Lascia vuoto per usare quella del piano</span></label>
         <label class="f" for="adv-init">Capitale di partenza (€)<input id="adv-init" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -546,6 +568,16 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
     <div><h1>Impostazioni</h1><p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano si aggiorna da solo.</p></div>
+    <section data-sub="io" class="card" aria-labelledby="t-me">
+      <h2 id="t-me">Chi sei</h2>
+      <p class="hint">Servono solo a personalizzare l'app. Restano in questo telefono.</p>
+      <div class="fields">
+        <label class="f" for="me-name">Il tuo nome<input id="me-name" type="text" autocomplete="off" maxlength="30"></label>
+        <label class="f" for="me-live">Dove vivi<input id="me-live" type="text" autocomplete="off" maxlength="40" placeholder="Es. Giardini Naxos"></label>
+        <label class="f" for="me-work">Dove lavori<input id="me-work" type="text" autocomplete="off" maxlength="40" placeholder="Es. Taormina"></label>
+        <label class="f" for="me-home">Dove torni ogni tanto<input id="me-home" type="text" autocomplete="off" maxlength="40" placeholder="Es. Saponara"></label>
+      </div>
+    </section>
     <section data-sub="io" class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
       <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -559,22 +591,29 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
       <button type="button" id="split-prop">Dividi in proporzione agli stipendi</button>
     </section>
+    <section data-sub="casa" class="card" aria-labelledby="t-hs">
+      <h2 id="t-hs">La tua casa</h2>
+      <p class="hint">Scegli come abiti: l'importo va tolto ogni mese dallo stipendio. Se è un mutuo, indica anche l'ultima rata.</p>
+      <div id="fx-casa"></div>
+    </section>
+    <section data-sub="casa" class="card" aria-labelledby="t-ln">
+      <h2 id="t-ln">Prestiti e rate</h2>
+      <p class="hint">Finanziamenti, auto a rate, carte revolving… Con la data dell'ultima rata, la voce sparisce da sola quando finisce.</p>
+      <div id="fx-loans"></div>
+      <button type="button" id="ln-add">+ Aggiungi un prestito o una rata</button>
+      <p class="small" id="ln-sum"></p>
+    </section>
     <section data-sub="casa" class="card" aria-labelledby="t-p2">
-      <h2 id="t-p2">Spese fisse</h2>
-      <p class="hint">Affitto, assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota qui sotto.</p>
+      <h2 id="t-p2">Altre spese fisse</h2>
+      <p class="hint">Assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota in "Io".</p>
       <div id="fx-edit"></div>
       <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
     </section>
     <section data-sub="auto" class="card" aria-labelledby="t-p3">
-      <h2 id="t-p3">Tragitto casa-lavoro</h2>
-      <p class="hint">Saponara → Taormina. Il pedaggio di partenza (3,30 € a tratta) è la somma delle tariffe 2026 classe A del Consorzio Autostrade Siciliane: A20 Villafranca–Messina Nord 1,20 € e A18 Messina Sud–Taormina 2,10 €. Controlla il tuo percorso e il tuo Telepass e correggilo. I km sono una stima. Andata e ritorno si contano da soli.</p>
-      <div class="fields">
-        <label class="f" for="days">Giorni di lavoro al mese<input id="days" type="text" inputmode="numeric" autocomplete="off"></label>
-        <label class="f" for="kmOne">Km solo andata<input id="kmOne" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="tollOne">Pedaggio solo andata (€)<input id="tollOne" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="commuteCar">Auto per andare al lavoro
-          <select id="commuteCar"><option value="diesel">Diesel</option><option value="benzina">Benzina</option></select></label>
-      </div>
+      <h2 id="t-p3">I tuoi tragitti</h2>
+      <p class="hint">Scrivi ogni tragitto che fai: casa-lavoro, rientro dai tuoi… Per ognuno indica i km di sola andata, il pedaggio o il biglietto e i giorni della settimana. Andata e ritorno si contano da soli. Km e pedaggio controllali su Google Maps o sul tuo Telepass. Dalla Home puoi correggere i giorni in cui hai fatto davvero un tragitto.</p>
+      <div id="rt-edit"></div>
+      <button type="button" id="rt-add">+ Aggiungi un tragitto</button>
     </section>
     <section data-sub="auto" class="card" aria-labelledby="t-p4">
       <h2 id="t-p4">Auto a benzina</h2>
@@ -665,7 +704,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
   var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
-    days: 22, kmOne: 70, tollOne: 3.3, commuteCar: "diesel",
+    me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
   var PROFILES = {
@@ -683,18 +722,18 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5],  ["days", "days", 0, 31], ["kmOne", "kmOne", 0, 1000],
-    ["tollOne", "tollOne", 0, 500], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
+  var FIELDS = [["salary", "salary", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
   function mkFixed(o) {
     function g(k) { return typeof o[k] === "number" ? o[k] : DEFAULTS[k]; }
-    return [{ id: "rent", name: "Affitto", amount: g("rent"), due: g("dueRent"), split: true }, { id: "bills", name: "Bollette e abbonamenti", amount: g("bills"), due: g("dueBills"), split: true }, { id: "ins", name: "Assicurazione", amount: g("ins"), due: g("dueIns"), split: true }];
+    return [{ id: "rent", name: "Affitto", amount: g("rent"), due: g("dueRent"), split: true, kind: "casa", end: "" }, { id: "bills", name: "Bollette e abbonamenti", amount: g("bills"), due: g("dueBills"), split: true, kind: "fix", end: "" }, { id: "ins", name: "Assicurazione", amount: g("ins"), due: g("dueIns"), split: true, kind: "fix", end: "" }];
   }
   DEFAULTS.fixedList = mkFixed({});
   var S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, extra: {}, invested: [], fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" });
-  try { var st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") { if (!Array.isArray(st.fixedList)) st.fixedList = mkFixed(st); S = Object.assign(S, st); } } catch (e) {}
+  var st = null;
+  try { st = JSON.parse(localStorage.getItem(KEY)); if (st && typeof st === "object") { if (!Array.isArray(st.fixedList)) st.fixedList = mkFixed(st); S = Object.assign(S, st); } } catch (e) {}
   if (!S.spent || typeof S.spent !== "object") S.spent = {};
   if (!S.paid || typeof S.paid !== "object") S.paid = {};
   ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
@@ -703,6 +742,31 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   if (!S.monthKey) S.monthKey = CUR;
   S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {};
   if (!S.dv || S.dv < 2) { if (S.tollOne === 4) S.tollOne = 3.3; S.dv = 2; }
+  function deepc(x) { return JSON.parse(JSON.stringify(x)); }
+  function numOr(v, d, lo, hi) { v = typeof v === "number" && isFinite(v) ? v : d; return Math.min(hi, Math.max(lo, v)); }
+  function routesFrom(raw) {
+    if (Array.isArray(raw.routes)) return raw.routes;
+    if (raw.kmOne !== undefined || raw.days !== undefined || raw.tollOne !== undefined) {
+      var d = numOr(raw.days, 22, 0, 31), k = Math.min(7, Math.round(d / 4.33));
+      return [{ id: "r1", name: "Casa → lavoro", km: numOr(raw.kmOne, 70, 0, 1000), toll: numOr(raw.tollOne, 3.3, 0, 500), car: raw.commuteCar === "benzina" ? "benzina" : "diesel", wd: [1, 2, 3, 4, 5, 6, 0].slice(0, k) }];
+    }
+    return deepc(DEFAULTS.routes);
+  }
+  function migrate(raw) {
+    raw = raw && typeof raw === "object" ? raw : {};
+    S.routes = routesFrom(raw).filter(function (r) { return r && typeof r === "object"; }).map(function (r, i) {
+      var wd = Array.isArray(r.wd) ? r.wd.filter(function (x, j, a) { return typeof x === "number" && x >= 0 && x <= 6 && a.indexOf(x) === j; }) : [];
+      return { id: typeof r.id === "string" && r.id ? r.id : "r" + (i + 1) + "x", name: String(r.name || "Tragitto").slice(0, 40), km: numOr(r.km, 0, 0, 1000), toll: numOr(r.toll, 0, 0, 500), car: r.car === "benzina" || r.car === "none" ? r.car : "diesel", wd: wd };
+    });
+    ["days", "kmOne", "tollOne", "commuteCar"].forEach(function (k) { delete S[k]; });
+    S.me = Object.assign({}, DEFAULTS.me, S.me && typeof S.me === "object" ? S.me : {});
+    if (["affitto", "mutuo", "proprieta", "famiglia"].indexOf(S.me.housing) < 0) S.me.housing = "affitto";
+    if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
+    S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
+      return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "" });
+    });
+  }
+  migrate(typeof st !== "undefined" ? st : null);
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
   var warned = false;
   function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
@@ -727,21 +791,34 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   };
   function iconKey(n) {
     n = String(n).toLowerCase();
-    return /affitto|mutuo|casa/.test(n) ? "home" : /bollett|abbon|netflix|telefon|luce|gas|internet/.test(n) ? "bolt" : /assicur/.test(n) ? "shield" : /pedaggio|casello/.test(n) ? "road" : /benzina|diesel|carburante/.test(n) ? "fuel"
+    return /affitto|mutuo|casa/.test(n) ? "home" : /bollett|abbon|netflix|telefon|luce|gas|internet/.test(n) ? "bolt" : /assicur/.test(n) ? "shield" : /pedaggio|casello|biglietto/.test(n) ? "road" : /benzina|diesel|carburante/.test(n) ? "fuel"
       : /spesa alimentare|spesa/.test(n) ? "cart" : /tempo libero|svago/.test(n) ? "smile" : /da parte|risparmio/.test(n) ? "lock" : /investiment/.test(n) ? "trend" : /annual/.test(n) ? "cal" : "tag";
   }
   function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function routeCount(r, mk) {
+    var pr = mk.split("-"), y = +pr[0], m = +pr[1] - 1, dim = new Date(y, m + 1, 0).getDate(), n = 0;
+    for (var d = 1; d <= dim; d++) {
+      var base = r.wd.indexOf(new Date(y, m, d).getDay()) >= 0, o = (S.dayo[mk + "-" + pad2(d)] || {})[r.id];
+      if (o === undefined ? base : !!o) n++;
+    }
+    return n;
+  }
   function plan() {
     var sal = S.salary;
     var sh = Math.min(100, Math.max(1, S.share)) / 100;
     var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0);
-    var fixed = S.fixedList.map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split }; });
+    var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split, end: f.end || "", kind: f.kind }; });
     var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
     var spesa = Math.round(sal * S.spesaPct / 100);
-    var commuteKm = S.days * 2 * S.kmOne;
-    var toll = Math.round(S.days * 2 * S.tollOne);
-    var kmB = S.extraB + (S.commuteCar === "benzina" ? commuteKm : 0);
-    var kmD = S.extraD + (S.commuteCar === "diesel" ? commuteKm : 0);
+    var rts = S.routes.map(function (r) {
+      var n = routeCount(r, S.monthKey), km = n * 2 * r.km, tl = n * 2 * r.toll;
+      var fu = r.car === "benzina" ? (S.kmlB > 0 ? km / S.kmlB * S.priceB : 0) : r.car === "diesel" ? (S.kmlD > 0 ? km / S.kmlD * S.priceD : 0) : 0;
+      return { id: r.id, name: r.name, n: n, km: km, tollRaw: tl, car: r.car, toll1: r.toll, cost: tl + fu };
+    });
+    var toll = Math.round(rts.reduce(function (a, r) { return a + r.tollRaw; }, 0));
+    var kmB = S.extraB + rts.reduce(function (a, r) { return a + (r.car === "benzina" ? r.km : 0); }, 0);
+    var kmD = S.extraD + rts.reduce(function (a, r) { return a + (r.car === "diesel" ? r.km : 0); }, 0);
     var litB = S.kmlB > 0 ? kmB / S.kmlB : 0, litD = S.kmlD > 0 ? kmD / S.kmlD : 0;
     var fuelB = Math.round(litB * S.priceB), fuelD = Math.round(litD * S.priceD);
     var svago = Math.round(sal * S.svagoPct / 100);
@@ -751,7 +828,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
     var inv = left - toSave;
     var essentials = fixedTot + spesa + toll + fuelB + fuelD;
-    return { sal: sal, extra: E, fixed: fixed, fixedTot: fixedTot, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+    return { routes: rts, sal: sal, extra: E, fixed: fixed, fixedTot: fixedTot, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
       svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal - E };
   }
   function project(monthly, years, ann) {
@@ -835,15 +912,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("bk-warn").hidden = !(S.saved && (nsp >= 10 || Object.keys(S.history).length) && (!S.lastBackup || Date.now() - S.lastBackup > 30 * 864e5));
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
-      must: p.fixed.map(function (f) { return [f.name, f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Fisso ogni mese", f.amt]; }),
-      move: [["Pedaggio Saponara-Taormina", S.days + " giorni × andata e ritorno × " + eur2.format(S.tollOne), p.toll],
+      must: p.fixed.map(function (f) { return [f.name, (f.end ? "Fino a " + mlabel(f.end) + ". " : "") + (f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Ogni mese"), f.amt]; }),
+      move: p.routes.filter(function (r) { return r.tollRaw > 0; }).map(function (r) { return [(r.car === "none" ? "Biglietto · " : "Pedaggio · ") + r.name, r.n + (r.n === 1 ? " viaggio" : " viaggi") + " × andata e ritorno × " + eur2.format(r.toll1), Math.round(r.tollRaw)]; }).concat([
              ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
-             ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]],
+             ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]]),
       daily: [["Spesa alimentare", nf.format(S.spesaPct) + "% dello stipendio", p.spesa], ["Tempo libero", nf.format(S.svagoPct) + "% dello stipendio", p.svago]],
       future: [["Da parte", nf.format(S.saveShare) + "% di quello che avanza", p.toSave], ["Investimenti", nf.format(100 - Math.min(100, S.saveShare)) + "% di quello che avanza", p.inv]]
     };
     if (p.annualM > 0) rows.must.push(["Spese annuali", S.annual.length + (S.annual.length === 1 ? " voce" : " voci") + " ÷ 12 mesi", p.annualM]);
-    var meta = [["Cose da pagare", rows.must, rows.must.map(function () { return "var(--c-must)"; })], ["Spostamenti", rows.move, ["var(--c-move)", "var(--c-move)", "var(--c-move)"]],
+    var meta = [["Cose da pagare", rows.must, rows.must.map(function () { return "var(--c-must)"; })], ["Spostamenti", rows.move, rows.move.map(function () { return "var(--c-move)"; })],
                 ["Vita di tutti i giorni", rows.daily, ["var(--c-daily)", "var(--c-fun)"]], ["Il tuo futuro", rows.future, ["var(--c-save)", "var(--c-invest)"]]];
     var html = "", segs = [];
     meta.forEach(function (g) {
@@ -918,6 +995,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     }).join("");
     $("rule-text").textContent = needs / inc * 100 > 50 ? "Le cose necessarie sono " + Math.round(needs / inc * 100) + "% delle entrate, più del 50% consigliato. Sono fisse, carburante e spesa le voci su cui puoi incidere. È una guida, non una regola: con affitto e auto alti è normale stare sopra."
       : p.left / inc * 100 >= 20 ? "Sei in linea con la regola: ti avanza almeno il 20%." : "Le necessarie sono nei limiti ma ti avanza meno del 20%: guarda il tempo libero.";
+    (function () { var hi = $("hero-hi"), h = NOW.getHours(); hi.hidden = !S.me.name; hi.textContent = (h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera") + ", " + S.me.name; })();
     $("hm-pocket").textContent = eur.format(m.pocket); $("hm-pocket").style.color = m.pocket < 0 ? "#ffb59a" : "";
     $("hero-sub").textContent = "su " + eur.format(p.sal + p.extra) + " di entrate";
     $("hero-fix").textContent = "Fisse " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
@@ -1003,7 +1081,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.4";
+  var APP_VERSION = "2026-11-12.5";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1065,8 +1143,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- Profilo ---------- */
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
-    renderFixedEditor(src.fixedList);
-    $("commuteCar").value = src.commuteCar;
+    var me = src.me || DEFAULTS.me;
+    $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || "";
+    renderFixedEditor(src.fixedList, me.housing);
+    renderRoutes(src.routes || []);
     $("years").value = String(src.years);
     document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.checked = r.value === src.profile; });
     markProfile();
@@ -1091,10 +1171,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       else next[f[1]] = Math.min(f[3], Math.max(f[2], n));
     });
     if (!(next.salary > 0)) { toast("Scrivi quanto prendi al mese"); $("salary").focus(); return; }
-    next.commuteCar = $("commuteCar").value;
     next.years = parseInt($("years").value, 10);
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
-    next.profile = pr; next.saved = true; next.fixedList = readFixedEditor();
+    next.profile = pr; next.saved = true; next.fixedList = readFixedEditor(); next.routes = readRoutes();
+    next.me = { name: $("me-name").value.trim().slice(0, 30), live: $("me-live").value.trim().slice(0, 40), work: $("me-work").value.trim().slice(0, 40), home: $("me-home").value.trim().slice(0, 40), housing: readHousing() || S.me.housing };
     Object.assign(S, next); persist(); renderAll(); fillForm(S);
     location.hash = "#home"; showView();
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
@@ -1211,26 +1291,116 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   }
 
   /* ---------- editor spese fisse ---------- */
-  function renderFixedEditor(list) {
-    var box = $("fx-edit"); box.innerHTML = "";
-    (list || []).forEach(function (f) {
-      var d = document.createElement("div"); d.className = "fxe"; d.setAttribute("data-id", f.id);
-      d.innerHTML = '<label class="f">Nome<input type="text" class="fx-name" autocomplete="off" value="' + esc(f.name) + '"></label>'
-        + '<div class="fields"><label class="f">Importo (€)<input type="text" class="fx-amt" inputmode="decimal" autocomplete="off" value="' + txt(f.amount) + '"></label>'
-        + '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>'
-        + '<label class="chk"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>'
-        + '<button type="button" class="link fx-del">Elimina questa voce</button>';
-      d.querySelector(".fx-del").onclick = function () { var cur = readFixedEditor().filter(function (x) { return x.id !== f.id; }); renderFixedEditor(cur); };
+  var HOUSING = { affitto: ["Affitto", "Affitto al mese (€)"], mutuo: ["Mutuo", "Rata del mutuo (€)"], proprieta: ["Spese di casa", "Condominio, tasse e spese al mese (€)"], famiglia: ["Contributo a casa", "Quanto dai a casa al mese (€)"] };
+  function readHousing() { var el = document.querySelector("#fx-casa .hs-type"); return el ? el.value : null; }
+  function fxBlock(f, kind, housing) {
+    var d = document.createElement("div"); d.className = "fxe"; d.setAttribute("data-id", f.id); d.setAttribute("data-kind", kind); d.setAttribute("data-end", f.end || "");
+    var h = "";
+    if (kind === "casa") {
+      h += '<label class="f">Come abiti<select class="hs-type">' + Object.keys(HOUSING).map(function (k) { return '<option value="' + k + '"' + (k === housing ? " selected" : "") + ">" + { affitto: "In affitto", mutuo: "Con un mutuo", proprieta: "Casa di proprietà, senza mutuo", famiglia: "Con la famiglia" }[k] + "</option>"; }).join("") + "</select></label>";
+      h += '<div class="fields"><label class="f">' + HOUSING[housing][1] + '<input type="text" class="fx-amt" inputmode="decimal" autocomplete="off" value="' + txt(f.amount) + '"></label>';
+    } else {
+      h += '<label class="f">Nome<input type="text" class="fx-name" autocomplete="off" value="' + esc(f.name) + '"></label><div class="fields"><label class="f">' + (kind === "loan" ? "Rata al mese (€)" : "Importo (€)") + '<input type="text" class="fx-amt" inputmode="decimal" autocomplete="off" value="' + txt(f.amount) + '"></label>';
+    }
+    h += '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>';
+    if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
+    h += '<label class="chk"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
+    if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
+    d.innerHTML = h;
+    var del = d.querySelector(".fx-del");
+    if (del) del.onclick = function () { var cur = readFixedEditor().filter(function (x) { return x.id !== f.id; }); renderFixedEditor(cur); };
+    var sel = d.querySelector(".hs-type");
+    if (sel) sel.onchange = function () { renderFixedEditor(readFixedEditor(), this.value); };
+    return d;
+  }
+  function renderFixedEditor(list, housing) {
+    list = list || []; housing = housing || readHousing() || S.me.housing || "affitto";
+    var casa = list.filter(function (f) { return f.kind === "casa"; })[0] || { id: "rent", name: "Affitto", amount: 0, due: 1, split: true, kind: "casa", end: "" };
+    ["fx-casa", "fx-loans", "fx-edit"].forEach(function (id) { $(id).innerHTML = ""; });
+    $("fx-casa").appendChild(fxBlock(casa, "casa", housing));
+    list.forEach(function (f) { if (f.kind === "loan") $("fx-loans").appendChild(fxBlock(f, "loan")); else if (f.kind !== "casa") $("fx-edit").appendChild(fxBlock(f, "fix")); });
+  }
+  function readFixedEditor() {
+    var out = [], hs = readHousing() || S.me.housing;
+    document.querySelectorAll("#fx-casa .fxe, #fx-loans .fxe, #fx-edit .fxe").forEach(function (d) {
+      var kind = d.getAttribute("data-kind"), amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
+      var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
+      var nm = d.querySelector(".fx-name");
+      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked });
+    });
+    return out;
+  }
+
+  /* ---------- tragitti ---------- */
+  var WD = [[1, "Lun"], [2, "Mar"], [3, "Mer"], [4, "Gio"], [5, "Ven"], [6, "Sab"], [0, "Dom"]];
+  function renderRoutes(list) {
+    var box = $("rt-edit"); box.innerHTML = "";
+    if (!list.length) box.innerHTML = '<p class="empty">Nessun tragitto: non conto pedaggi né carburante per spostamenti.</p>';
+    list.forEach(function (r) {
+      var d = document.createElement("div"); d.className = "fxe rte"; d.setAttribute("data-id", r.id);
+      d.innerHTML = '<label class="f">Nome del tragitto<input type="text" class="rt-name" autocomplete="off" maxlength="40" placeholder="Es. Giardini Naxos → Taormina" value="' + esc(r.name) + '"></label>'
+        + '<div class="fields"><label class="f">Km di sola andata<input type="text" class="rt-km" inputmode="decimal" autocomplete="off" value="' + txt(r.km) + '"></label>'
+        + '<label class="f">Pedaggio o biglietto, solo andata (€)<input type="text" class="rt-toll" inputmode="decimal" autocomplete="off" value="' + txt(r.toll) + '"></label></div>'
+        + '<label class="f">Come ti muovi<select class="rt-car"><option value="diesel">Auto diesel</option><option value="benzina">Auto a benzina</option><option value="none">Senza auto (treno, bus, a piedi)</option></select></label>'
+        + '<div class="f"><span style="font-weight:500">Giorni in cui lo fai, andata e ritorno</span><div class="wds">' + WD.map(function (w) { return '<label><input type="checkbox" class="rt-wd" value="' + w[0] + '"' + (r.wd.indexOf(w[0]) >= 0 ? " checked" : "") + ">" + w[1] + "</label>"; }).join("") + "</div></div>"
+        + '<button type="button" class="link rt-del">Elimina questo tragitto</button>';
+      d.querySelector(".rt-car").value = r.car;
+      d.querySelectorAll(".wds input").forEach(function (i) { i.parentNode.className = i.checked ? "on" : ""; i.onchange = function () { this.parentNode.className = this.checked ? "on" : ""; }; });
+      d.querySelector(".rt-del").onclick = function () { renderRoutes(readRoutes().filter(function (x) { return x.id !== r.id; })); };
       box.appendChild(d);
     });
   }
-  function readFixedEditor() {
+  function readRoutes() {
     var out = [];
-    document.querySelectorAll("#fx-edit .fxe").forEach(function (d) {
-      var amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
-      out.push({ id: d.getAttribute("data-id"), name: d.querySelector(".fx-name").value.trim().slice(0, 40) || "Spesa fissa", amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked });
+    document.querySelectorAll("#rt-edit .rte").forEach(function (d) {
+      var km = pnum(d.querySelector(".rt-km").value), tl = pnum(d.querySelector(".rt-toll").value), wd = [];
+      d.querySelectorAll(".rt-wd").forEach(function (i) { if (i.checked) wd.push(+i.value); });
+      out.push({ id: d.getAttribute("data-id"), name: d.querySelector(".rt-name").value.trim().slice(0, 40) || "Tragitto", km: isNaN(km) ? 0 : Math.min(1000, km), toll: isNaN(tl) ? 0 : Math.min(500, tl), car: d.querySelector(".rt-car").value, wd: wd });
     });
     return out;
+  }
+
+  /* ---------- viaggi di oggi, profilo da completare, debiti ---------- */
+  var TODAY_KEY = NOW.getFullYear() + "-" + pad2(NOW.getMonth() + 1) + "-" + pad2(NOW.getDate()), tdDate = "";
+  function renderToday() {
+    var sec = $("today"); sec.hidden = !S.saved || !S.routes.length;
+    if (sec.hidden) return;
+    var pr = S.monthKey.split("-"), first = S.monthKey + "-01", last = S.monthKey + "-" + pad2(new Date(+pr[0], +pr[1], 0).getDate()), inp = $("td-date");
+    inp.min = first; inp.max = last;
+    if (!tdDate || tdDate.slice(0, 7) !== S.monthKey) tdDate = TODAY_KEY.slice(0, 7) === S.monthKey ? TODAY_KEY : first;
+    inp.value = tdDate;
+    var dd = tdDate.split("-"), wd = new Date(+dd[0], +dd[1] - 1, +dd[2]).getDay(), p = plan(), tot = 0, html = "";
+    S.routes.forEach(function (r) {
+      var base = r.wd.indexOf(wd) >= 0, o = (S.dayo[tdDate] || {})[r.id], did = o === undefined ? base : !!o, pr2 = p.routes.filter(function (x) { return x.id === r.id; })[0] || { n: 0, cost: 0 };
+      tot += pr2.cost;
+      html += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (did ? " checked" : "") + '><span>' + esc(r.name) + "<small>" + (base ? "Previsto" : "Non previsto") + " in questo giorno · " + pr2.n + (pr2.n === 1 ? " viaggio" : " viaggi") + " nel mese</small></span></label><b class=\"num\">" + eur.format(pr2.cost) + "</b></div>";
+    });
+    $("td-list").innerHTML = html;
+    $("td-sum").textContent = "Costo dei tragitti questo mese (pedaggi e carburante): " + eur.format(tot) + ".";
+    $("td-list").querySelectorAll("input").forEach(function (i) {
+      i.onchange = function () {
+        var rid = this.getAttribute("data-r"), r = S.routes.filter(function (x) { return x.id === rid; })[0]; if (!r) return;
+        var base = r.wd.indexOf(wd) >= 0, day = S.dayo[tdDate] || (S.dayo[tdDate] = {});
+        if (this.checked === base) delete day[rid]; else day[rid] = this.checked ? 1 : 0;
+        if (!Object.keys(day).length) delete S.dayo[tdDate];
+        persist(); renderAll();
+      };
+    });
+  }
+  function renderComplete() {
+    var miss = [], casa = S.fixedList.filter(function (f) { return f.kind === "casa"; })[0];
+    if (!S.me.name) miss.push("il tuo nome"); if (!S.me.live) miss.push("dove vivi"); if (!S.me.work) miss.push("dove lavori");
+    if ((S.me.housing === "affitto" || S.me.housing === "mutuo") && !(casa && casa.amount > 0)) miss.push("quanto paghi di casa");
+    if (!S.routes.some(function (r) { return r.km > 0; })) miss.push("i tuoi tragitti");
+    $("complete").hidden = !S.saved || !miss.length;
+    if (miss.length) $("cmp-text").textContent = "Mancano: " + miss.join(", ") + ". Ci vuole un minuto e il piano diventa molto più preciso.";
+  }
+  function renderDebts() {
+    var items = S.fixedList.filter(function (f) { return f.amount > 0 && f.end && f.end >= S.monthKey; }), a = S.monthKey.split("-"), tot = 0;
+    $("ln-sum").innerHTML = items.length ? items.map(function (f) {
+      var b = f.end.split("-"), n = (+b[0] - +a[0]) * 12 + (+b[1] - +a[1]) + 1; tot += n * f.amount;
+      return "<b>" + esc(f.name) + "</b>: " + (n === 1 ? "resta 1 rata" : "restano " + n + " rate") + " da " + eur.format(f.amount) + ", ancora " + eur.format(n * f.amount) + " da pagare (ultima a " + mlabel(f.end) + ").";
+    }).join("<br>") + (items.length > 1 ? "<br><b>In tutto ancora " + eur.format(tot) + "</b>." : "") : "Nessun debito con una data di fine.";
   }
 
   /* ---------- entrate extra e versamenti ---------- */
@@ -1456,6 +1626,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
       if (!S.extra || typeof S.extra !== "object") S.extra = {};
       if (!S.monthKey) S.monthKey = CUR;
+      migrate(o);
       pending = S.monthKey < CUR ? CUR : null;
       S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {}; fillAdvisorInputs(); markOpts();
       persist(); renderAll(); fillForm(S); $("bk-text").value = ""; toast("Dati ripristinati ✓");
@@ -1470,7 +1641,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   /* ---------- navigazione ---------- */
   var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["obiettivi", "Obiettivi"]], storico: [],
-    profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Auto"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
+    profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
     var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
@@ -1496,7 +1667,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     curView = h;
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderComplete(); renderDebts(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -1521,7 +1692,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("iv-form").onsubmit = addInvested;
   $("exp-note").onchange = function () { var c = NOTE_CAT[this.value.trim()]; if (c && !editId) { S.cat = c; renderChips(); } };
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
-  $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5] }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
+  $("td-date").onchange = function () { if (this.value && this.value.slice(0, 7) === S.monthKey) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
+  document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
   setupBackup();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
