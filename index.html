@@ -769,6 +769,12 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <h2 id="t-p1">Quanto prendi</h2>
       <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
     </section>
+    <section data-sub="io" class="card" aria-labelledby="t-pay">
+      <h2 id="t-pay">Quando arriva lo stipendio</h2>
+      <p class="hint">Il tuo mese va dal giorno della paga fino al giorno prima della paga successiva. Se il mese è più corto, vale l'ultimo giorno. Metti 1 per il mese di calendario.</p>
+      <label class="f" for="payDay">Giorno della paga (1–31)<input id="payDay" type="text" inputmode="numeric" autocomplete="off"></label>
+      <p class="small muted" id="pay-prev"></p>
+    </section>
     <section data-sub="io" class="card" aria-labelledby="t-mm">
       <h2 id="t-mm">Tredicesima e quattordicesima</h2>
       <p class="hint">Se le hai, scrivi quanto ti arriva in busta, al netto. Il piano le aggiunge alle entrate di dicembre e di luglio. Lascia 0 se non le hai.</p>
@@ -932,13 +938,30 @@ create policy "solo i miei dati" on stipendio_pilota
 
   var NOW = new Date();
   function mkOf(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
-  function mlabel(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(new Date(+p[0], +p[1] - 1, 1)); }
-  function mname(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(new Date(+p[0], +p[1] - 1, 1)); }
-  var CUR = mkOf(NOW);
-  var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
-  var DAYS_LEFT = DIM - NOW.getDate() + 1;
+  var PAYDAY = 1;
+  function dimOf(y, m0) { return new Date(y, m0 + 1, 0).getDate(); }
+  function startOf(key) { var q = key.split("-"), y = +q[0], m = +q[1] - 1; return new Date(y, m, Math.min(PAYDAY, dimOf(y, m))); }
+  function nextKey(key) { var q = key.split("-"); return mkOf(new Date(+q[0], +q[1], 1)); }
+  function prevKey(key) { var q = key.split("-"); return mkOf(new Date(+q[0], +q[1] - 2, 1)); }
+  function endOf(key) { var e = startOf(nextKey(key)); e.setDate(e.getDate() - 1); return e; }
+  function psStr(key) { return ymd(startOf(key)); }
+  function peStr(key) { return ymd(endOf(key)); }
+  function periodKeyFor(d) { var k = mkOf(d), t = new Date(d.getFullYear(), d.getMonth(), d.getDate()); return t >= startOf(k) ? k : prevKey(k); }
+  var CUR, DIM, DAYS_LEFT, DAYNUM;
+  function setPeriod() {
+    CUR = periodKeyFor(NOW);
+    var s0 = startOf(CUR), e0 = endOf(CUR), t = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+    DIM = Math.round((e0 - s0) / 864e5) + 1; DAYNUM = Math.round((t - s0) / 864e5) + 1; DAYS_LEFT = DIM - DAYNUM + 1;
+  }
+  function applyPay() { PAYDAY = Math.min(31, Math.max(1, Math.round(+S.payDay) || 1)); setPeriod(); }
+  setPeriod();
+  function mlabel(key) { return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(endOf(key)); }
+  function mname(key) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(endOf(key)); }
+  function mnameCal(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(new Date(+p[0], +p[1] - 1, 1)); }
+  function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
+  function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -957,7 +980,7 @@ create policy "solo i miei dati" on stipendio_pilota
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["m13", "m13", 0, 1e7], ["m14", "m14", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
+  var FIELDS = [["payDay", "payDay", 1, 31], ["salary", "salary", 0, 1e7], ["m13", "m13", 0, 1e7], ["m14", "m14", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
@@ -974,6 +997,7 @@ create policy "solo i miei dati" on stipendio_pilota
   ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
   if (!S.extra || typeof S.extra !== "object") S.extra = {};
   if (!S.history || typeof S.history !== "object") S.history = {};
+  applyPay();
   if (!S.monthKey) S.monthKey = CUR;
   S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {};
   if (!S.dv || S.dv < 2) { if (S.tollOne === 4) S.tollOne = 3.3; S.dv = 2; }
@@ -1033,9 +1057,9 @@ create policy "solo i miei dati" on stipendio_pilota
   function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function routeCount(r, mk, planOnly) {
-    var pr = mk.split("-"), y = +pr[0], m = +pr[1] - 1, dim = new Date(y, m + 1, 0).getDate(), n = 0;
-    for (var d = 1; d <= dim; d++) {
-      var base = r.wd.indexOf(new Date(y, m, d).getDay()) >= 0, o = planOnly ? undefined : (S.dayo[mk + "-" + pad2(d)] || {})[r.id];
+    var n = 0, e0 = endOf(mk);
+    for (var d = new Date(startOf(mk)); d <= e0; d.setDate(d.getDate() + 1)) {
+      var k = ymd(d), base = r.wd.indexOf(d.getDay()) >= 0, o = planOnly ? undefined : (S.dayo[k] || {})[r.id];
       if (o === undefined ? base : !!o) n++;
     }
     return n;
@@ -1043,7 +1067,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function plan() {
     var sal = S.salary;
     var sh = Math.min(100, Math.max(1, S.share)) / 100;
-    var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0) + (S.monthKey.slice(5) === "12" ? S.m13 || 0 : 0) + (S.monthKey.slice(5) === "07" ? S.m14 || 0 : 0);
+    var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0) + (endOf(S.monthKey).getMonth() === 11 ? S.m13 || 0 : 0) + (endOf(S.monthKey).getMonth() === 6 ? S.m14 || 0 : 0);
     var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split, end: f.end || "", kind: f.kind }; });
     var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
     var spesa = Math.round(sal * S.spesaPct / 100);
@@ -1086,10 +1110,15 @@ create policy "solo i miei dati" on stipendio_pilota
     var fixTot = p.fixedTot, paidSum = 0; fixed.forEach(function (f) { if (pd[f.id]) paidSum += f.amt; });
     return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal + p.extra - paidSum - A, extra: p.extra, invested: invM, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left, tripPlan: Math.round(p.tripCostPlan), tripReal: Math.round(p.tripCost) };
   }
+  function dueDate(f, key) {
+    var s0 = startOf(key), c = new Date(s0.getFullYear(), s0.getMonth(), Math.min(f.due, dimOf(s0.getFullYear(), s0.getMonth())));
+    if (c < s0) c = new Date(s0.getFullYear(), s0.getMonth() + 1, Math.min(f.due, dimOf(s0.getFullYear(), s0.getMonth() + 1)));
+    return c;
+  }
   function dueInfo(f) {
-    var d = Math.min(f.due, DIM);
+    var dd = dueDate(f, S.monthKey), d = PAYDAY > 1 ? dfDay.format(dd) : dd.getDate();
     if (S.monthKey !== CUR) return { t: "Scade il " + d, diff: null };
-    var diff = d - NOW.getDate();
+    var diff = Math.round((dd - new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate())) / 864e5);
     if (diff < 0) return { t: "Scaduta da " + (-diff) + (diff === -1 ? " giorno" : " giorni"), diff: diff };
     if (diff === 0) return { t: "Scade oggi", diff: 0 };
     return { t: "Scade il " + d + " · tra " + diff + (diff === 1 ? " giorno" : " giorni"), diff: diff };
@@ -1150,7 +1179,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function renderHome() {
     var p = plan();
-    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
+    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (PAYDAY > 1 ? " (" + plabel(S.monthKey) + ")" : "") + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
     $("sal-big").textContent = eur.format(p.sal);
     $("example").hidden = !!S.saved;
     var nsp = Object.keys(S.spent).reduce(function (a, k) { return a + S.spent[k].length; }, 0);
@@ -1246,7 +1275,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var lf0 = m.V - m.A, isCur0 = S.monthKey === CUR, day = isCur0 ? lf0 / DAYS_LEFT : lf0, el = $("hm-today");
       el.style.color = day < 0 ? "#ffb59a" : "";
       countTo(el, Math.round(day));
-      $("hero-sub").textContent = isCur0 ? "giorno " + NOW.getDate() + " di " + DIM + " · budget rimasto " + eur.format(lf0) : "budget rimasto del mese";
+      $("hero-sub").textContent = isCur0 ? "giorno " + DAYNUM + " di " + DIM + " · budget rimasto " + eur.format(lf0) : "budget rimasto del mese";
     })();
     $("hero-fix").textContent = "Fisse " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
     $("hero-budget").textContent = (m.V > 0 ? Math.round(m.A / m.V * 100) : 0) + "% del budget speso";
@@ -1305,8 +1334,8 @@ create policy "solo i miei dati" on stipendio_pilota
     }).join("");
     var list = (S.spent[S.monthKey] || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
     fillNotes();
-    var dt = $("exp-date"), mp = S.monthKey.split("-"), lastD = new Date(+mp[0], +mp[1], 0).getDate();
-    dt.min = S.monthKey + "-01"; dt.max = S.monthKey + "-" + String(lastD).padStart(2, "0");
+    var dt = $("exp-date");
+    dt.min = psStr(S.monthKey); dt.max = peStr(S.monthKey);
     if (!dt.value || dt.value < dt.min || dt.value > dt.max) dt.value = S.monthKey === CUR ? ymd(NOW) : dt.max;
     var box = $("exp-list"); box.innerHTML = "";
     if (!list.length) { box.innerHTML = '<p class="empty">Ancora nessuna spesa. Segna la prima qui sopra.</p>'; return; }
@@ -1331,7 +1360,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.14";
+  var APP_VERSION = "2026-11-12.15";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1347,7 +1376,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var n = pnum($("exp-amount").value);
     if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("exp-amount").focus(); return; }
     var dv = $("exp-date").value;
-    if (dv && dv.slice(0, 7) !== S.monthKey) { toast("La data deve essere in " + mlabel(S.monthKey)); return; }
+    if (dv && !inMonth(dv)) { toast("La data deve essere tra il " + dfDay.format(startOf(S.monthKey)) + " e il " + dfDay.format(endOf(S.monthKey))); return; }
     var when = dv ? new Date(dv + "T12:00:00") : new Date(), note = $("exp-note").value.trim().slice(0, 60);
     var list = (S.spent[S.monthKey] || []).slice();
     if (editId) list = list.map(function (x) { return x.id === editId ? Object.assign({}, x, { amount: n, cat: S.cat, note: note, date: when.toISOString() }) : x; });
@@ -1412,6 +1441,7 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- Profilo ---------- */
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
+    if ($("payDay").oninput) $("payDay").oninput();
     var me = src.me || DEFAULTS.me;
     $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || "";
     renderFixedEditor(src.fixedList, me.housing);
@@ -1444,7 +1474,14 @@ create policy "solo i miei dati" on stipendio_pilota
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
     next.profile = pr; next.saved = true; next.fixedList = readFixedEditor(); next.routes = readRoutes();
     next.me = { name: $("me-name").value.trim().slice(0, 30), live: $("me-live").value.trim().slice(0, 40), work: $("me-work").value.trim().slice(0, 40), home: $("me-home").value.trim().slice(0, 40), housing: readHousing() || S.me.housing };
-    Object.assign(S, next); persist(); renderAll(); fillForm(S);
+    var oldCur = CUR;
+    Object.assign(S, next); applyPay();
+    if (CUR !== oldCur && S.monthKey === oldCur) {
+      S.monthKey = CUR;
+      ["spent", "paid", "extra"].forEach(function (k) { if (S[k][oldCur] && !S[k][CUR]) { S[k][CUR] = S[k][oldCur]; delete S[k][oldCur]; } });
+    }
+    pending = S.monthKey < CUR ? CUR : null;
+    persist(); renderAll(); fillForm(S);
     location.hash = "#home"; showView();
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
   }
@@ -1638,7 +1675,7 @@ create policy "solo i miei dati" on stipendio_pilota
       svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(100).toFixed(1) + '" y2="' + Y(100).toFixed(1) + '" stroke-dasharray="3 4" style="stroke:var(--line)"/>';
       svg += '<path d="' + d + ' L' + X(ser.length - 1).toFixed(1) + " " + (T + ph) + " L" + L + " " + (T + ph) + ' Z" style="fill:' + col + ';opacity:0.12"/>';
       svg += '<path d="' + d + '" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:' + col + '"/>';
-      var fm = function (k) { var q = k.split("-"); return mname(q[0] + "-" + q[1]).slice(0, 3) + " " + q[0].slice(2); };
+      var fm = function (k) { var q = k.split("-"); return mnameCal(q[0] + "-" + q[1]).slice(0, 3) + " " + q[0].slice(2); };
       svg += '<text x="' + L + '" y="' + (H - 6) + '" font-size="11" style="fill:var(--muted)">' + fm(ser[0][0]) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" font-size="11" text-anchor="end" style="fill:var(--muted)">' + fm(ser[ser.length - 1][0]) + "</text></svg>";
       ch.innerHTML = svg;
       var last = ser[ser.length - 1][1], peak = 0, dd = 0; ser.forEach(function (r) { peak = Math.max(peak, r[1]); dd = Math.min(dd, r[1] / peak - 1); });
@@ -1785,7 +1822,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderAlerts() {
     var box = $("alerts"); box.hidden = true;
     if (!S.saved || S.monthKey !== CUR) return;
-    var m = liveMonth(), dim = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate(), day = NOW.getDate(), f = day / dim, out = [];
+    var m = liveMonth(), dim = DIM, day = DAYNUM, f = day / dim, out = [];
     CATS.forEach(function (c) {
       var sp = m.by[c.id] || 0, b = m.bud[c.id] || 0; if (!(b > 0) || !(sp > 0)) return;
       var rest = dim - day, proj = f >= 0.25 ? sp / f : 0;
@@ -1813,25 +1850,25 @@ create policy "solo i miei dati" on stipendio_pilota
     if (did === base) delete day[r.id]; else day[r.id] = did ? 1 : 0;
     if (!Object.keys(day).length) delete S.dayo[date];
   }
-  function inMonth(k) { return k.slice(0, 7) === S.monthKey; }
+  function inMonth(k) { return k >= psStr(S.monthKey) && k <= peStr(S.monthKey); }
   function renderCalendar() {
     var has = S.routes.length > 0;
-    if (!calSel || !inMonth(calSel)) calSel = inMonth(TODAY_KEY) ? TODAY_KEY : S.monthKey + "-01";
+    if (!calSel || !inMonth(calSel)) calSel = inMonth(TODAY_KEY) ? TODAY_KEY : psStr(S.monthKey);
     var grid = $("cal-grid");
     if (!has) { grid.innerHTML = '<p class="empty" style="grid-column:1/-1">Aggiungi i tuoi tragitti in Profilo → Viaggi per usare il calendario.</p>'; $("cal-day").innerHTML = ""; $("wk-grid").innerHTML = ""; $("wk-quick").innerHTML = ""; $("rp-box").innerHTML = ""; return; }
-    var pr = S.monthKey.split("-"), y = +pr[0], m = +pr[1] - 1, dim = new Date(y, m + 1, 0).getDate(), lead = ((new Date(y, m, 1).getDay() || 7) - 1), h = "";
+    var sD = startOf(S.monthKey), eD = endOf(S.monthKey), lead = ((sD.getDay() || 7) - 1), h = "";
     ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
     for (var i = 0; i < lead; i++) h += "<span></span>";
-    for (var d = 1; d <= dim; d++) {
-      var k = S.monthKey + "-" + pad2(d), dots = S.routes.map(function (r, ri) { var did = didTrip(r, k), confirmed = S.dayo[k] && S.dayo[k][r.id] !== undefined || S.conf[mondayOf(k)];
+    for (var dd0 = new Date(sD); dd0 <= eD; dd0.setDate(dd0.getDate() + 1)) {
+      var d = dd0.getDate(), k = ymd(dd0), dots = S.routes.map(function (r, ri) { var did = didTrip(r, k), confirmed = S.dayo[k] && S.dayo[k][r.id] !== undefined || S.conf[mondayOf(k)];
         if (!did) return ""; return '<i class="' + (confirmed || k > TODAY_KEY ? (confirmed ? "" : "pl") : "pl") + '" style="background:' + ROUTE_COL[ri % 5] + ";border-color:" + ROUTE_COL[ri % 5] + '"></i>'; }).join("");
-      h += '<button type="button" data-d="' + k + '" class="' + (k === calSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + d + ' ' + mname(S.monthKey) + '">' + d + '<span class="dots">' + dots + "</span></button>";
+      h += '<button type="button" data-d="' + k + '" class="' + (k === calSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + d + ' ' + mnameD(dd0) + '">' + d + '<span class="dots">' + dots + "</span></button>";
     }
     grid.innerHTML = h;
     grid.querySelectorAll("button").forEach(function (b) { b.onclick = function () { calSel = this.getAttribute("data-d"); renderCalendar(); }; });
     $("cal-lgd").innerHTML = S.routes.map(function (r, ri) { return '<span><i style="background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span>"; }).join("");
     // dettaglio del giorno
-    var wd = dOf(calSel).getDay(), dh = '<h3 style="margin:14px 0 4px;font-size:15px">' + WDN[wd] + " " + dOf(calSel).getDate() + " " + mname(S.monthKey) + "</h3>";
+    var wd = dOf(calSel).getDay(), dh = '<h3 style="margin:14px 0 4px;font-size:15px">' + WDN[wd] + " " + dOf(calSel).getDate() + " " + mnameD(dOf(calSel)) + "</h3>";
     S.routes.forEach(function (r) { dh += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (didTrip(r, calSel) ? " checked" : "") + "><span>" + esc(r.name) + "<small>" + (r.wd.indexOf(wd) >= 0 ? "Previsto nel programma" : "Non previsto nel programma") + "</small></span></label></div>"; });
     $("cal-day").innerHTML = dh;
     $("cal-day").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(calSel, r, this.checked); persist(); renderAll(); }; });
@@ -1855,8 +1892,8 @@ create policy "solo i miei dati" on stipendio_pilota
     var done = !!S.conf[mon]; $("wk-conf").textContent = done ? "Settimana confermata ✓ (tocca per togliere)" : "Conferma questa settimana";
     $("wk-conf").onclick = function () { if (S.conf[mon]) delete S.conf[mon]; else S.conf[mon] = 1; persist(); renderAll(); };
     $("wk-st").textContent = done ? "I viaggi di questa settimana contano come reali." : "Finché non confermi, i viaggi di questa settimana restano una stima del programma.";
-    $("wk-prev").onclick = function () { calSel = addDays(mon, -7); if (!inMonth(calSel)) calSel = addDays(mon, -1); if (!inMonth(calSel)) calSel = S.monthKey + "-01"; renderCalendar(); };
-    $("wk-next").onclick = function () { calSel = addDays(mon, 7); if (!inMonth(calSel)) calSel = S.monthKey + "-" + pad2(dim); renderCalendar(); };
+    $("wk-prev").onclick = function () { calSel = addDays(mon, -7); if (!inMonth(calSel)) calSel = addDays(mon, -1); if (!inMonth(calSel)) calSel = psStr(S.monthKey); renderCalendar(); };
+    $("wk-next").onclick = function () { calSel = addDays(mon, 7); if (!inMonth(calSel)) calSel = peStr(S.monthKey); renderCalendar(); };
     // resoconto
     var p = plan(), tp = 0, tr = 0;
     var hh = p.routes.map(function (r) { tp += r.costPlan; tr += r.cost; return '<div class="rpt"><b>' + esc(r.name) + "</b><span class=\"num\">" + r.nPlan + " → " + r.n + '</span><span class="num">' + eur.format(r.costPlan) + " → " + eur.format(r.cost) + "</span></div>"; }).join("");
@@ -1874,9 +1911,9 @@ create policy "solo i miei dati" on stipendio_pilota
     box.hidden = false; box.setAttribute("data-mon", mon);
   }
   function icsExport() {
-    var pr = S.monthKey.split("-"), dim = new Date(+pr[0], +pr[1], 0).getDate(), L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Stipendio Pilota//IT", "CALSCALE:GREGORIAN"], n = 0;
-    for (var d = 1; d <= dim; d++) {
-      var k = S.monthKey + "-" + pad2(d), nk = addDays(k, 1);
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Stipendio Pilota//IT", "CALSCALE:GREGORIAN"], n = 0;
+    for (var dd1 = new Date(startOf(S.monthKey)); dd1 <= endOf(S.monthKey); dd1.setDate(dd1.getDate() + 1)) {
+      var k = ymd(dd1), nk = addDays(k, 1);
       S.routes.forEach(function (r) { if (didTrip(r, k)) { n++; L.push("BEGIN:VEVENT", "UID:" + r.id + "-" + k + "@stipendio-pilota", "DTSTAMP:" + k.replace(/-/g, "") + "T080000Z", "DTSTART;VALUE=DATE:" + k.replace(/-/g, ""), "DTEND;VALUE=DATE:" + nk.replace(/-/g, ""), "SUMMARY:" + r.name.replace(/[,;\n]/g, " "), "END:VEVENT"); } });
     }
     L.push("END:VCALENDAR");
@@ -1889,9 +1926,9 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderToday() {
     var sec = $("today"); sec.hidden = !S.saved || !S.routes.length;
     if (sec.hidden) return;
-    var pr = S.monthKey.split("-"), first = S.monthKey + "-01", last = S.monthKey + "-" + pad2(new Date(+pr[0], +pr[1], 0).getDate()), inp = $("td-date");
+    var first = psStr(S.monthKey), last = peStr(S.monthKey), inp = $("td-date");
     inp.min = first; inp.max = last;
-    if (!tdDate || tdDate.slice(0, 7) !== S.monthKey) tdDate = TODAY_KEY.slice(0, 7) === S.monthKey ? TODAY_KEY : first;
+    if (!tdDate || !inMonth(tdDate)) tdDate = inMonth(TODAY_KEY) ? TODAY_KEY : first;
     inp.value = tdDate;
     var dd = tdDate.split("-"), wd = new Date(+dd[0], +dd[1] - 1, +dd[2]).getDay(), p = plan(), tot = 0, html = "";
     S.routes.forEach(function (r) {
@@ -2163,6 +2200,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["spent", "history", "paid"].forEach(function (k) { if (!S[k] || typeof S[k] !== "object") S[k] = {}; });
     ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
     if (!S.extra || typeof S.extra !== "object") S.extra = {};
+    applyPay();
     if (!S.monthKey) S.monthKey = CUR;
     migrate(o);
     pending = S.monthKey < CUR ? CUR : null;
@@ -2293,7 +2331,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
+  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -2329,7 +2367,11 @@ create policy "solo i miei dati" on stipendio_pilota
   $("cal-ics").onclick = icsExport;
   $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; if (!inMonth(calSel)) calSel = S.monthKey + "-01"; location.hash = "#spese/calendario"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
-  $("td-date").onchange = function () { if (this.value && this.value.slice(0, 7) === S.monthKey) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
+  $("payDay").oninput = function () {
+    var v = Math.min(31, Math.max(1, Math.round(pnum(this.value)) || 1)), keep = PAYDAY, el = $("pay-prev"); PAYDAY = v;
+    var k = periodKeyFor(NOW); el.textContent = "Con il giorno " + v + " il mese in corso va dal " + dfDay.format(startOf(k)) + " al " + dfDay.format(endOf(k)) + "."; PAYDAY = keep;
+  };
+  $("td-date").onchange = function () { if (this.value && inMonth(this.value)) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
   setupBackup();
   setupSync();
@@ -2338,7 +2380,7 @@ create policy "solo i miei dati" on stipendio_pilota
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
   document.querySelectorAll('input[type="text"]').forEach(function (i) { i.addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); }); });
 
-  (function () { var h = "", d = new Date(NOW.getFullYear(), NOW.getMonth(), 1); for (var i = 1; i <= 48; i++) { var dd = new Date(d.getFullYear(), d.getMonth() + i, 1), k = mkOf(dd); h += '<option value="' + k + '">' + mlabel(k) + "</option>"; } $("g-when").innerHTML = h; $("g-when").value = mkOf(new Date(d.getFullYear(), d.getMonth() + 12, 1)); })();
+  (function () { var h = "", k = CUR, k12 = CUR; for (var i = 1; i <= 48; i++) { k = nextKey(k); if (i === 12) k12 = k; h += '<option value="' + k + '">' + mlabel(k) + "</option>"; } $("g-when").innerHTML = h; $("g-when").value = k12; })();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
   $("ver").textContent = "Versione " + APP_VERSION;
   document.addEventListener("visibilitychange", function () {
