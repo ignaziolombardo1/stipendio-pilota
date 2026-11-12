@@ -700,14 +700,6 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
     <div><h1>Impostazioni</h1><p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano si aggiorna da solo.</p></div>
-    <section data-sub="io" class="card" aria-labelledby="t-mm">
-      <h2 id="t-mm">Tredicesima e quattordicesima</h2>
-      <p class="hint">Se le hai, scrivi quanto ti arriva in busta, al netto. Il piano le aggiunge alle entrate di dicembre e di luglio. Lascia 0 se non le hai.</p>
-      <div class="fields">
-        <label class="f" for="m13">Tredicesima, a dicembre (€)<input id="m13" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="m14">Quattordicesima, a luglio (€)<input id="m14" type="text" inputmode="decimal" autocomplete="off"></label>
-      </div>
-    </section>
     <section data-sub="io" class="card" aria-labelledby="t-me">
       <h2 id="t-me">Chi sei</h2>
       <p class="hint">Servono solo a personalizzare l'app. Restano in questo telefono.</p>
@@ -721,6 +713,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     <section data-sub="io" class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
       <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
+    </section>
+    <section data-sub="io" class="card" aria-labelledby="t-mm">
+      <h2 id="t-mm">Tredicesima e quattordicesima</h2>
+      <p class="hint">Se le hai, scrivi quanto ti arriva in busta, al netto. Il piano le aggiunge alle entrate di dicembre e di luglio. Lascia 0 se non le hai.</p>
+      <div class="fields">
+        <label class="f" for="m13">Tredicesima, a dicembre (€)<input id="m13" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="m14">Quattordicesima, a luglio (€)<input id="m14" type="text" inputmode="decimal" autocomplete="off"></label>
+      </div>
     </section>
     <section data-sub="io" class="card" aria-labelledby="t-pc">
       <h2 id="t-pc">In coppia</h2>
@@ -1263,7 +1263,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.12";
+  var APP_VERSION = "2026-11-12.13";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1322,7 +1322,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var ok = ms.filter(function (m) { return m.A <= m.V; }).length;
     $("st-year-stats").innerHTML = '<div><b class="num">' + eur.format(inc) + "</b>Entrate</div><div><b class=\"num\">" + eur.format(spent) + "</b>Speso nel budget variabile</div><div><b class=\"num\" style=\"color:" + (saved < 0 ? "var(--bad)" : "var(--accent)") + '">' + eur.format(saved) + "</b>Risparmiato</div><div><b class=\"num\">" + eur.format(inv) + "</b>Investito</div>";
     var avg = saved / ms.length, left = yrSel === String(NOW.getFullYear()) ? 12 - ms.length : 0;
-    $("st-year-note").textContent = ms.length + (ms.length === 1 ? " mese" : " mesi") + " registrati, bilancio ok in " + ok + "." + (inc > 0 ? " Hai messo da parte il " + Math.round(saved / inc * 100) + "% delle entrate." : "") + (left > 0 && ms.length >= 2 ? " Se continui così, a fine anno sarai a circa " + eur.format(saved + avg * left) + " risparmiati." : "");
+    $("st-year-note").textContent = ms.length + (ms.length === 1 ? " mese registrato" : " mesi registrati") + ", bilancio ok in " + ok + "." + (inc > 0 ? " Hai messo da parte il " + Math.round(saved / inc * 100) + "% delle entrate." : "") + (left > 0 && ms.length >= 2 ? " Se continui così, a fine anno sarai a circa " + eur.format(saved + avg * left) + " risparmiati." : "");
   }
   function renderStorico() {
     var keys = Object.keys(S.history).sort().reverse().filter(function (k) { return k !== S.monthKey; });
@@ -2221,11 +2221,11 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     if (h === "profilo" && curView !== "profilo") fillForm(S);
     curView = h;
-    $("fab").hidden = h === "profilo" || !S.saved;
+    $("fab").hidden = h === "profilo" || (h === "spese" && sub === "spese") || !S.saved;
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || !S.saved; }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
