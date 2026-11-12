@@ -1,0 +1,23 @@
+name: Aggiorna dati di mercato
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/aggiorna.py"
+      - ".github/workflows/dati.yml"
+permissions:
+  contents: write
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/aggiorna.py
+      - name: Salva se è cambiato
+        run: |
+          git config user.name "dati-bot"
+          git config user.email "dati-bot@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || (git commit -m "Aggiorna dati di mercato" && git push)

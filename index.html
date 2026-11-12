@@ -257,6 +257,20 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .tdrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .tdrow small { display: block; color: var(--muted); font-size: 12px; }
 #td-date { width: auto; padding: 9px 12px; }
+.seg button { flex: 1; padding: 11px 6px; border-radius: 9px; border: 0; background: transparent; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted); cursor: pointer; }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.nw { display: flex; flex-direction: column; gap: 3px; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.nw b { font-weight: 600; line-height: 1.35; }
+.nw small { color: var(--muted); font-size: 12px; }
+.nw .why { font-size: 13px; color: var(--muted); background: var(--soft); border-radius: 10px; padding: 8px 10px; margin-top: 4px; }
+.evr { display: flex; gap: 12px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.evr .dd { flex: none; width: 52px; text-align: center; background: var(--soft); border-radius: 10px; padding: 6px 0; font-family: var(--font-head); line-height: 1.1; }
+.evr .dd b { display: block; font-size: 20px; } .evr .dd small { font-size: 11px; color: var(--muted); text-transform: capitalize; }
+.evr p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.stat3 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat3 div { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; color: var(--muted); }
+.stat3 b { display: block; font-family: var(--font-head); font-size: 20px; color: var(--ink); }
+.hero #hm-ev { font-size: 13px; }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { flex: 1; text-align: center; padding: 11px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -311,6 +325,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div class="chips2"><span class="chip2" id="hero-fix"></span><span class="chip2" id="hero-budget"></span></div>
       <p id="hm-day"></p>
       <p id="hm-due" hidden></p>
+      <p id="hm-ev" hidden></p>
       <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
     </section>
     <section data-sub="home" class="card hl" id="complete" aria-labelledby="t-cmp" hidden>
@@ -526,6 +541,31 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
     </section>
     <p data-sub="consulente" class="disclaimer">Strumento educativo: non è consulenza finanziaria personalizzata e non sostituisce un consulente abilitato. I rendimenti sono ipotesi costanti, non garanzie, e possono anche essere negativi. Le tasse e i costi sono stime.</p>
+    <section data-sub="mercato" class="card" aria-labelledby="t-mk">
+      <h2 id="t-mk">Come sono andati i fondi</h2>
+      <p class="hint">Prezzi veri degli ETF del Consulente. Serve a capire quanto si muovono, non a indovinare cosa farà il mercato.</p>
+      <div class="seg" id="mk-seg" role="group" aria-label="Cosa guardare"><button type="button" data-f="eq">Azioni</button><button type="button" data-f="bond">Obbligazioni</button><button type="button" data-f="mix">Il tuo mix</button></div>
+      <label class="f" for="mk-range">Periodo<select id="mk-range"><option value="1">Ultimo anno</option><option value="3">Ultimi 3 anni</option><option value="5">Ultimi 5 anni</option></select></label>
+      <div class="chartwrap" id="mk-chart"></div>
+      <div class="stat3" id="mk-stats"></div>
+      <p class="small" id="mk-dca"></p>
+      <p class="small muted" id="mk-note"></p>
+    </section>
+    <section data-sub="mercato" class="card" aria-labelledby="t-ev">
+      <h2 id="t-ev">Prossimi appuntamenti</h2>
+      <div id="ev-list"></div>
+      <p class="small muted">Date delle banche centrali dai calendari ufficiali; quelle del 2027 della Fed sono provvisorie. Le scadenze fiscali tornano ogni anno: controlla sempre la data dell'anno in corso.</p>
+    </section>
+    <section data-sub="mercato" class="card" aria-labelledby="t-nw">
+      <h2 id="t-nw">Notizie</h2>
+      <div id="nw-list"></div>
+      <p class="small muted" id="nw-note"></p>
+    </section>
+    <section data-sub="mercato" class="card" aria-labelledby="t-ls">
+      <h2 id="t-ls">Lezione della settimana</h2>
+      <div id="ls-box"></div>
+    </section>
+    <p data-sub="mercato" class="disclaimer">Informazioni e notizie a scopo educativo, non consulenza né invito a comprare o vendere. I rendimenti passati non garantiscono quelli futuri. I titoli delle notizie appartengono alle testate indicate: aprendoli vai sul loro sito.</p>
     <p data-sub="obiettivi" class="hint">Metti da parte per qualcosa di preciso e per le spese che arrivano una volta all'anno.</p>
     <section data-sub="obiettivi" class="card" aria-labelledby="t-g">
       <h2 id="t-g">I tuoi obiettivi</h2>
@@ -1081,7 +1121,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.5";
+  var APP_VERSION = "2026-11-12.6";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1288,6 +1328,123 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("adv-cost").innerHTML = '<div class="entry"><div class="t">ETF a basso costo<small>Costi e bollo ' + nf.format(S.costPct) + '% l\'anno</small></div><b class="num">' + eur.format(etf) + '</b><span></span></div>'
       + '<div class="entry"><div class="t">Fondo con commissioni<small>Ingresso ' + nf.format(a.entry) + "% e gestione " + nf.format(a.mgmt) + '% + bollo 0,2%</small></div><b class="num">' + eur.format(prod) + '</b><span></span></div>'
       + '<div class="entry"><div class="t"><b>Differenza dopo ' + a.years + ' anni</b></div><b class="num" style="color:var(--bad)">' + eur.format(Math.max(0, etf - prod)) + '</b><span></span></div>';
+  }
+
+
+  /* ---------- mercato ---------- */
+  var MK = { data: null, fail: false, f: "eq", range: 3 };
+  var EV_TXT = {
+    bce: "La BCE decide i tassi dell'euro. Influisce su mutui a tasso variabile, obbligazioni e conti deposito. Per chi versa ogni mese non serve reagire.",
+    fed: "La banca centrale americana decide i tassi del dollaro. Muove i mercati di tutto il mondo nel breve, ma non cambia un piano di lungo periodo.",
+    tax: "Scadenza fiscale che torna ogni anno: controlla la data esatta dell'anno in corso sul sito dell'Agenzia delle Entrate.",
+    pac: "Il tuo versamento mensile: stesso giorno, stessa cifra, senza guardare i prezzi."
+  };
+  var EVENTS = [["2026-12-09", "fed", "Riunione della Fed (USA)"], ["2026-12-17", "bce", "Riunione della BCE"],
+    ["2027-01-27", "fed", "Riunione della Fed (USA)"], ["2027-02-04", "bce", "Riunione della BCE"], ["2027-03-17", "fed", "Riunione della Fed (USA)"], ["2027-03-18", "bce", "Riunione della BCE"],
+    ["2027-04-28", "fed", "Riunione della Fed (USA)"], ["2027-04-29", "bce", "Riunione della BCE"], ["2027-06-09", "fed", "Riunione della Fed (USA)"], ["2027-06-10", "bce", "Riunione della BCE"],
+    ["2027-07-22", "bce", "Riunione della BCE"], ["2027-07-28", "fed", "Riunione della Fed (USA)"], ["2027-09-09", "bce", "Riunione della BCE"], ["2027-09-15", "fed", "Riunione della Fed (USA)"],
+    ["2027-10-27", "fed", "Riunione della Fed (USA)"], ["2027-10-28", "bce", "Riunione della BCE"], ["2027-12-08", "fed", "Riunione della Fed (USA)"], ["2027-12-16", "bce", "Riunione della BCE"]];
+  function upcomingEvents(limit) {
+    var t0 = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()), list = EVENTS.slice();
+    for (var y = NOW.getFullYear(); y <= NOW.getFullYear() + 2; y++) list.push([y + "-09-30", "tax", "Ultimo giorno per il modello 730"]);
+    if (S.adv.day > 0) for (var i = 0; i < 4; i++) { var dd = new Date(NOW.getFullYear(), NOW.getMonth() + i, 1), dm = new Date(dd.getFullYear(), dd.getMonth() + 1, 0).getDate(); list.push([dd.getFullYear() + "-" + pad2(dd.getMonth() + 1) + "-" + pad2(Math.min(Math.round(S.adv.day), dm)), "pac", "Versamento del piano d'accumulo"]); }
+    return list.map(function (e) { var q = e[0].split("-"), d = new Date(+q[0], +q[1] - 1, +q[2]); return { d: d, diff: Math.round((d - t0) / 864e5), kind: e[1], t: e[2] }; })
+      .filter(function (e) { return e.diff >= 0; }).sort(function (a, b) { return a.d - b.d; }).slice(0, limit);
+  }
+  function inDays(n) { return n === 0 ? "oggi" : n === 1 ? "domani" : "tra " + n + " giorni"; }
+  var LESSONS = [
+    ["Cos'è un ETF", "Un ETF è un fondo che si compra e si vende in Borsa come un'azione e che copia un indice. Con un solo acquisto possiedi pezzetti di migliaia di aziende, e costa molto meno di un fondo gestito da qualcuno che sceglie i titoli."],
+    ["Il costo che pesa di più", "Un costo dell'1,9% l'anno sembra poco, ma su vent'anni si mangia una parte grande del guadagno. Guarda sempre il costo annuo (TER) e le commissioni di ingresso nel documento KID: sono quasi l'unica cosa che puoi controllare."],
+    ["Perché versare ogni mese", "Con una rata fissa compri più quote quando i prezzi scendono e meno quando salgono. Non devi indovinare il momento giusto: il piano d'accumulo lo fa per te, ed evita la tentazione di fermarti nei crolli."],
+    ["Il fondo di sicurezza viene prima", "Prima di investire tieni da parte alcuni mesi di spese su un conto a cui arrivi subito. Così, se capita un imprevisto, non devi vendere i tuoi investimenti nel momento peggiore."],
+    ["Diversificare", "Non mettere tutto su una sola azienda, un solo Paese o un solo tipo di strumento. Un ETF mondiale diversifica per te; le obbligazioni aggiungono stabilità quando le azioni scendono."],
+    ["Rischio e tempo", "Le azioni nel breve possono perdere anche il 30-40%, ma su orizzonti lunghi nel passato hanno recuperato. Più hai tempo davanti, più puoi permetterti rischio; se i soldi servono tra pochi anni, serve prudenza."],
+    ["L'inflazione", "Con l'inflazione i prezzi salgono e i soldi fermi comprano meno. Un conto a zero interessi perde valore ogni anno: per questo conviene investire la parte che non ti serve a breve."],
+    ["L'interesse composto", "I guadagni producono altri guadagni. Con 100 € al mese per 20 anni versi 24.000 €, ma il capitale finale può essere molto più alto proprio grazie a questo effetto: il tempo conta più dell'importo."],
+    ["Le tasse sugli ETF", "In Italia i guadagni su ETF e azioni sono tassati al 26% (12,5% sui titoli di Stato). Con un broker italiano l'imposta viene trattenuta da lui; con uno estero devi dichiararla tu. Chiedi sempre come funziona."],
+    ["Accumulazione o distribuzione", "Un ETF ad accumulazione reinveste i dividendi da solo, senza che tu faccia nulla. Uno a distribuzione te li paga in contanti. Per chi costruisce un capitale nel tempo, l'accumulazione è più semplice."],
+    ["Ribilanciare", "Se le azioni salgono molto, la tua quota di azioni cresce oltre il piano. Una volta all'anno puoi riportare le percentuali al livello scelto, anche solo indirizzando i nuovi versamenti dove serve."],
+    ["Le notizie e i mercati", "Le notizie raccontano quello che è già successo e i prezzi si sono già mossi. Rincorrerle porta a comprare caro e vendere basso. Un piano scritto prima, e rispettato, batte quasi sempre l'umore del momento."]
+  ];
+  var NEWS_WHY = [
+    [/\bbce\b|\bfed\b|tassi|lagarde|powell|banca centrale/, "Le banche centrali decidono quanto costa il denaro. Sposta i prezzi nel breve, ma non cambia un piano di dieci anni o più."],
+    [/inflazion|prezzi al consumo|caro vita|carovita/, "L'inflazione riduce il valore dei soldi fermi: è il motivo per cui conviene investire ciò che non ti serve a breve."],
+    [/spread|btp|bund|titoli di stato|rendiment/, "Rendimenti e spread dicono quanto costa il debito di uno Stato. Interessano soprattutto alle obbligazioni."],
+    [/borsa|piazza affari|wall street|ftse|nasdaq|dow jones|indici|crollo|record|rally/, "I mercati salgono e scendono ogni giorno. Con una rata fissa compri di più quando i prezzi calano."],
+    [/mutui?\b|prestit|finanziament|banche|conti? deposito/, "Può cambiare il costo di mutui, prestiti e conti: controlla le tue rate e le condizioni."],
+    [/petrolio|carburant|benzina|gasolio|diesel/, "I prezzi dei carburanti entrano nel tuo budget: se salgono, cambia il costo dei tragitti."]
+  ];
+  function newsWhy(t) { t = t.toLowerCase(); for (var i = 0; i < NEWS_WHY.length; i++) if (NEWS_WHY[i][0].test(t)) return NEWS_WHY[i][1]; return ""; }
+  function mkSeries(id) {
+    var f = (MK.data && MK.data.funds || []).filter(function (x) { return x.id === id; })[0];
+    return f && Array.isArray(f.series) ? f.series.filter(function (r) { return Array.isArray(r) && typeof r[1] === "number" && r[1] > 0; }) : [];
+  }
+  function mkIdx() { // serie rebasata a 100 secondo la scelta, tagliata sul periodo
+    var cut = new Date(NOW.getFullYear() - MK.range, NOW.getMonth(), NOW.getDate()), key = cut.getFullYear() + "-" + pad2(cut.getMonth() + 1) + "-" + pad2(cut.getDate());
+    var P = PROFILES[S.profile] || PROFILES.bilanciato, w = P.eq / 100, a = mkSeries("eq").filter(function (r) { return r[0] >= key; }), b = mkSeries("bond").filter(function (r) { return r[0] >= key; }), out;
+    if (MK.f === "eq") out = a; else if (MK.f === "bond") out = b;
+    else {
+      var bm = {}; b.forEach(function (r) { bm[r[0]] = r[1]; });
+      var both = a.filter(function (r) { return bm[r[0]] !== undefined; });
+      if (!both.length) return [];
+      out = both.map(function (r) { return [r[0], w * r[1] / both[0][1] * 100 + (1 - w) * bm[r[0]] / bm[both[0][0]] * 100]; });
+      return out;
+    }
+    return out.length ? out.map(function (r) { return [r[0], r[1] / out[0][1] * 100]; }) : [];
+  }
+  function renderMarket() {
+    document.querySelectorAll("#mk-seg button").forEach(function (b) { b.className = b.getAttribute("data-f") === MK.f ? "on" : ""; b.setAttribute("aria-pressed", b.getAttribute("data-f") === MK.f); });
+    var P = PROFILES[S.profile] || PROFILES.bilanciato, ser = mkIdx(), ch = $("mk-chart");
+    $("mk-seg").querySelector('[data-f="mix"]').textContent = "Il tuo mix " + P.eq + "/" + (100 - P.eq);
+    if (ser.length < 8) {
+      ch.innerHTML = ""; $("mk-stats").innerHTML = ""; $("mk-dca").textContent = "";
+      $("mk-note").textContent = MK.fail ? "I dati di mercato non sono raggiungibili adesso. Riprova più tardi: il resto dell'app funziona come sempre." : "I prezzi compaiono dopo il primo aggiornamento automatico, che avviene ogni mattina. Se è la prima volta, riprova tra poco.";
+    } else {
+      var W = 320, H = 170, L = 8, R = 8, T = 14, B = 24, pw = W - L - R, ph = H - T - B, lo = Math.min.apply(null, ser.map(function (r) { return r[1]; })), hi = Math.max.apply(null, ser.map(function (r) { return r[1]; }));
+      lo = Math.min(lo, 100); hi = Math.max(hi, 100); var pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+      function X(i) { return L + pw * i / (ser.length - 1); } function Y(v) { return T + ph * (1 - (v - lo) / (hi - lo)); }
+      var col = MK.f === "eq" ? "var(--c-invest)" : MK.f === "bond" ? "var(--c-save)" : "var(--c-daily)";
+      var d = ser.map(function (r, i) { return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(r[1]).toFixed(1); }).join(" ");
+      var svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" role="img" aria-label="Andamento del fondo, base 100 all\'inizio del periodo">';
+      svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(100).toFixed(1) + '" y2="' + Y(100).toFixed(1) + '" stroke-dasharray="3 4" style="stroke:var(--line)"/>';
+      svg += '<path d="' + d + ' L' + X(ser.length - 1).toFixed(1) + " " + (T + ph) + " L" + L + " " + (T + ph) + ' Z" style="fill:' + col + ';opacity:0.12"/>';
+      svg += '<path d="' + d + '" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:' + col + '"/>';
+      var fm = function (k) { var q = k.split("-"); return mname(q[0] + "-" + q[1]).slice(0, 3) + " " + q[0].slice(2); };
+      svg += '<text x="' + L + '" y="' + (H - 6) + '" font-size="11" style="fill:var(--muted)">' + fm(ser[0][0]) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" font-size="11" text-anchor="end" style="fill:var(--muted)">' + fm(ser[ser.length - 1][0]) + "</text></svg>";
+      ch.innerHTML = svg;
+      var last = ser[ser.length - 1][1], peak = 0, dd = 0; ser.forEach(function (r) { peak = Math.max(peak, r[1]); dd = Math.min(dd, r[1] / peak - 1); });
+      var chg = last - 100;
+      $("mk-stats").innerHTML = '<div><b class="num" style="color:' + (chg < 0 ? "var(--bad)" : "var(--accent)") + '">' + (chg > 0 ? "+" : "") + nf.format(Math.round(chg * 10) / 10) + '%</b>Variazione nel periodo</div><div><b class="num">' + nf.format(Math.round(dd * 1000) / 10) + '%</b>Calo massimo dal picco</div>';
+      // simulazione rata
+      var p = plan(), rata = S.adv.rata > 0 ? S.adv.rata : (p.inv > 0 ? Math.round(p.inv) : 100), seen = {}, buys = [];
+      ser.forEach(function (r) { var m = r[0].slice(0, 7); if (!seen[m]) { seen[m] = 1; buys.push(r[1]); } });
+      var units = buys.reduce(function (a, v) { return a + rata / v; }, 0), val = units * last, inv = rata * buys.length, gain = val - inv;
+      $("mk-dca").innerHTML = "Se in questo periodo avessi versato <b>" + eur.format(rata) + "</b> al mese (" + buys.length + " versamenti, " + eur.format(inv) + "), oggi la rata accumulata varrebbe circa <b>" + eur.format(val) + "</b>: " + (gain >= 0 ? "un guadagno" : "una perdita") + " di <b>" + eur.format(Math.abs(gain)) + "</b> (" + nf.format(Math.round(Math.abs(gain) / inv * 1000) / 10) + "%) prima di tasse e costi. Il passato non garantisce il futuro.";
+      var upd = MK.data && MK.data.updated ? new Date(MK.data.updated) : null;
+      $("mk-note").textContent = "Prezzi di chiusura settimanali" + (MK.f === "mix" ? " dei due ETF, senza ribilanciamenti" : "") + (upd && !isNaN(upd) ? ", aggiornati il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(upd) : "") + ". Base 100 all'inizio del periodo.";
+    }
+    var evs = upcomingEvents(8);
+    $("ev-list").innerHTML = evs.map(function (e) {
+      return '<div class="evr"><div class="dd"><b>' + e.d.getDate() + "</b><small>" + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(e.d) + "</small></div><div><b>" + esc(e.t) + '</b> <small class="muted">' + inDays(e.diff) + "</small><p>" + esc(EV_TXT[e.kind]) + "</p></div></div>";
+    }).join("");
+    var news = MK.data && Array.isArray(MK.data.news) ? MK.data.news.filter(function (n) { return n && /^https?:\/\//.test(n.u) && n.t; }).slice(0, 8) : [];
+    $("nw-list").innerHTML = news.length ? news.map(function (n) {
+      var w = newsWhy(n.t), dt = n.d ? new Date(n.d) : null;
+      return '<a class="nw" href="' + esc(n.u) + '" target="_blank" rel="noopener noreferrer"><b>' + esc(n.t) + "</b><small>" + esc(n.s || "") + (dt && !isNaN(dt) ? " · " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" }).format(dt) : "") + "</small>" + (w ? '<span class="why">Per te: ' + esc(w) + "</span>" : "") + "</a>";
+    }).join("") : '<p class="empty">' + (MK.fail ? "Le notizie non sono raggiungibili adesso." : "Le notizie arrivano dopo il primo aggiornamento automatico.") + "</p>";
+    $("nw-note").textContent = news.length ? "Titoli dalle testate indicate. Sono contesto, non consigli: per un piano a lungo termine di solito non serve fare nulla." : "";
+    var wk = Math.floor((NOW - new Date(NOW.getFullYear(), 0, 1)) / 6048e5), ls = LESSONS[wk % LESSONS.length];
+    $("ls-box").innerHTML = "<b>" + esc(ls[0]) + '</b><p class="small" style="margin:6px 0 0">' + esc(ls[1]) + "</p>";
+  }
+  function loadMarket() {
+    try {
+      fetch("data.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) { MK.data = d; MK.fail = false; renderMarket(); }).catch(function () { MK.fail = true; renderMarket(); });
+    } catch (e) { MK.fail = true; }
+  }
+  function renderHomeEvent() {
+    var e = upcomingEvents(40).filter(function (x) { return x.kind !== "pac" && x.diff <= 45; })[0], el = $("hm-ev");
+    el.hidden = !e;
+    if (e) el.textContent = "Prossimo appuntamento: " + e.t + ", " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(e.d) + " (" + inDays(e.diff) + ")";
   }
 
   /* ---------- editor spese fisse ---------- */
@@ -1640,7 +1797,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   /* ---------- navigazione ---------- */
   var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -1667,7 +1824,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     curView = h;
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderComplete(); renderDebts(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -1695,6 +1852,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5] }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
+  $("mk-range").value = String(MK.range); $("mk-range").onchange = function () { MK.range = +this.value; renderMarket(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
   $("td-date").onchange = function () { if (this.value && this.value.slice(0, 7) === S.monthKey) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
@@ -1716,7 +1875,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
-  renderAll(); showView();
+  renderAll(); showView(); loadMarket();
 })();
 </script>
 <script>if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
