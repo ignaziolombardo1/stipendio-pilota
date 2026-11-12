@@ -298,7 +298,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
         <label class="f" for="exp-amount">Quanto hai speso? (€)<input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
         <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
-        <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+        <label class="f" for="exp-note">Nota (facoltativa)<input id="exp-note" type="text" autocomplete="off" list="notes-dl" placeholder="Per esempio supermercato"><datalist id="notes-dl"></datalist></label>
         <label class="f" for="exp-date">Data<input id="exp-date" type="date"></label>
         <button class="primary" type="submit" id="exp-add">Aggiungi</button>
         <button type="button" id="exp-cancel" hidden>Annulla modifica</button>
@@ -537,6 +537,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <label class="f" for="theme">Tema<select id="theme"><option value="auto">Come il telefono</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select></label>
       <p class="hint">Per averla come app: su iPhone apri il sito in Safari, tocca Condividi e poi "Aggiungi alla schermata Home". Su Android apri il menu ⋮ di Chrome e scegli "Installa app".</p>
       <button type="button" class="primary" id="install" hidden>Installa l'app</button>
+      <p class="small muted" id="ver"></p>
     </section>
     <section data-sub="dati" class="card" aria-labelledby="t-bk">
       <h2 id="t-bk">Backup e condivisione</h2>
@@ -804,6 +805,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var mm = liveMonth(), lf = mm.V - mm.A;
     $("hm-day").textContent = lf < 0 ? "Il budget di spesa, carburante e tempo libero è finito: hai superato di " + eur.format(-lf) + "."
       : S.monthKey === CUR ? "Per spesa, carburante e tempo libero ti restano " + eur.format(lf) + ": circa " + eur.format(lf / DAYS_LEFT) + " al giorno fino a fine mese." : "Budget di spesa, carburante e tempo libero: " + eur.format(lf) + " rimasti.";
+    var warnC = [];
+    CATS.slice(0, 3).forEach(function (c) { var b = mm.bud[c.id], x = mm.by[c.id]; if (b > 0 && x / b >= 0.8 && x <= b) warnC.push(c.name.toLowerCase() + " all'" + Math.round(x / b * 100) + "%"); });
+    if (warnC.length) $("hm-day").textContent += " Attenzione: " + warnC.join(", ") + " del budget.";
     var hd = $("hm-due"); hd.hidden = nd.hidden; hd.className = nd.className; hd.textContent = nd.textContent;
     $("save-amt").textContent = eur.format(p.toSave);
     var done = p.target > 0 ? Math.min(100, S.savedNow / p.target * 100) : 100;
@@ -852,6 +856,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       return '<div class="catrow"><div class="top2"><span><span class="dot" style="background:' + c.color + ';margin-right:8px"></span>' + c.name + '</span><span class="num">' + right + '</span></div><div class="meter' + (over ? " over" : "") + '"><div style="width:' + w + '%"></div></div></div>';
     }).join("");
     var list = (S.spent[S.monthKey] || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+    fillNotes();
     var dt = $("exp-date"), mp = S.monthKey.split("-"), lastD = new Date(+mp[0], +mp[1], 0).getDate();
     dt.min = S.monthKey + "-01"; dt.max = S.monthKey + "-" + String(lastD).padStart(2, "0");
     if (!dt.value || dt.value < dt.min || dt.value > dt.max) dt.value = S.monthKey === CUR ? ymd(NOW) : dt.max;
@@ -878,6 +883,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
   }
   var editId = null;
+  var APP_VERSION = "2026-11-12.2";
+  function fillNotes() {
+    var cnt = {}, last = {};
+    Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
+    NOTE_CAT = last;
+    $("notes-dl").innerHTML = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; }).slice(0, 20).map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join("");
+  }
+  var NOTE_CAT = {};
   function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   function resetExpForm() { editId = null; $("exp-amount").value = ""; $("exp-note").value = ""; $("exp-date").value = ""; $("exp-add").textContent = "Aggiungi"; $("exp-cancel").hidden = true; }
   function addExpense(ev) {
@@ -1276,6 +1289,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("annual-form").onsubmit = addAnnual;
   $("extra-form").onsubmit = addExtra;
   $("iv-form").onsubmit = addInvested;
+  $("exp-note").onchange = function () { var c = NOTE_CAT[this.value.trim()]; if (c && !editId) { S.cat = c; renderChips(); } };
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   setupBackup();
@@ -1285,6 +1299,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   (function () { var h = "", d = new Date(NOW.getFullYear(), NOW.getMonth(), 1); for (var i = 1; i <= 48; i++) { var dd = new Date(d.getFullYear(), d.getMonth() + i, 1), k = mkOf(dd); h += '<option value="' + k + '">' + mlabel(k) + "</option>"; } $("g-when").innerHTML = h; $("g-when").value = mkOf(new Date(d.getFullYear(), d.getMonth() + 12, 1)); })();
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  $("ver").textContent = "Versione " + APP_VERSION;
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible" || !navigator.onLine) return;
+    fetch("index.html", { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (t) {
+      var m = t.match(/APP_VERSION = "([^"]+)"/);
+      if (m && m[1] !== APP_VERSION) toast("È disponibile una nuova versione", "Aggiorna", function () { location.reload(); });
+    }).catch(function () {});
+  });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
   renderAll(); showView();
