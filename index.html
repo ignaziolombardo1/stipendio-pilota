@@ -7,59 +7,61 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="theme-color" content="#0a2624">
+<meta name="theme-color" content="#0d2d58">
 <meta name="application-name" content="Stipendio Pilota">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Stipendio Pilota">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Fraunces:opsz,wght@9..144,600;700&display=swap">
 <style>
 /* Layout: quattro schermate (Home, Spese, Storico, Profilo) scelte da un selettore in alto. Il Profilo ha il pulsante Salva fisso in basso. Ogni mese un riquadro chiede il nuovo stipendio. */
 :root {
-  --bg: #eff3f2;
+  --bg: #eef4fb;
   --surface: #ffffff;
-  --ink: #16221f;
-  --muted: #586865;
-  --line: #e4e9e7;
-  --soft: #eef3f1;
-  --accent: #0b7060;
+  --ink: #10243e;
+  --muted: #566a85;
+  --line: #e0e8f3;
+  --soft: #e8f0fa;
+  --accent: #1456b8;
   --accent-ink: #ffffff;
   --warn: #a8500a;
   --warn-bg: #fdf0dc;
-  --ok-bg: #dcf2ec;
+  --ok-bg: #d6f4ee;
   --bad: #b03a12;
   --bad-bg: #fde6df;
-  --toast-bg: #16221f;
+  --toast-bg: #10243e;
   --toast-ink: #ffffff;
   --nav-h: calc(60px + env(safe-area-inset-bottom, 0px));
   --c-must: #7d8ca6;
   --c-move: #9674d4;
   --c-daily: #e3a336;
   --c-fun: #d4608f;
-  --c-save: #4a82e0;
-  --c-invest: #14a58f;
-  --font-head: "Bricolage Grotesque", system-ui, sans-serif;
-  --hero: #0a2624;
-  --hero-ink: #eaf6f3;
-  --hero-muted: #a9c7c1;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --c-save: #3b7be0;
+  --c-invest: #12b0a0;
+  --font-head: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "Fraunces", Georgia, "Times New Roman", serif;
+  --pos: #0b7a6d;
+  --hero: #0d2d58;
+  --hero-ink: #f0f6ff;
+  --hero-muted: #adc4e4;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
-    --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
-    --toast-bg: #e9f1ef; --toast-ink: #0e1514; --hero: #123431;
-    --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
+    --bg: #091325; --surface: #121f37; --ink: #e8eefa; --muted: #93a7c6; --line: #22334f; --soft: #1a2a46; --pos: #4fd8c6;
+    --accent: #6aaaff; --accent-ink: #04122a; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #123a42; --bad: #f08a5d; --bad-bg: #3a1d14;
+    --toast-bg: #e8eefa; --toast-ink: #091325; --hero: #123a70;
+    --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #7aa8f5; --c-invest: #4fd8c6;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
-  --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
-  --toast-bg: #e9f1ef; --toast-ink: #0e1514; --hero: #123431;
-  --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
+  --bg: #091325; --surface: #121f37; --ink: #e8eefa; --muted: #93a7c6; --line: #22334f; --soft: #1a2a46; --pos: #4fd8c6;
+  --accent: #6aaaff; --accent-ink: #04122a; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #123a42; --bad: #f08a5d; --bad-bg: #3a1d14;
+  --toast-bg: #e8eefa; --toast-ink: #091325; --hero: #123a70;
+  --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #7aa8f5; --c-invest: #4fd8c6;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -324,6 +326,59 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 .savebar .in { max-width: 720px; margin: 0 auto; }
 .savebar button { width: 100%; font-size: 17px; padding: 15px 16px; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(var(--nav-h) + 84px); z-index: 30; background: var(--toast-bg); color: var(--toast-ink); padding: 12px 18px; border-radius: 12px; font-weight: 600; max-width: calc(100% - 32px); text-align: center; }
+
+/* ===== Restyling: caldo, blu e turchese ===== */
+body { font-weight: 500; }
+h1 { font-size: 28px; font-weight: 800; }
+h2 { font-weight: 800; }
+.card { border: 0; border-radius: 26px; padding: 22px; box-shadow: 0 1px 2px rgba(16,36,62,0.05), 0 10px 28px -12px rgba(16,36,62,0.14); }
+:root[data-theme="dark"] .card { box-shadow: none; border: 1px solid var(--line); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .card { box-shadow: none; border: 1px solid var(--line); } }
+.card.hl { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+details.month { border: 0; border-radius: 26px; box-shadow: 0 1px 2px rgba(16,36,62,0.05), 0 10px 28px -12px rgba(16,36,62,0.14); }
+button { border-radius: 16px; font-weight: 700; padding: 13px 18px; transition: transform .12s ease, filter .12s ease; }
+button:active { transform: scale(0.97); }
+button.primary { box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
+input[type="text"], input[type="date"], input[type="month"], select, textarea { border-radius: 16px; }
+.salary-big, .tile .big, .pocket b, .qs-amt, .big-input input, .ringc b, .stat b, .mnums b, .ramt b, .fund .amt, .fx > b, .stat3 b { font-family: var(--font-num); font-variant-numeric: lining-nums tabular-nums; font-weight: 700; }
+.salary-big { font-size: 38px; }
+.mark { border-radius: 12px; }
+.top .name { font-weight: 800; font-size: 18px; }
+.tabs, .seg { border-radius: 18px; }
+.subtabs a { font-weight: 700; padding: 11px 18px; }
+.subtabs a.on { background: var(--accent); box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--accent) 70%, transparent); }
+.badge.ok { color: var(--pos); }
+.bnav { border-top: 0; box-shadow: 0 -8px 30px -12px rgba(16,36,62,0.22); border-radius: 22px 22px 0 0; }
+.bnav a { font-weight: 700; }
+.bnav a.on { color: var(--accent); }
+.hero { border-radius: 34px; padding: 26px 18px 20px; position: relative; overflow: hidden; isolation: isolate;
+  background: radial-gradient(120% 70% at 85% -10%, rgba(34,211,190,0.38), transparent 60%), radial-gradient(90% 60% at 0% 110%, rgba(90,150,255,0.35), transparent 60%), var(--hero); }
+.hero .hello { font-size: 15px; font-weight: 700; }
+.ringc b { font-size: clamp(34px, 11vw, 50px); letter-spacing: -0.01em; }
+.ringc small:first-child { font-weight: 700; font-size: 13.5px; }
+.chip2 { background: rgba(255,255,255,0.12); backdrop-filter: blur(4px); font-weight: 700; }
+.chip2 b { font-family: var(--font-num); font-weight: 700; margin-left: 4px; }
+.hero .btnrow button.primary { background: #34d9c3; color: #04282a; box-shadow: 0 8px 18px -8px rgba(52,217,195,0.8); }
+.ico { border-radius: 14px; }
+.ico.sm { width: 30px; height: 30px; border-radius: 10px; flex: none; }
+.ico.sm svg { width: 17px; height: 17px; }
+.chips label { border-radius: 16px; border-width: 2px; }
+.chips label.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
+.meter, .bar { height: 10px; border-radius: 6px; }
+.meter div { border-radius: 6px; background: linear-gradient(90deg, var(--accent), #12b0a0); }
+.meter.over div { background: var(--bad); }
+.tile { border-radius: 20px; }
+.toast { border-radius: 16px; font-weight: 700; }
+.fab { box-shadow: 0 12px 24px -8px color-mix(in srgb, var(--accent) 80%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .view:not([hidden]) > .hero { animation: rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  .view:not([hidden]) > .card:nth-child(-n+4) { animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
+  .meter div, .bar div { transition: width .7s cubic-bezier(.2,.8,.2,1); }
+  .toast:not([hidden]) { animation: pop .3s cubic-bezier(.2,1.4,.4,1) both; }
+  .entry:first-child { animation: rise .35s ease-out both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes pop { from { opacity: 0; transform: translateX(-50%) scale(.92); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+}
 </style>
 </head>
 <body>
@@ -371,12 +426,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       </div>
     <section data-sub="home" class="hero" aria-labelledby="t-pk">
       <p class="hello" id="hero-hi" hidden></p>
-      <h2 id="t-pk" class="sr-only">In tasca adesso</h2>
+      <h2 id="t-pk" class="sr-only">Quanto puoi spendere oggi</h2>
       <div class="ringbox">
         <svg id="ring" viewBox="0 0 220 220" aria-hidden="true"></svg>
-        <div class="ringc"><small>In tasca adesso</small><b class="num" id="hm-pocket">0</b><small id="hero-sub"></small></div>
+        <div class="ringc"><small>Oggi puoi spendere</small><b class="num" id="hm-today">0</b><small id="hero-sub"></small></div>
       </div>
-      <div class="chips2"><span class="chip2" id="hero-fix"></span><span class="chip2" id="hero-budget"></span></div>
+      <div class="chips2"><span class="chip2">In tasca <b class="num" id="hm-pocket">0</b></span><span class="chip2" id="hero-fix"></span><span class="chip2" id="hero-budget"></span></div>
       <p id="hm-day"></p>
       <p id="hm-due" hidden></p>
       <p id="hm-ev" hidden></p>
@@ -1085,6 +1140,14 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   /* ---------- Home ---------- */
+  function countTo(el, to) {
+    var from = +el.getAttribute("data-v"); if (isNaN(from)) from = 0; el.setAttribute("data-v", to);
+    var fmt = function (v) { return eur.format(Math.round(v)); };
+    if (from === to || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches)) { el.textContent = fmt(to); return; }
+    var t0 = performance.now(), dur = 650;
+    cancelAnimationFrame(el._raf);
+    (function step(t) { var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); el.textContent = fmt(from + (to - from) * e); if (k < 1) el._raf = requestAnimationFrame(step); })(t0);
+  }
   function renderHome() {
     var p = plan();
     $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
@@ -1179,7 +1242,12 @@ create policy "solo i miei dati" on stipendio_pilota
       : p.left / inc * 100 >= 20 ? "Sei in linea con la regola: ti avanza almeno il 20%." : "Le necessarie sono nei limiti ma ti avanza meno del 20%: guarda il tempo libero.";
     (function () { var hi = $("hero-hi"), h = NOW.getHours(); hi.hidden = !S.me.name; hi.textContent = (h < 13 ? "Buongiorno" : h < 18 ? "Buon pomeriggio" : "Buonasera") + ", " + S.me.name; })();
     $("hm-pocket").textContent = eur.format(m.pocket); $("hm-pocket").style.color = m.pocket < 0 ? "#ffb59a" : "";
-    $("hero-sub").textContent = "su " + eur.format(p.sal + p.extra) + " di entrate";
+    (function () {
+      var lf0 = m.V - m.A, isCur0 = S.monthKey === CUR, day = isCur0 ? lf0 / DAYS_LEFT : lf0, el = $("hm-today");
+      el.style.color = day < 0 ? "#ffb59a" : "";
+      countTo(el, Math.round(day));
+      $("hero-sub").textContent = isCur0 ? "giorno " + NOW.getDate() + " di " + DIM + " · budget rimasto " + eur.format(lf0) : "budget rimasto del mese";
+    })();
     $("hero-fix").textContent = "Fisse " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
     $("hero-budget").textContent = (m.V > 0 ? Math.round(m.A / m.V * 100) : 0) + "% del budget speso";
     var mm = liveMonth(), lf = mm.V - mm.A;
@@ -1209,7 +1277,7 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- Spese ---------- */
   function renderChips() {
     $("chips").innerHTML = CATS.map(function (c) {
-      return '<label class="' + (S.cat === c.id ? "on" : "") + '"><input type="radio" name="cat" value="' + c.id + '"' + (S.cat === c.id ? " checked" : "") + '><span class="dot" style="background:' + c.color + '"></span>' + c.name + "</label>";
+      return '<label class="' + (S.cat === c.id ? "on" : "") + '"><input type="radio" name="cat" value="' + c.id + '"' + (S.cat === c.id ? " checked" : "") + '><span class="ico sm" style="--c:' + c.color + '">' + iconSvg(c.id === "spesa" ? "cart" : c.id === "carb" ? "fuel" : c.id === "svago" ? "smile" : "tag") + "</span>" + c.name + "</label>";
     }).join("");
     document.querySelectorAll('input[name="cat"]').forEach(function (r) {
       r.onchange = function () { S.cat = r.value; persist(); renderChips(); };
@@ -1263,7 +1331,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.13";
+  var APP_VERSION = "2026-11-12.14";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
