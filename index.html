@@ -601,6 +601,11 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <h1>Storico</h1>
       <p class="hint" id="st-sub"></p>
     </div>
+    <section class="card" id="st-year-card" aria-labelledby="t-yr" hidden>
+      <div class="line"><h2 id="t-yr">Il tuo anno</h2><select id="st-year" aria-label="Anno" style="width:auto"></select></div>
+      <div class="stat3" id="st-year-stats"></div>
+      <p class="small" id="st-year-note"></p>
+    </section>
     <div id="st-charts"></div>
     <div id="st-list" style="display:flex;flex-direction:column;gap:14px"></div>
   </main>
@@ -608,6 +613,14 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
     <div><h1>Impostazioni</h1><p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano si aggiorna da solo.</p></div>
+    <section data-sub="io" class="card" aria-labelledby="t-mm">
+      <h2 id="t-mm">Tredicesima e quattordicesima</h2>
+      <p class="hint">Se le hai, scrivi quanto ti arriva in busta, al netto. Il piano le aggiunge alle entrate di dicembre e di luglio. Lascia 0 se non le hai.</p>
+      <div class="fields">
+        <label class="f" for="m13">Tredicesima, a dicembre (€)<input id="m13" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="m14">Quattordicesima, a luglio (€)<input id="m14" type="text" inputmode="decimal" autocomplete="off"></label>
+      </div>
+    </section>
     <section data-sub="io" class="card" aria-labelledby="t-me">
       <h2 id="t-me">Chi sei</h2>
       <p class="hint">Servono solo a personalizzare l'app. Restano in questo telefono.</p>
@@ -713,11 +726,43 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     </section>
     <section data-sub="dati" class="card" aria-labelledby="t-bk">
       <h2 id="t-bk">Backup e condivisione</h2>
-      <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per usare l'app anche su un altro telefono, o darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Non c'è sincronizzazione automatica.</p>
+      <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Per usare i tuoi dati su più telefoni usa il cloud qui sopra.</p>
       <div class="btnrow"><button type="button" id="bk-dl">Scarica backup</button><button type="button" id="bk-copy">Copia codice</button><button type="button" id="bk-csv">Spese in CSV</button></div>
       <label class="f" for="bk-text">Codice di backup<textarea id="bk-text" spellcheck="false" placeholder="Qui compare il codice, oppure incollalo qui per ripristinare"></textarea></label>
       <label class="f" for="bk-file">Oppure scegli un file di backup<input id="bk-file" type="file" accept="application/json,.json"></label>
       <button type="button" id="bk-restore">Ripristina da codice</button>
+    </section>
+    <section data-sub="dati" class="card" id="sync-card" aria-labelledby="t-sy">
+      <h2 id="t-sy">Cloud e accesso con Google</h2>
+      <p class="hint">Con l'accesso con Google i tuoi dati sono al sicuro nel cloud e si aggiornano da soli su tutti i tuoi telefoni. Se perdi il telefono, accedi e ritrovi tutto. I dati sono salvati nel tuo progetto Supabase personale: li vedi solo tu.</p>
+      <div id="sy-setup">
+        <details>
+          <summary>Come si prepara (una volta sola, circa 10 minuti)</summary>
+          <ol class="small">
+            <li>Su supabase.com crea un account gratuito e un nuovo progetto.</li>
+            <li>Apri "SQL Editor", incolla il testo qui sotto e premi Run.</li>
+            <li>In "Authentication → Sign In / Providers" attiva Google. Servono un ID client e un segreto che crei su console.cloud.google.com (Credenziali → ID client OAuth, tipo "Applicazione web"). Come "URI di reindirizzamento" metti l'indirizzo che Supabase ti mostra nella pagina di Google (finisce con /auth/v1/callback).</li>
+            <li>In "Authentication → URL Configuration" scrivi come Site URL l'indirizzo di questa app, e aggiungilo anche tra i Redirect URLs.</li>
+            <li>In "Project Settings → API" copia "Project URL" e la chiave "anon public" nei due campi qui sotto.</li>
+          </ol>
+          <pre class="small" id="sy-sql" style="white-space:pre-wrap;user-select:all">create table stipendio_pilota (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table stipendio_pilota enable row level security;
+create policy "solo i miei dati" on stipendio_pilota
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);</pre>
+          <button type="button" id="sy-sql-copy">Copia il testo SQL</button>
+        </details>
+        <div class="fields">
+          <label class="f" for="sy-url">Project URL<input id="sy-url" type="text" autocomplete="off" placeholder="https://xxxx.supabase.co"></label>
+          <label class="f" for="sy-key">Chiave anon public<input id="sy-key" type="text" autocomplete="off" placeholder="eyJ…"></label>
+        </div>
+      </div>
+      <div class="btnrow"><button type="button" class="primary" id="sy-in">Accedi con Google</button><button type="button" id="sy-now" hidden>Sincronizza ora</button><button type="button" id="sy-out" hidden>Esci</button></div>
+      <div id="sy-choice" hidden><p class="small" id="sy-choice-text"></p><div class="btnrow"><button type="button" id="sy-use-cloud">Usa i dati del cloud</button><button type="button" id="sy-use-local">Tieni quelli di questo telefono</button></div></div>
+      <p class="small" id="sy-status"></p>
     </section>
     <button data-sub="dati" class="link" id="reset" type="button">Inserisci i valori di esempio</button>
   </main>
@@ -744,7 +789,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
   var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
-    me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
+    m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
   var PROFILES = {
@@ -762,7 +807,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     { id: "svago", name: "Tempo libero", color: "var(--c-fun)" },
     { id: "altro", name: "Altro", color: "var(--c-must)" }
   ];
-  var FIELDS = [["salary", "salary", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
+  var FIELDS = [["salary", "salary", 0, 1e7], ["m13", "m13", 0, 1e7], ["m14", "m14", 0, 1e7], ["sal2", "sal2", 0, 1e7], ["share", "share", 1, 100], ["taxPct", "taxPct", 0, 60], ["costPct", "costPct", 0, 5], ["kmlB", "kmlB", 1, 100], ["priceB", "priceB", 0, 10], ["extraB", "extraB", 0, 100000], ["kmlD", "kmlD", 1, 100],
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
@@ -809,7 +854,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   migrate(typeof st !== "undefined" ? st : null);
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
   var warned = false;
-  function persist() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
+  function persist(keepTs) { if (keepTs !== true) S.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); if (keepTs !== true) queueSync(); } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function txt(n) { return String(n).replace(".", ","); }
@@ -847,7 +892,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   function plan() {
     var sal = S.salary;
     var sh = Math.min(100, Math.max(1, S.share)) / 100;
-    var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0);
+    var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0) + (S.monthKey.slice(5) === "12" ? S.m13 || 0 : 0) + (S.monthKey.slice(5) === "07" ? S.m14 || 0 : 0);
     var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split, end: f.end || "", kind: f.kind }; });
     var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
     var spesa = Math.round(sal * S.spesaPct / 100);
@@ -1121,7 +1166,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.6";
+  var APP_VERSION = "2026-11-12.8";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1164,6 +1209,24 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       + '<div class="mnums"><div><span>Entrate</span><b class="num">' + eur.format(m.salary + (m.extra || 0)) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
       + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
   }
+  var yrSel = "";
+  function renderYear() {
+    var live = liveMonth(), all = Object.keys(S.history).filter(function (k) { return k !== S.monthKey; }).map(function (k) { return S.history[k]; });
+    if (live.n > 0) all.push(live);
+    all = all.filter(function (m) { return m && m.n > 0; });
+    var years = all.map(function (m) { return m.key.slice(0, 4); }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
+    $("st-year-card").hidden = !years.length;
+    if (!years.length) return;
+    if (years.indexOf(yrSel) < 0) yrSel = years[0];
+    var sel = $("st-year"); sel.innerHTML = years.map(function (y) { return '<option value="' + y + '"' + (y === yrSel ? " selected" : "") + ">" + y + "</option>"; }).join("");
+    sel.onchange = function () { yrSel = this.value; renderYear(); };
+    var ms = all.filter(function (m) { return m.key.slice(0, 4) === yrSel; }), sum = function (f) { return ms.reduce(function (a, m) { return a + f(m); }, 0); };
+    var inc = sum(function (m) { return m.salary + (m.extra || 0); }), spent = sum(function (m) { return m.A; }), saved = sum(function (m) { return m.realSaved; }), inv = sum(function (m) { return m.invested || 0; });
+    var ok = ms.filter(function (m) { return m.A <= m.V; }).length;
+    $("st-year-stats").innerHTML = '<div><b class="num">' + eur.format(inc) + "</b>Entrate</div><div><b class=\"num\">" + eur.format(spent) + "</b>Speso nel budget variabile</div><div><b class=\"num\" style=\"color:" + (saved < 0 ? "var(--bad)" : "var(--accent)") + '">' + eur.format(saved) + "</b>Risparmiato</div><div><b class=\"num\">" + eur.format(inv) + "</b>Investito</div>";
+    var avg = saved / ms.length, left = yrSel === String(NOW.getFullYear()) ? 12 - ms.length : 0;
+    $("st-year-note").textContent = ms.length + (ms.length === 1 ? " mese" : " mesi") + " registrati, bilancio ok in " + ok + "." + (inc > 0 ? " Hai messo da parte il " + Math.round(saved / inc * 100) + "% delle entrate." : "") + (left > 0 && ms.length >= 2 ? " Se continui così, a fine anno sarai a circa " + eur.format(saved + avg * left) + " risparmiati." : "");
+  }
   function renderStorico() {
     var keys = Object.keys(S.history).sort().reverse().filter(function (k) { return k !== S.monthKey; });
     var closed = keys.map(function (k) { return S.history[k]; });
@@ -1173,6 +1236,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     $("st-sub").textContent = closed.length
       ? "Mesi chiusi: " + closed.length + ". Bilancio ok in " + okN + " su " + evaluated.length + (evaluated.length ? ", risparmiato in tutto " + eur.format(tot) + " (" + Math.round(tot / Math.max(1, evaluated.reduce(function (a, m) { return a + m.salary + (m.extra || 0); }, 0)) * 100) + "% delle entrate)." : ".")
       : "Quando finisce il mese, qui trovi com'è andato. Per ora vedi quello in corso.";
+    renderYear();
     var html = monthCard(liveMonth(), true);
     closed.forEach(function (m) { html += monthCard(m, false); });
     $("st-list").innerHTML = html;
@@ -1777,16 +1841,8 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       if (!o || typeof o !== "object" || !(o.salary > 0)) { toast("Il codice non è valido"); armed = false; btn.textContent = "Ripristina da codice"; return; }
       if (!armed) { armed = true; btn.textContent = "Conferma: sostituisce i dati di questa app"; return; }
       armed = false; btn.textContent = "Ripristina da codice";
-      if (!Array.isArray(o.fixedList)) o.fixedList = mkFixed(o);
-      S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, extra: {}, invested: [], fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" }, o);
-      ["spent", "history", "paid"].forEach(function (k) { if (!S[k] || typeof S[k] !== "object") S[k] = {}; });
-      ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
-      if (!S.extra || typeof S.extra !== "object") S.extra = {};
-      if (!S.monthKey) S.monthKey = CUR;
-      migrate(o);
-      pending = S.monthKey < CUR ? CUR : null;
-      S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {}; fillAdvisorInputs(); markOpts();
-      persist(); renderAll(); fillForm(S); $("bk-text").value = ""; toast("Dati ripristinati ✓");
+      adoptState(o, false);
+      $("bk-text").value = ""; toast("Dati ripristinati ✓");
     };
     $("split-prop").onclick = function () {
       var a = pnum($("salary").value), b = pnum($("sal2").value);
@@ -1794,6 +1850,95 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       $("share").value = txt(Math.round(a / (a + b) * 100)); toast("Quota calcolata: premi Salva");
     };
   }
+
+  function adoptState(o, keepTs) {
+    if (!Array.isArray(o.fixedList)) o.fixedList = mkFixed(o);
+    S = Object.assign({}, DEFAULTS, { monthKey: CUR, spent: {}, history: {}, paid: {}, extra: {}, invested: [], fuel: [], goals: [], annual: [], nextId: 1, cat: "spesa" }, o);
+    ["spent", "history", "paid"].forEach(function (k) { if (!S[k] || typeof S[k] !== "object") S[k] = {}; });
+    ["fuel", "goals", "annual", "invested", "fixedList"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; });
+    if (!S.extra || typeof S.extra !== "object") S.extra = {};
+    if (!S.monthKey) S.monthKey = CUR;
+    migrate(o);
+    pending = S.monthKey < CUR ? CUR : null;
+    S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {}; fillAdvisorInputs(); markOpts();
+    persist(keepTs); renderAll(); fillForm(S);
+  }
+
+  /* ---------- cloud (Supabase) ---------- */
+  var SYNC_URL = "", SYNC_KEY = "", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "";
+  try { var sraw = JSON.parse(localStorage.getItem(SK)); if (sraw && typeof sraw === "object") sy = Object.assign(sy, sraw); } catch (e) {}
+  function sySave() { try { localStorage.setItem(SK, JSON.stringify(sy)); } catch (e) {} }
+  function syCfg() { return { url: String(sy.url || SYNC_URL).trim().replace(/\/+$/, ""), key: String(sy.key || SYNC_KEY).trim() }; }
+  function syOn() { var c = syCfg(); return !!(c.url && c.key && sy.rt); }
+  function syToken() {
+    if (sy.at && sy.exp > Date.now() + 60000) return Promise.resolve(sy.at);
+    var c = syCfg();
+    return fetch(c.url + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: c.key, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: sy.rt }) })
+      .then(function (r) { if (!r.ok) throw new Error("auth"); return r.json(); })
+      .then(function (j) { sy.at = j.access_token; sy.rt = j.refresh_token || sy.rt; sy.exp = Date.now() + (j.expires_in || 3600) * 1000; sySave(); return sy.at; });
+  }
+  function syFetch(path, opt) {
+    var c = syCfg();
+    return syToken().then(function (t) {
+      opt = opt || {}; opt.headers = Object.assign({ apikey: c.key, Authorization: "Bearer " + t, "Content-Type": "application/json" }, opt.headers || {});
+      return fetch(c.url + path, opt);
+    });
+  }
+  function syCapture() { // rientro da Google: i token arrivano nell'indirizzo
+    if (!/access_token=/.test(location.hash)) return Promise.resolve();
+    var q = new URLSearchParams(location.hash.replace(/^#/, ""));
+    sy.at = q.get("access_token") || ""; sy.rt = q.get("refresh_token") || ""; sy.exp = Date.now() + (+q.get("expires_in") || 3600) * 1000; sy.last = 0;
+    try { history.replaceState(null, "", location.pathname + "#profilo/dati"); } catch (e) { location.hash = "#profilo/dati"; }
+    var c = syCfg();
+    return fetch(c.url + "/auth/v1/user", { headers: { apikey: c.key, Authorization: "Bearer " + sy.at } }).then(function (r) { return r.json(); })
+      .then(function (u) { sy.uid = u.id || ""; sy.email = u.email || ""; sySave(); })
+      .catch(function () { sySave(); });
+  }
+  function queueSync() { if (!syOn() || !sy.uid) return; clearTimeout(syTimer); syTimer = setTimeout(function () { syncNow(false); }, 2500); }
+  function syncNow(manual) {
+    if (!syOn() || !sy.uid || syBusy) return Promise.resolve();
+    syBusy = true; syMsg = "Sincronizzo…"; renderSync();
+    var q = "/rest/v1/stipendio_pilota?select=data,updated_at&user_id=eq." + encodeURIComponent(sy.uid);
+    return syFetch(q).then(function (r) { if (!r.ok) throw new Error("get " + r.status); return r.json(); }).then(function (rows) {
+      var rem = rows[0], lt = S.ts || 0;
+      if (!rem) return push();
+      var rt = Date.parse(rem.updated_at) || 0;
+      if (!S.saved && rem.data && rem.data.salary > 0) { adoptState(rem.data, true); S.ts = rt; persist(true); sy.last = rt; sySave(); toast("Dati del cloud caricati ✓"); return; }
+      if (!sy.last && S.saved && rem.data && rem.data.salary > 0 && Math.abs(rt - lt) > 1000) { syChoice = { data: rem.data, rt: rt, lt: lt }; return; }
+      if (rt > sy.last && rt > lt) { adoptState(rem.data, true); S.ts = rt; persist(true); sy.last = rt; sySave(); toast("Dati aggiornati dall'altro telefono ✓"); return; }
+      if (lt > rt) return push();
+      sy.last = Math.max(sy.last, rt); sySave();
+    }).then(function () { syMsg = syChoice ? "" : "Sincronizzato alle " + new Intl.DateTimeFormat("it-IT", { hour: "2-digit", minute: "2-digit" }).format(new Date()); })
+      .catch(function () { syMsg = "Non riesco a sincronizzare adesso. Riproverò al prossimo salvataggio."; })
+      .then(function () { syBusy = false; renderSync(); });
+    function push() {
+      var ts = S.ts || Date.now();
+      return syFetch("/rest/v1/stipendio_pilota?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ user_id: sy.uid, data: S, updated_at: new Date(ts).toISOString() }) })
+        .then(function (r) { if (!r.ok) throw new Error("post " + r.status); sy.last = ts; sySave(); });
+    }
+  }
+  function renderSync() {
+    var c = syCfg(), on = syOn(), has = !!(c.url && c.key);
+    $("sy-setup").hidden = !!(SYNC_URL && SYNC_KEY) || on;
+    $("sy-in").hidden = on; $("sy-in").disabled = !has; $("sy-now").hidden = !on; $("sy-out").hidden = !on;
+    $("sy-status").textContent = on ? "Collegato come " + (sy.email || "il tuo account Google") + ". " + syMsg : (has ? "Premi Accedi con Google per collegare questo telefono." : "Prima inserisci i due dati del tuo progetto Supabase (passi qui sopra).");
+    $("sy-choice").hidden = !syChoice;
+    if (syChoice) $("sy-choice-text").textContent = "Nel cloud ci sono già dei dati (salvati " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(syChoice.rt)) + "). Quali vuoi tenere?";
+  }
+  function setupSync() {
+    $("sy-url").value = sy.url || ""; $("sy-key").value = sy.key || "";
+    $("sy-url").onchange = $("sy-key").onchange = function () { sy.url = $("sy-url").value.trim(); sy.key = $("sy-key").value.trim(); sySave(); renderSync(); };
+    $("sy-url").oninput = $("sy-key").oninput = function () { sy.url = $("sy-url").value.trim(); sy.key = $("sy-key").value.trim(); sySave(); renderSync(); };
+    $("sy-in").onclick = function () { var c = syCfg(); if (!/^https:\/\//.test(c.url) || !c.key) { toast("Controlla indirizzo e chiave del progetto"); return; } location.href = c.url + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(location.origin + location.pathname); };
+    $("sy-now").onclick = function () { syncNow(true); };
+    $("sy-out").onclick = function () { sy.at = ""; sy.rt = ""; sy.exp = 0; sy.uid = ""; sy.email = ""; sy.last = 0; sySave(); syChoice = null; syMsg = ""; renderSync(); toast("Scollegato. I dati restano in questo telefono."); };
+    $("sy-use-cloud").onclick = function () { var ch = syChoice; syChoice = null; adoptState(ch.data, true); S.ts = ch.rt; persist(true); sy.last = ch.rt; sySave(); syMsg = "Dati del cloud caricati"; renderSync(); toast("Dati del cloud caricati ✓"); };
+    $("sy-use-local").onclick = function () { syChoice = null; sy.last = 1; sySave(); S.ts = Date.now(); persist(true); syncNow(true); };
+    $("sy-sql-copy").onclick = function () { var t = $("sy-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
+    renderSync();
+  }
+  function syInit() { syCapture().then(function () { renderSync(); showView(); if (syOn() && sy.uid) syncNow(false); }); }
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && syOn() && sy.uid && navigator.onLine) syncNow(false); });
 
   /* ---------- navigazione ---------- */
   var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
@@ -1858,6 +2003,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("td-date").onchange = function () { if (this.value && this.value.slice(0, 7) === S.monthKey) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
   setupBackup();
+  setupSync();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
@@ -1875,7 +2021,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
-  renderAll(); showView(); loadMarket();
+  renderAll(); showView(); loadMarket(); syInit();
 })();
 </script>
 <script>if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
