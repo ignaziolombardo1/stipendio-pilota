@@ -1263,7 +1263,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.11";
+  var APP_VERSION = "2026-11-12.12";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2103,7 +2103,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   /* ---------- cloud (Supabase) ---------- */
-  var SYNC_URL = "", SYNC_KEY = "", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "";
+  var SYNC_URL = "https://ajahyezbyqbbodukwpzy.supabase.co", SYNC_KEY = "sb_publishable_oGKHkRiiqqf4g6gaeNwOaQ_k8aW0Ukr", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "";
   try { var sraw = JSON.parse(localStorage.getItem(SK)); if (sraw && typeof sraw === "object") sy = Object.assign(sy, sraw); } catch (e) {}
   function sySave() { try { localStorage.setItem(SK, JSON.stringify(sy)); } catch (e) {} }
   function syCfg() { return { url: String(sy.url || SYNC_URL).trim().replace(/\/+$/, ""), key: String(sy.key || SYNC_KEY).trim() }; }
