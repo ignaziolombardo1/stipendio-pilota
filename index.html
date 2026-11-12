@@ -379,6 +379,28 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @keyframes pop { from { opacity: 0; transform: translateX(-50%) scale(.92); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 }
+
+/* ===== Archivio ===== */
+.bnav a { font-size: 10.5px; padding-left: 0; padding-right: 0; }
+.bnav a.on svg { width: 46px; }
+.tplrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.chipb { padding: 8px 12px; border-radius: 14px; font-size: 13.5px; background: var(--soft); color: var(--ink); border: 0; }
+.dl { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.dl:last-child { border-bottom: 0; }
+.dl .t { min-width: 0; overflow-wrap: anywhere; }
+.dl .t b { font-weight: 800; }
+.dl .t small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.dl.late .t small { color: var(--bad, #c0392b); font-weight: 700; }
+.dl .acts { display: flex; gap: 6px; align-items: center; }
+.tick { width: 42px; height: 42px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-size: 18px; background: var(--soft); color: var(--accent); }
+.mini { padding: 8px 12px; font-size: 13px; border-radius: 12px; background: var(--soft); color: var(--ink); }
+.mini.danger { background: var(--bad, #c0392b); color: #fff; }
+.dl.edit { padding: 14px 0; }
+.grp { font-size: 14px; color: var(--muted); margin: 14px 0 0; font-weight: 800; }
+.grp:first-child { margin-top: 0; }
+.btnlink { display: inline-flex; align-items: center; justify-content: center; padding: 13px 18px; border-radius: 16px; font-weight: 700; text-decoration: none; flex: 1 1 auto; background: var(--soft); color: var(--ink); }
+.btnlink.primary { background: var(--accent); color: var(--accent-ink, #fff); }
+@media (max-width: 400px) { .dl { grid-template-columns: auto minmax(0, 1fr) auto; } .dl > b.num { grid-column: 2; grid-row: 2; justify-self: start; } .dl > .tick, .dl > .acts { grid-column: 3; grid-row: 1 / span 2; } }
 </style>
 </head>
 <body>
@@ -445,6 +467,11 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <h2 id="t-cmp">Completa il tuo profilo</h2>
       <p class="hint" id="cmp-text"></p>
       <button class="primary" type="button" id="cmp-go">Completa ora</button>
+    </section>
+    <section data-sub="home" class="card" id="home-dl" aria-labelledby="t-hdl" hidden>
+      <h2 id="t-hdl">Da pagare a breve</h2>
+      <div id="home-dl-list"></div>
+      <div class="btnrow" style="margin-top:10px"><button type="button" id="home-dl-go">Vedi tutte le scadenze</button></div>
     </section>
     <section data-sub="home" class="card hl" id="wk-remind" aria-labelledby="t-wr" hidden>
       <h2 id="t-wr">Com'è andata la settimana scorsa?</h2>
@@ -609,6 +636,16 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <div id="funds"></div>
       <p class="small muted" id="proj"></p>
     </section>
+    <section data-sub="investire" class="card" aria-labelledby="t-br">
+      <h2 id="t-br">Il tuo broker</h2>
+      <p class="small muted" id="br-text"></p>
+      <div class="fields">
+        <label class="f" for="br-name">Nome<input id="br-name" type="text" autocomplete="off" placeholder="Per esempio Mediolanum"></label>
+        <label class="f" for="br-url">Link al sito o all'app<input id="br-url" type="text" inputmode="url" autocomplete="off" placeholder="www.…"></label>
+      </div>
+      <div class="btnrow"><button type="button" id="br-save">Salva</button><a class="btnlink primary" id="br-open" href="#" target="_blank" rel="noopener" hidden>Apri il broker</a></div>
+      <p class="small muted">I soldi si versano sempre dall'app o dal sito del tuo broker: qui tieni il promemoria e segni quanto hai versato. L'app non muove denaro e non vede i tuoi conti.</p>
+    </section>
     <section data-sub="investire" class="card" aria-labelledby="t-iv">
       <h2 id="t-iv">Quanto hai investito davvero</h2>
       <div class="stats">
@@ -738,6 +775,95 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
   </main>
 
   <!-- STORICO -->
+  <main class="view" id="v-archivio" hidden>
+    <section data-sub="panoramica" class="card" aria-labelledby="t-ov">
+      <h2 id="t-ov">Cosa hai da pagare</h2>
+      <div class="stats">
+        <div class="stat"><span>Prossimi 30 giorni</span><b class="num" id="ov-due">0</b></div>
+        <div class="stat"><span>Scadute</span><b class="num" id="ov-late">0</b></div>
+        <div class="stat"><span>Documenti</span><b class="num" id="ov-docs">0</b></div>
+      </div>
+      <p class="small muted" id="ov-note"></p>
+    </section>
+    <section data-sub="panoramica" class="card" aria-labelledby="t-ovl">
+      <h2 id="t-ovl">Scadenze in arrivo</h2>
+      <div id="ov-list"></div>
+      <div class="btnrow" style="margin-top:12px"><button type="button" id="ov-go">Aggiungi una scadenza</button></div>
+    </section>
+    <section data-sub="panoramica" class="card" aria-labelledby="t-ovd">
+      <h2 id="t-ovd">Ultimi documenti</h2>
+      <div id="ov-recent"></div>
+      <div class="btnrow" style="margin-top:12px"><button type="button" id="ov-godoc">Apri l'archivio</button></div>
+    </section>
+
+    <section data-sub="scadenze" class="card" aria-labelledby="t-dl">
+      <h2 id="t-dl">Aggiungi una scadenza</h2>
+      <p class="hint">Bollette, bollo, assicurazioni, tasse, abbonamenti. Scegli un modello oppure scrivi tu.</p>
+      <div class="tplrow" id="dl-tpl" aria-label="Modelli"></div>
+      <form id="dl-form" style="display:flex;flex-direction:column;gap:14px">
+        <label class="f" for="dl-name">Cosa devi pagare?<input id="dl-name" type="text" autocomplete="off" placeholder="Per esempio bolletta luce"></label>
+        <div class="fields">
+          <label class="f" for="dl-amt">Importo (€)<input id="dl-amt" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
+          <label class="f" for="dl-date">Scade il<input id="dl-date" type="date"></label>
+        </div>
+        <div class="fields">
+          <label class="f" for="dl-cat">Tipo<select id="dl-cat"></select></label>
+          <label class="f" for="dl-rep">Si ripete<select id="dl-rep"><option value="none">Una volta sola</option><option value="month">Ogni mese</option><option value="year">Ogni anno</option></select></label>
+        </div>
+        <label class="f" for="dl-note">Nota (facoltativa)<input id="dl-note" type="text" autocomplete="off" placeholder="Per esempio numero cliente"></label>
+        <button class="primary" type="submit" id="dl-add">Aggiungi scadenza</button>
+        <button type="button" id="dl-cancel" hidden>Annulla modifica</button>
+      </form>
+    </section>
+    <section data-sub="scadenze" class="card" aria-labelledby="t-dll">
+      <h2 id="t-dll">Tutte le scadenze</h2>
+      <div id="dl-list"></div>
+    </section>
+
+    <section data-sub="documenti" class="card" aria-labelledby="t-up">
+      <h2 id="t-up">Aggiungi documenti</h2>
+      <p class="hint">Carica foto o PDF di bollette, contratti, ricevute, buste paga. Le foto vengono rimpicciolite da sole per non occupare spazio.</p>
+      <form id="doc-form" style="display:flex;flex-direction:column;gap:14px">
+        <div class="fields">
+          <label class="f" for="doc-cat">Categoria<select id="doc-cat"></select></label>
+          <label class="f" for="doc-dl">Collega a una scadenza<select id="doc-dl"></select></label>
+        </div>
+        <label class="f" for="doc-file">Scegli i file<input id="doc-file" type="file" accept="image/*,application/pdf" multiple></label>
+        <button class="primary" type="submit" id="doc-add">Salva nell'archivio</button>
+      </form>
+      <p class="small muted" id="doc-st"></p>
+    </section>
+    <section data-sub="documenti" class="card" aria-labelledby="t-docl">
+      <h2 id="t-docl">I tuoi documenti</h2>
+      <div class="fields">
+        <label class="f" for="doc-q">Cerca<input id="doc-q" type="text" autocomplete="off" placeholder="Nome o nota"></label>
+        <label class="f" for="doc-fcat">Mostra<select id="doc-fcat"></select></label>
+      </div>
+      <p class="small muted" id="doc-flt" hidden></p>
+      <div id="doc-list"></div>
+    </section>
+    <section data-sub="documenti" class="card" aria-labelledby="t-cl">
+      <h2 id="t-cl">Archivio nel cloud</h2>
+      <p class="small muted" id="doc-cl"></p>
+      <div class="btnrow"><button type="button" id="doc-push">Invia al cloud i file rimasti qui</button></div>
+      <details style="margin-top:12px">
+        <summary>Come si attiva (una volta sola)</summary>
+        <ol class="small">
+          <li>Collega prima il tuo account in Profilo → Dati.</li>
+          <li>Su supabase.com apri il progetto, vai in "SQL Editor", incolla il testo qui sotto e premi Run.</li>
+        </ol>
+        <pre class="small" id="doc-sql" style="white-space:pre-wrap;user-select:all">insert into storage.buckets (id, name, public)
+values ('documenti', 'documenti', false)
+on conflict (id) do nothing;
+drop policy if exists "stipendio pilota documenti" on storage.objects;
+create policy "stipendio pilota documenti" on storage.objects
+  for all to authenticated
+  using (bucket_id = 'documenti' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'documenti' and (storage.foldername(name))[1] = auth.uid()::text);</pre>
+        <button type="button" id="doc-sql-copy">Copia il testo SQL</button>
+      </details>
+    </section>
+  </main>
   <main class="view" id="v-storico" hidden>
     <div>
       <h1>Storico</h1>
@@ -926,7 +1052,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
 <div class="savebar" id="savebar" hidden><div class="in"><button class="primary" id="save" type="button">Salva</button></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profilo</a></nav>
+<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profilo</a></nav>
 
 <script>
 (function () {
@@ -961,7 +1087,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var DEFAULTS = { payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1020,6 +1146,9 @@ create policy "solo i miei dati" on stipendio_pilota
     ["days", "kmOne", "tollOne", "commuteCar"].forEach(function (k) { delete S[k]; });
     S.me = Object.assign({}, DEFAULTS.me, S.me && typeof S.me === "object" ? S.me : {});
     if (["affitto", "mutuo", "proprieta", "famiglia"].indexOf(S.me.housing) < 0) S.me.housing = "affitto";
+    ["deadlines", "docs"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; S[k] = S[k].filter(function (x) { return x && typeof x === "object" && x.id; }); });
+    S.deadlines.forEach(function (d) { d.name = String(d.name || "Scadenza"); d.amount = +d.amount > 0 ? +d.amount : 0; d.repeat = ["none", "month", "year"].indexOf(d.repeat) >= 0 ? d.repeat : "none"; if (!d.done || typeof d.done !== "object") d.done = {}; });
+    if (!S.broker || typeof S.broker !== "object") S.broker = { name: "", url: "" };
     if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
@@ -1360,7 +1489,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.15";
+  var APP_VERSION = "2026-11-12.16";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2301,8 +2430,297 @@ create policy "solo i miei dati" on stipendio_pilota
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && syOn() && sy.uid && navigator.onLine) syncNow(false); });
 
   /* ---------- navigazione ---------- */
-  var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  /* ---------- archivio: scadenze, documenti, panoramica ---------- */
+  var DL_CATS = [
+    { id: "bolletta", name: "Bolletta", color: "#e0a030", ic: "M13 2L4 14h7l-1 8 9-12h-7z" },
+    { id: "casa", name: "Casa", color: "#3b7be0", ic: "M3 11l9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" },
+    { id: "auto", name: "Auto", color: "#12b0a0", ic: "M5 16V11l2-5h10l2 5v5M5 16h14M7 19v-3M17 19v-3" },
+    { id: "tasse", name: "Tasse", color: "#d4577a", ic: "M3 9l9-5 9 5M5 9v9M10 9v9M14 9v9M19 9v9M3 20h18" },
+    { id: "assicurazione", name: "Assicurazione", color: "#8a6bd8", ic: "M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" },
+    { id: "salute", name: "Salute", color: "#e5604d", ic: "M12 5v14M5 12h14" },
+    { id: "abbonamento", name: "Abbonamento", color: "#5b8fd6", ic: "M4 12a8 8 0 0 1 14-5l2 2M20 12a8 8 0 0 1-14 5l-2-2M20 4v5h-5M4 20v-5h5" },
+    { id: "altro", name: "Altro", color: "#7d8ca6", ic: "M5 12h.01M12 12h.01M19 12h.01" }
+  ];
+  var DL_TPL = [["Bolletta luce", "bolletta", "month"], ["Bolletta gas", "bolletta", "month"], ["Bolletta acqua", "bolletta", "none"], ["Internet e telefono", "bolletta", "month"], ["Bollo auto", "auto", "year"], ["Assicurazione auto", "assicurazione", "year"], ["Revisione auto", "auto", "year"], ["Tasse (acconto)", "tasse", "year"], ["Abbonamento", "abbonamento", "month"]];
+  function dlCat(id) { return DL_CATS.filter(function (c) { return c.id === id; })[0] || DL_CATS[DL_CATS.length - 1]; }
+  function catIco(c, cls) { return '<span class="ico ' + (cls || "") + '" style="--c:' + c.color + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + c.ic + '"/></svg></span>'; }
+  var REP_TXT = { none: "una volta", month: "ogni mese", year: "ogni anno" };
+  function todayStart() { return new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()); }
+  function daysTo(dateStr) { return Math.round((dOf(dateStr) - todayStart()) / 864e5); }
+  function dlOccs(d, from, to) {
+    var out = [], s0 = dOf(d.date);
+    if (isNaN(s0)) return out;
+    if (d.repeat === "none") { if (d.date >= from && d.date <= to) out.push(d.date); return out; }
+    for (var i = 0; i < 800; i++) {
+      var y = d.repeat === "year" ? s0.getFullYear() + i : s0.getFullYear() + Math.floor((s0.getMonth() + i) / 12), m = d.repeat === "year" ? s0.getMonth() : (s0.getMonth() + i) % 12;
+      var cur = ymd(new Date(y, m, Math.min(s0.getDate(), dimOf(y, m))));
+      if (cur > to) break;
+      if (cur >= from) out.push(cur);
+    }
+    return out;
+  }
+  function dlDueText(date) {
+    var n = daysTo(date), ds = dfDay.format(dOf(date));
+    return n < 0 ? "Scaduta il " + ds + " (" + (-n) + (n === -1 ? " giorno fa" : " giorni fa") + ")" : n === 0 ? "Scade oggi" : "Scade il " + ds + " · tra " + n + (n === 1 ? " giorno" : " giorni");
+  }
+  function ovItems() {
+    var td = ymd(todayStart()), to = addDays(td, 60), from = addDays(td, -45), items = [];
+    S.deadlines.forEach(function (d) {
+      var f = d.repeat === "none" ? "0000-01-01" : from;
+      dlOccs(d, f, to).forEach(function (o) { if (!(d.done && d.done[o])) items.push({ kind: "dl", d: d, occ: o, name: d.name, cat: d.cat, amount: d.amount, date: o }); });
+    });
+    var p = plan(), pd = S.paid[S.monthKey] || {};
+    if (S.saved && S.monthKey === CUR) p.fixed.forEach(function (f) {
+      if (pd[f.id]) return; var dd = ymd(dueDate(f, S.monthKey));
+      items.push({ kind: "fix", f: f, name: f.name, cat: f.kind === "casa" ? "casa" : f.kind === "loan" ? "tasse" : "altro", amount: f.amt, date: dd });
+    });
+    items.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    return items;
+  }
+  function markDone(it, on) {
+    if (it.kind === "dl") { it.d.done = it.d.done || {}; if (on) it.d.done[it.occ] = 1; else delete it.d.done[it.occ]; }
+    else { var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (on) cur[it.f.id] = true; else delete cur[it.f.id]; S.paid[S.monthKey] = cur; }
+    persist(); renderAll();
+  }
+  function itemRow(it) {
+    var c = dlCat(it.cat), n = daysTo(it.date), row = document.createElement("div");
+    row.className = "dl" + (n < 0 ? " late" : "");
+    row.innerHTML = catIco(c) + '<div class="t"><b>' + esc(it.name) + "</b><small>" + dlDueText(it.date) + (it.kind === "fix" ? " · spesa fissa" : "") + '</small></div><b class="num">' + (it.amount > 0 ? eur2.format(it.amount) : "") + '</b><button type="button" class="tick" aria-label="Segna come pagata: ' + esc(it.name) + '">✓</button>';
+    row.querySelector("button").onclick = function () { markDone(it, true); toast(it.name + " pagata ✓", "Annulla", function () { markDone(it, false); }); };
+    return row;
+  }
+  function renderOverview() {
+    var items = ovItems(), td = ymd(todayStart()), lim = addDays(td, 30), tot = 0, late = 0;
+    var p = plan(), inv = S.saved && S.monthKey === CUR ? Math.max(0, p.inv - liveMonth().invested) : 0;
+    items.forEach(function (it) { if (it.date <= lim) tot += it.amount || 0; if (it.date < td) late++; });
+    $("ov-due").textContent = eur.format(tot); $("ov-late").textContent = String(late); $("ov-docs").textContent = String(S.docs.length);
+    $("ov-note").textContent = !items.length ? "Nessuna scadenza in arrivo. Aggiungi bollette, bollo o assicurazioni nella scheda Scadenze." : late ? "Hai " + late + (late === 1 ? " scadenza passata" : " scadenze passate") + ": se le hai già pagate, spunta la voce." : "Tutto in ordine: niente di scaduto.";
+    var box = $("ov-list"); box.innerHTML = "";
+    var groups = [["Da sistemare subito", function (n) { return n < 0; }], ["Questa settimana", function (n) { return n >= 0 && n <= 7; }], ["Entro 30 giorni", function (n) { return n > 7 && n <= 30; }], ["Più avanti", function (n) { return n > 30; }]];
+    groups.forEach(function (g) {
+      var l = items.filter(function (it) { return g[1](daysTo(it.date)); }); if (!l.length) return;
+      var h = document.createElement("h3"); h.className = "grp"; h.textContent = g[0]; box.appendChild(h);
+      l.forEach(function (it) { box.appendChild(itemRow(it)); });
+    });
+    if (inv > 0) {
+      var h2 = document.createElement("h3"); h2.className = "grp"; h2.textContent = "Per il futuro"; box.appendChild(h2);
+      var r = document.createElement("div"); r.className = "dl";
+      r.innerHTML = catIco({ color: "#12b0a0", ic: "M3 17l6-6 4 4 8-8M15 7h6v6" }) + '<div class="t"><b>Investimento del mese</b><small>Ancora da versare</small></div><b class="num">' + eur.format(inv) + '</b><button type="button" class="tick" aria-label="Vai a Investire">→</button>';
+      r.querySelector("button").onclick = function () { location.hash = "#piano/investire"; };
+      box.appendChild(r);
+    }
+    if (!box.children.length) box.innerHTML = '<p class="empty">Niente in arrivo. Aggiungi la prima scadenza qui sotto.</p>';
+    var rb = $("ov-recent"); rb.innerHTML = "";
+    var rec = S.docs.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 3);
+    if (!rec.length) rb.innerHTML = '<p class="empty">Ancora nessun documento. Caricane uno dalla scheda Documenti.</p>';
+    rec.forEach(function (d) { rb.appendChild(docRow(d, true)); });
+  }
+  /* home */
+  function renderHomeDl() {
+    var sec = $("home-dl"); if (!sec) return;
+    var items = ovItems().filter(function (it) { return daysTo(it.date) <= 14; }).slice(0, 3);
+    sec.hidden = !S.saved || !items.length;
+    if (sec.hidden) return;
+    var box = $("home-dl-list"); box.innerHTML = "";
+    items.forEach(function (it) { box.appendChild(itemRow(it)); });
+  }
+  /* scadenze: modulo e elenco */
+  var dlEdit = 0;
+  function fillCatSelect(sel, withAll) {
+    var h = withAll ? '<option value="">Tutte le categorie</option>' : "";
+    DL_CATS.forEach(function (c) { h += '<option value="' + c.id + '">' + c.name + "</option>"; });
+    sel.innerHTML = h;
+  }
+  function resetDlForm() { dlEdit = 0; $("dl-form").reset(); $("dl-cat").value = "bolletta"; $("dl-date").value = ymd(addDays2(todayStart(), 7)); $("dl-add").textContent = "Aggiungi scadenza"; $("dl-cancel").hidden = true; $("t-dl").textContent = "Aggiungi una scadenza"; }
+  function addDays2(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  function saveDeadline(ev) {
+    ev.preventDefault();
+    var name = $("dl-name").value.trim().slice(0, 50), amt = pnum($("dl-amt").value), date = $("dl-date").value;
+    if (!name) { toast("Scrivi cosa devi pagare"); $("dl-name").focus(); return; }
+    if (!date) { toast("Scegli la data di scadenza"); return; }
+    if (isNaN(amt) || amt < 0) amt = 0;
+    var o = { name: name, amount: amt, date: date, cat: $("dl-cat").value, repeat: $("dl-rep").value, note: $("dl-note").value.trim().slice(0, 80) };
+    if (dlEdit) { var d = S.deadlines.filter(function (x) { return x.id === dlEdit; })[0]; if (d) Object.assign(d, o); }
+    else S.deadlines.push(Object.assign({ id: S.nextId++, done: {} }, o));
+    var was = dlEdit; persist(); resetDlForm(); renderAll(); toast(was ? "Scadenza aggiornata ✓" : "Scadenza aggiunta ✓");
+  }
+  function nextOcc(d) {
+    var td = ymd(todayStart()), o = dlOccs(d, d.repeat === "none" ? "0000-01-01" : addDays(td, -45), addDays(td, 800)).filter(function (x) { return !(d.done && d.done[x]); });
+    return o[0] || "";
+  }
+  function renderDeadlines() {
+    var box = $("dl-list"); box.innerHTML = "";
+    if (!S.deadlines.length) { box.innerHTML = '<p class="empty">Ancora nessuna scadenza. Scegli un modello qui sopra per cominciare.</p>'; return; }
+    S.deadlines.map(function (d) { return { d: d, n: nextOcc(d) }; }).sort(function (a, b) { return (a.n || "9999") < (b.n || "9999") ? -1 : 1; }).forEach(function (x) {
+      var d = x.d, c = dlCat(d.cat), nd = S.docs.filter(function (k) { return k.dl === d.id; }).length, row = document.createElement("div"); row.className = "dl";
+      row.innerHTML = catIco(c) + '<div class="t"><b>' + esc(d.name) + "</b><small>" + (x.n ? dlDueText(x.n) : "Tutte pagate") + " · " + REP_TXT[d.repeat] + (nd ? " · " + nd + (nd === 1 ? " documento" : " documenti") : "") + (d.note ? " · " + esc(d.note) : "") + '</small></div><b class="num">' + (d.amount > 0 ? eur2.format(d.amount) : "") + '</b><span class="acts"><button type="button" class="mini" data-a="e">Modifica</button><button type="button" class="x" data-a="x" aria-label="Elimina ' + esc(d.name) + '">×</button></span>';
+      row.querySelector('[data-a="e"]').onclick = function () {
+        dlEdit = d.id; $("dl-name").value = d.name; $("dl-amt").value = d.amount ? txt(d.amount) : ""; $("dl-date").value = d.date; $("dl-cat").value = d.cat; $("dl-rep").value = d.repeat; $("dl-note").value = d.note || "";
+        $("dl-add").textContent = "Salva modifiche"; $("dl-cancel").hidden = false; $("t-dl").textContent = "Modifica la scadenza"; window.scrollTo(0, 0);
+      };
+      row.querySelector('[data-a="x"]').onclick = function () {
+        var keep = deepc(d); S.deadlines = S.deadlines.filter(function (y) { return y.id !== d.id; }); persist(); renderAll();
+        toast("Scadenza eliminata", "Annulla", function () { S.deadlines.push(keep); persist(); renderAll(); });
+      };
+      box.appendChild(row);
+    });
+    var sel = $("doc-dl"), cur = sel.value; sel.innerHTML = '<option value="">Nessuna</option>' + S.deadlines.map(function (d) { return '<option value="' + d.id + '">' + esc(d.name) + "</option>"; }).join(""); sel.value = cur;
+  }
+  /* documenti: file locali (IndexedDB) + cloud (Supabase Storage) */
+  var IDBP = null;
+  function idb() {
+    if (IDBP) return IDBP;
+    IDBP = new Promise(function (res, rej) {
+      try { var r = indexedDB.open("sp-files", 1); r.onupgradeneeded = function () { r.result.createObjectStore("f"); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; } catch (e) { rej(e); }
+    });
+    return IDBP;
+  }
+  function fileOp(mode, fn) { return idb().then(function (db) { return new Promise(function (res, rej) { var tx = db.transaction("f", mode), rq = fn(tx.objectStore("f")); tx.oncomplete = function () { res(rq && rq.result); }; tx.onerror = function () { rej(tx.error); }; tx.onabort = function () { rej(tx.error); }; }); }); }
+  function filePut(id, blob) { return fileOp("readwrite", function (s) { return s.put(blob, String(id)); }); }
+  function fileGet(id) { return fileOp("readonly", function (s) { return s.get(String(id)); }); }
+  function fileDel(id) { return fileOp("readwrite", function (s) { return s.delete(String(id)); }); }
+  function uidNow() {
+    if (sy.uid) return sy.uid;
+    try { return JSON.parse(atob(sy.at.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).sub || ""; } catch (e) { return ""; }
+  }
+  function cloudPut(d, blob) {
+    if (!syOn()) return Promise.reject(new Error("off"));
+    return syToken().then(function () {
+      var u = uidNow(); if (!u) throw new Error("uid");
+      return syFetch("/storage/v1/object/documenti/" + u + "/" + d.id, { method: "POST", headers: { "Content-Type": blob.type || "application/octet-stream", "x-upsert": "true" }, body: blob });
+    }).then(function (r) { if (!r.ok) throw new Error("up " + r.status); return true; });
+  }
+  function cloudGet(d) {
+    return syToken().then(function () { return syFetch("/storage/v1/object/authenticated/documenti/" + uidNow() + "/" + d.id, { headers: { "Content-Type": "application/json" } }); })
+      .then(function (r) { if (!r.ok) throw new Error("dl " + r.status); return r.blob(); });
+  }
+  function cloudDel(d) { if (!syOn() || !d.cloud) return Promise.resolve(); return syFetch("/storage/v1/object/documenti/" + uidNow() + "/" + d.id, { method: "DELETE" }).catch(function () {}); }
+  function shrink(file) {
+    return new Promise(function (res) {
+      if (!/^image\/(jpeg|png|webp|heic|heif)/.test(file.type) || !window.createImageBitmap) { res(file); return; }
+      createImageBitmap(file).then(function (bm) {
+        var k = Math.min(1, 1800 / Math.max(bm.width, bm.height)), c = document.createElement("canvas"); c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k);
+        c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height);
+        c.toBlob(function (b) { res(b && b.size < file.size ? b : file); }, "image/jpeg", 0.82);
+      }).catch(function () { res(file); });
+    });
+  }
+  function fsize(n) { return n >= 1048576 ? nf.format(Math.round(n / 104857.6) / 10) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  var docMsg = "", docQ = "", docFcat = "", docFdl = 0;
+  function addDocs(ev) {
+    ev.preventDefault();
+    var files = Array.prototype.slice.call($("doc-file").files || []);
+    if (!files.length) { toast("Scegli almeno un file"); return; }
+    var cat = $("doc-cat").value, dl = +$("doc-dl").value || 0, ok = 0, cloudOk = 0, fails = 0;
+    $("doc-add").disabled = true; docMsg = "Salvo " + files.length + (files.length === 1 ? " file…" : " file…"); renderDocSt();
+    files.reduce(function (pr, f) {
+      return pr.then(function () {
+        if (f.size > 25 * 1048576) { fails++; return; }
+        return shrink(f).then(function (blob) {
+          if (blob.size > 12 * 1048576) { fails++; return; }
+          var d = { id: S.nextId++, name: f.name.replace(/\.[^.]+$/, "").slice(0, 60) || "Documento", cat: cat, date: ymd(NOW), size: blob.size, type: blob.type || f.type || "", note: "", dl: dl, cloud: false };
+          return filePut(d.id, blob).then(function () { S.docs.push(d); ok++; return cloudPut(d, blob).then(function () { d.cloud = true; cloudOk++; }, function () {}); }, function () { fails++; });
+        });
+      });
+    }, Promise.resolve()).then(function () {
+      $("doc-add").disabled = false; $("doc-file").value = "";
+      docMsg = ok ? ok + (ok === 1 ? " file salvato" : " file salvati") + (cloudOk === ok ? " anche nel cloud ✓." : syOn() ? " su questo telefono. Il cloud non li ha accettati: guarda “Archivio nel cloud” qui sotto." : " su questo telefono.") : "";
+      if (fails) docMsg += " " + fails + (fails === 1 ? " file non salvato (troppo grande o non leggibile)." : " file non salvati (troppo grandi o non leggibili).");
+      persist(); renderAll(); toast(ok ? "Documenti salvati ✓" : "Non sono riuscito a salvare i file");
+    });
+  }
+  function openDoc(d, download) {
+    var getB = fileGet(d.id).then(function (b) { if (b) return b; if (d.cloud && syOn()) return cloudGet(d).then(function (bb) { return filePut(d.id, bb).then(function () { return bb; }, function () { return bb; }); }); throw new Error("none"); });
+    getB.then(function (b) {
+      var url = URL.createObjectURL(b), a = document.createElement("a"); a.href = url;
+      if (download) a.download = d.name + (/pdf/.test(b.type) ? ".pdf" : /png/.test(b.type) ? ".png" : /jpe?g/.test(b.type) ? ".jpg" : ""); else { a.target = "_blank"; a.rel = "noopener"; }
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    }).catch(function () { toast("File non disponibile su questo telefono. Attiva l'archivio nel cloud per ritrovarlo ovunque."); });
+  }
+  function docRow(d, compact) {
+    var c = dlCat(d.cat), isPdf = /pdf/.test(d.type), row = document.createElement("div"); row.className = "dl";
+    var dlr = S.deadlines.filter(function (x) { return x.id === d.dl; })[0];
+    row.innerHTML = catIco(c) + '<div class="t"><b>' + esc(d.name) + "</b><small>" + c.name + " · " + dfDay.format(dOf(d.date)) + " · " + (isPdf ? "PDF" : "Foto") + " " + fsize(d.size) + (dlr ? " · " + esc(dlr.name) : "") + (d.cloud ? " · ☁" : "") + (d.note ? " · " + esc(d.note) : "") + '</small></div><span></span><span class="acts"><button type="button" class="mini" data-a="o">Apri</button>' + (compact ? "" : '<button type="button" class="mini" data-a="e">Modifica</button><button type="button" class="x" data-a="x" aria-label="Elimina ' + esc(d.name) + '">×</button>') + "</span>";
+    row.querySelector('[data-a="o"]').onclick = function () { openDoc(d, false); };
+    if (!compact) {
+      row.querySelector('[data-a="e"]').onclick = function () { editDocRow(row, d); };
+      row.querySelector('[data-a="x"]').onclick = function () {
+        if (row.getAttribute("data-sure") !== "1") { row.setAttribute("data-sure", "1"); var b = row.querySelector('[data-a="x"]'); b.textContent = "Elimina?"; b.className = "mini danger"; setTimeout(function () { if (b.isConnected) { row.removeAttribute("data-sure"); b.textContent = "×"; b.className = "x"; } }, 4000); return; }
+        S.docs = S.docs.filter(function (y) { return y.id !== d.id; }); persist(); fileDel(d.id).catch(function () {}); cloudDel(d); renderAll(); toast("Documento eliminato");
+      };
+    }
+    return row;
+  }
+  function editDocRow(row, d) {
+    row.className = "dl edit"; row.style.display = "block";
+    var h = '<div class="fields"><label class="f">Nome<input type="text" class="e-name" value="' + esc(d.name) + '"></label><label class="f">Categoria<select class="e-cat">' + DL_CATS.map(function (c) { return '<option value="' + c.id + '"' + (c.id === d.cat ? " selected" : "") + ">" + c.name + "</option>"; }).join("") + '</select></label></div><label class="f" style="margin-top:8px">Nota<input type="text" class="e-note" value="' + esc(d.note || "") + '"></label><div class="btnrow" style="margin-top:10px"><button type="button" class="primary e-ok">Salva</button><button type="button" class="e-no">Annulla</button><button type="button" class="e-dl">Scarica</button></div>';
+    row.innerHTML = h;
+    row.querySelector(".e-ok").onclick = function () { d.name = row.querySelector(".e-name").value.trim().slice(0, 60) || d.name; d.cat = row.querySelector(".e-cat").value; d.note = row.querySelector(".e-note").value.trim().slice(0, 80); persist(); renderAll(); };
+    row.querySelector(".e-no").onclick = function () { renderAll(); };
+    row.querySelector(".e-dl").onclick = function () { openDoc(d, true); };
+  }
+  function renderDocSt() {
+    $("doc-st").textContent = docMsg || (S.docs.length ? S.docs.length + (S.docs.length === 1 ? " documento in archivio." : " documenti in archivio.") : "I file restano su questo telefono e, se attivi il cloud, anche online.");
+    var on = syOn(), pend = S.docs.filter(function (d) { return !d.cloud; }).length;
+    $("doc-cl").textContent = !on ? "Per ritrovare i documenti su tutti i tuoi telefoni collega prima l'account in Profilo → Dati, poi attiva l'archivio qui sotto." : S.docs.length && !pend ? "Tutti i documenti sono anche nel cloud ☁. Li ritrovi accedendo da un altro telefono." : pend ? pend + (pend === 1 ? " documento è" : " documenti sono") + " solo su questo telefono. Se hai già attivato l'archivio, premi il pulsante per inviarli." : "Account collegato. Attiva l'archivio una volta (testo SQL qui sotto) e i nuovi documenti andranno anche nel cloud.";
+    $("doc-push").hidden = !on || !pend;
+  }
+  function renderDocs() {
+    var q = docQ.trim().toLowerCase(), box = $("doc-list"); box.innerHTML = "";
+    var l = S.docs.filter(function (d) { return (!docFcat || d.cat === docFcat) && (!docFdl || d.dl === docFdl) && (!q || (d.name + " " + (d.note || "")).toLowerCase().indexOf(q) >= 0); }).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id; });
+    var fl = $("doc-flt"); fl.hidden = !docFdl;
+    if (docFdl) { var dd = S.deadlines.filter(function (x) { return x.id === docFdl; })[0]; fl.innerHTML = "Solo i documenti di “" + esc(dd ? dd.name : "scadenza") + '”. <a href="#archivio/documenti" id="doc-flt-x">Mostra tutti</a>'; fl.querySelector("a").onclick = function (e) { e.preventDefault(); docFdl = 0; renderDocs(); }; }
+    if (!l.length) { box.innerHTML = '<p class="empty">' + (S.docs.length ? "Nessun documento corrisponde alla ricerca." : "Ancora nessun documento. Caricane uno qui sopra.") + "</p>"; }
+    l.forEach(function (d) { box.appendChild(docRow(d, false)); });
+    renderDocSt();
+  }
+  function pushPending() {
+    var l = S.docs.filter(function (d) { return !d.cloud; }), ok = 0;
+    if (!l.length) return;
+    $("doc-push").disabled = true;
+    l.reduce(function (pr, d) { return pr.then(function () { return fileGet(d.id).then(function (b) { if (!b) return; return cloudPut(d, b).then(function () { d.cloud = true; ok++; }, function () {}); }); }); }, Promise.resolve()).then(function () {
+      $("doc-push").disabled = false; persist(); renderAll();
+      toast(ok === l.length ? "Tutto nel cloud ✓" : ok ? ok + " inviati, gli altri no: controlla di aver attivato l'archivio" : "Il cloud non accetta i file: attiva l'archivio con il testo SQL");
+    });
+  }
+  function renderArchivio() { renderOverview(); renderDeadlines(); renderDocs(); renderHomeDl(); }
+  function initArchivio() {
+    fillCatSelect($("dl-cat")); fillCatSelect($("doc-cat")); fillCatSelect($("doc-fcat"), true);
+    $("doc-cat").value = "casa";
+    $("dl-tpl").innerHTML = DL_TPL.map(function (t, i) { return '<button type="button" class="chipb" data-i="' + i + '">' + t[0] + "</button>"; }).join("");
+    $("dl-tpl").querySelectorAll("button").forEach(function (b) { b.onclick = function () { var t = DL_TPL[+this.getAttribute("data-i")]; $("dl-name").value = t[0]; $("dl-cat").value = t[1]; $("dl-rep").value = t[2]; $("dl-amt").focus(); }; });
+    resetDlForm();
+    $("dl-form").onsubmit = saveDeadline; $("dl-cancel").onclick = resetDlForm;
+    $("doc-form").onsubmit = addDocs;
+    $("doc-q").oninput = function () { docQ = this.value; renderDocs(); };
+    $("doc-fcat").onchange = function () { docFcat = this.value; renderDocs(); };
+    $("doc-push").onclick = pushPending;
+    $("doc-sql-copy").onclick = function () { var t = $("doc-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
+    $("ov-go").onclick = function () { location.hash = "#archivio/scadenze"; };
+    $("ov-godoc").onclick = function () { location.hash = "#archivio/documenti"; };
+    var hg = $("home-dl-go"); if (hg) hg.onclick = function () { location.hash = "#archivio/panoramica"; };
+  }
+  /* broker */
+  function cleanUrl(u) {
+    u = String(u || "").trim(); if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u.replace(/^\/+/, "");
+    try { var x = new URL(u); return /^https?:$/.test(x.protocol) && x.hostname.indexOf(".") > 0 ? x.href : ""; } catch (e) { return ""; }
+  }
+  function renderBroker() {
+    var b = S.broker || {}, p = plan(), m = liveMonth(), left = Math.max(0, p.inv - m.invested), a = $("br-open");
+    if (document.activeElement !== $("br-name")) $("br-name").value = b.name || "";
+    if (document.activeElement !== $("br-url")) $("br-url").value = b.url || "";
+    a.hidden = !b.url; if (b.url) { a.href = b.url; a.textContent = "Apri " + (b.name || "il tuo broker"); }
+    $("br-text").textContent = p.inv <= 0 ? "Questo mese non è previsto nessun investimento." : left > 0 ? "Questo mese devi ancora versare " + eur.format(left) + " (previsto " + eur.format(p.inv) + "). Versali dall'app del tuo broker, poi torna qui e segna il versamento." : "Hai già versato quanto previsto per questo mese. 👍";
+  }
+  function saveBroker() {
+    var u = cleanUrl($("br-url").value);
+    if ($("br-url").value.trim() && !u) { toast("Il link non sembra valido: per esempio www.mediolanum.it"); return; }
+    S.broker = { name: $("br-name").value.trim().slice(0, 40), url: u }; persist(); renderAll(); toast("Broker salvato ✓");
+  }
+
+  var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -2327,11 +2745,11 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     if (h === "profilo" && curView !== "profilo") fillForm(S);
     curView = h;
-    $("fab").hidden = h === "profilo" || (h === "spese" && sub === "spese") || !S.saved;
+    $("fab").hidden = h === "profilo" || h === "archivio" || (h === "spese" && sub === "spese") || !S.saved;
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
+  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -2371,6 +2789,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var v = Math.min(31, Math.max(1, Math.round(pnum(this.value)) || 1)), keep = PAYDAY, el = $("pay-prev"); PAYDAY = v;
     var k = periodKeyFor(NOW); el.textContent = "Con il giorno " + v + " il mese in corso va dal " + dfDay.format(startOf(k)) + " al " + dfDay.format(endOf(k)) + "."; PAYDAY = keep;
   };
+  initArchivio(); $("br-save").onclick = saveBroker;
   $("td-date").onchange = function () { if (this.value && inMonth(this.value)) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
   setupBackup();
