@@ -14,11 +14,11 @@
 <meta name="apple-mobile-web-app-title" content="Stipendio Pilota">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
 <style>
 /* Layout: quattro schermate (Home, Spese, Storico, Profilo) scelte da un selettore in alto. Il Profilo ha il pulsante Salva fisso in basso. Ogni mese un riquadro chiede il nuovo stipendio. */
 :root {
-  --bg: #f4f6f4;
+  --bg: #eff3f2;
   --surface: #ffffff;
   --ink: #16221f;
   --muted: #586865;
@@ -40,14 +40,17 @@
   --c-fun: #d4608f;
   --c-save: #4a82e0;
   --c-invest: #14a58f;
-  --font-head: "Space Grotesk", system-ui, sans-serif;
+  --font-head: "Bricolage Grotesque", system-ui, sans-serif;
+  --hero: #0a2624;
+  --hero-ink: #eaf6f3;
+  --hero-muted: #a9c7c1;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
     --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
-    --toast-bg: #e9f1ef; --toast-ink: #0e1514;
+    --toast-bg: #e9f1ef; --toast-ink: #0e1514; --hero: #123431;
     --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
     color-scheme: dark;
   }
@@ -55,7 +58,7 @@
 :root[data-theme="dark"] {
   --bg: #0e1514; --surface: #162120; --ink: #e9f1ef; --muted: #94a7a4; --line: #263634; --soft: #1d2b29;
   --accent: #3fcab5; --accent-ink: #06201c; --warn: #f0b35a; --warn-bg: #33270f; --ok-bg: #143630; --bad: #f08a5d; --bad-bg: #3a1d14;
-  --toast-bg: #e9f1ef; --toast-ink: #0e1514;
+  --toast-bg: #e9f1ef; --toast-ink: #0e1514; --hero: #123431;
   --c-must: #93a3bd; --c-move: #b794f0; --c-daily: #eab04a; --c-fun: #e77fa9; --c-save: #6f9ef0; --c-invest: #3fcab5;
   color-scheme: dark;
 }
@@ -105,8 +108,8 @@ button.x { border: 0; background: transparent; color: var(--muted); min-width: 4
 .badge.none { background: var(--soft); color: var(--muted); }
 
 .group { display: flex; flex-direction: column; }
-.group-title { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 0 2px; }
-.row { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.group-title { font-size: 14px; font-weight: 700; color: var(--ink); padding: 10px 0 2px; }
+.row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); }
 .group .row:last-child { border-bottom: 0; }
 .dot { width: 12px; height: 12px; border-radius: 4px; display: inline-block; flex: none; }
 .rtxt { display: flex; flex-direction: column; min-width: 0; }
@@ -188,6 +191,38 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .bnav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 9px 2px 8px; font-size: 11px; font-weight: 600; color: var(--muted); text-decoration: none; min-width: 0; }
 .bnav a svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .bnav a.on { color: var(--accent); }
+.opts { display: flex; flex-direction: column; gap: 8px; }
+.opt { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border: 2px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 500; font-size: 14.5px; }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+.opt.on { border-color: var(--accent); background: var(--soft); font-weight: 600; }
+.opt:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.qq > b { display: block; margin-bottom: 8px; font-family: var(--font-head); font-size: 16px; }
+.ck { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.ck:last-child { border-bottom: 0; }
+.ck small { display: block; color: var(--muted); font-size: 13px; }
+.ckd { width: 14px; height: 14px; border-radius: 50%; margin-top: 4px; background: var(--accent); }
+.ckd.warn { background: var(--c-daily); }
+.ckd.bad { background: var(--bad); }
+.ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: var(--c); }
+.ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.hero { background: var(--hero); color: var(--hero-ink); border-radius: 28px; padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 14px; align-items: center; min-width: 0; }
+.ringbox { position: relative; width: min(74vw, 270px); aspect-ratio: 1; }
+.ringbox svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.ringc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 22%; gap: 2px; }
+.ringc small { color: var(--hero-muted); font-size: 13px; line-height: 1.3; }
+.ringc b { font-family: var(--font-head); font-size: clamp(28px, 9vw, 40px); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; }
+.chips2 { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.chip2 { background: rgba(255,255,255,0.1); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; }
+.hero p { margin: 0; text-align: center; font-size: 14px; color: var(--hero-muted); }
+.hero #hm-due.late-t { color: #ffb59a; }
+.hero .btnrow { width: 100%; }
+.hero .btnrow button { background: rgba(255,255,255,0.1); color: var(--hero-ink); border-color: transparent; }
+.hero .btnrow button.primary { background: #3fcab5; color: #06201c; }
+.bnav a.on svg { width: 56px; height: 30px; padding: 3px 16px; box-sizing: border-box; border-radius: 15px; background: color-mix(in srgb, var(--accent) 15%, transparent); }
+#example input[type="text"] { background: var(--soft); border: 1.5px solid var(--line, #c9d3cf); }
+#example button { width: 100%; }
+#example > span { color: var(--muted); }
 .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
 
 /* storico */
@@ -248,12 +283,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   <!-- HOME -->
   <main class="view" id="v-home">
     <div class="notice info" id="bk-warn" hidden><span>Non fai un backup da un po'. Se perdi il telefono o cancelli i dati dal browser perdi lo storico.</span><button class="primary" type="button" id="bk-go">Fai un backup</button></div>
-    <section data-sub="home" class="card" aria-labelledby="sal-label">
-      <div class="line">
-        <div><div class="salary-label" id="sal-label"></div><div class="salary-big num" id="sal-big"></div></div>
-        <button class="primary" id="edit-sal" type="button">Modifica</button>
-      </div>
-      <div class="notice info" id="example" hidden>
+    <div class="card hl" id="example" data-sub="home" hidden>
         <b>Benvenuto! Impostiamo il tuo piano in un minuto.</b>
         <span>Ora vedi valori di esempio. Scrivi tre numeri e il piano si calcola da solo: il resto lo regoli dopo nelle Impostazioni.</span>
         <label class="f" for="ob-sal" style="width:100%">Stipendio netto al mese (€)<input id="ob-sal" type="text" inputmode="decimal" autocomplete="off"></label>
@@ -262,16 +292,25 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <button class="primary" id="ob-go" type="button">Calcola il mio piano</button>
         <button class="link" id="go-profile" type="button">Preferisco le impostazioni complete</button>
       </div>
+    <section data-sub="home" class="hero" aria-labelledby="t-pk">
+      <h2 id="t-pk" class="sr-only">In tasca adesso</h2>
+      <div class="ringbox">
+        <svg id="ring" viewBox="0 0 220 220" aria-hidden="true"></svg>
+        <div class="ringc"><small>In tasca adesso</small><b class="num" id="hm-pocket">0</b><small id="hero-sub"></small></div>
+      </div>
+      <div class="chips2"><span class="chip2" id="hero-fix"></span><span class="chip2" id="hero-budget"></span></div>
+      <p id="hm-day"></p>
+      <p id="hm-due" hidden></p>
+      <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
+    </section>
+    <section data-sub="home" class="card" aria-labelledby="sal-label">
+      <div class="line">
+        <div><div class="salary-label" id="sal-label"></div><div class="salary-big num" id="sal-big"></div></div>
+        <button class="primary" id="edit-sal" type="button">Modifica</button>
+      </div>
       <div id="warn" class="notice" hidden></div>
       <p class="headline" id="headline"></p>
-      <div class="bar" id="bar" role="img" aria-label="Come si divide lo stipendio"></div>
-    </section>
-    <section data-sub="home" class="card" aria-labelledby="t-pk">
-      <h2 id="t-pk">In tasca adesso</h2>
-      <div class="pocket"><span>Dopo fisse pagate e spese</span><b class="num" id="hm-pocket">0</b></div>
-      <p class="small muted" id="hm-day"></p>
-      <p class="small muted" id="hm-due" hidden></p>
-      <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
+      <div class="bar" id="bar" hidden role="img" aria-label="Come si divide lo stipendio"></div>
     </section>
     <section data-sub="home" class="card" aria-labelledby="t-now">
       <div class="line"><h2 id="t-now">Le tue spese di questo mese</h2><span class="badge none" id="now-badge"></span></div>
@@ -411,6 +450,60 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <div id="iv-list"></div>
     </section>
     <p data-sub="investire" class="disclaimer">Strumento didattico, non consulenza finanziaria. I rendimenti sono ipotesi costanti e nella realtà possono anche essere negativi. Prima di acquistare un ETF leggi il suo KID e verifica costi e tasse con il tuo broker o un professionista. Pedaggio, km e prezzi dei carburanti sono stime da correggere con i tuoi dati.</p>
+    <p data-sub="consulente" class="hint">Rispondi a poche domande: ti propongo un profilo, un piano d'accumulo e un check-up. È uno strumento educativo, non una consulenza personalizzata.</p>
+    <section data-sub="consulente" class="card" aria-labelledby="t-aq">
+      <h2 id="t-aq">Che investitore sei</h2>
+      <div id="adv-q" style="display:flex;flex-direction:column;gap:18px"></div>
+      <div id="adv-res"></div>
+    </section>
+    <section data-sub="consulente" class="card" aria-labelledby="t-pac">
+      <h2 id="t-pac">Il tuo piano d'accumulo</h2>
+      <p class="hint">Versi ogni mese la stessa cifra, anche piccola. Con il tempo gli interessi lavorano per te.</p>
+      <div class="fields">
+        <label class="f" for="adv-rata">Rata mensile (€)<input id="adv-rata" type="text" inputmode="decimal" autocomplete="off"><span class="help">Lascia vuoto per usare quella del piano</span></label>
+        <label class="f" for="adv-init">Capitale di partenza (€)<input id="adv-init" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="adv-years">Per quanti anni<select id="adv-years"><option value="5">5 anni</option><option value="10">10 anni</option><option value="15">15 anni</option><option value="20">20 anni</option><option value="25">25 anni</option><option value="30">30 anni</option></select></label>
+        <label class="f" for="adv-step">Aumenta la rata ogni anno<select id="adv-step"><option value="0">Mai</option><option value="2">Del 2%</option><option value="3">Del 3%</option><option value="5">Del 5%</option></select></label>
+        <label class="f" for="adv-target">Capitale che vuoi raggiungere (€)<input id="adv-target" type="text" inputmode="decimal" autocomplete="off"><span class="help">Facoltativo</span></label>
+        <label class="f" for="adv-day">Giorno del versamento<input id="adv-day" type="text" inputmode="numeric" autocomplete="off"><span class="help">Facoltativo: in Home ti ricordo la scadenza</span></label>
+      </div>
+      <div class="legend" id="adv-legend"></div>
+      <div class="chartwrap" id="adv-chart"></div>
+      <div id="adv-table"></div>
+      <p class="small" id="adv-goal"></p>
+      <p class="small muted" id="adv-note"></p>
+    </section>
+    <section data-sub="consulente" class="card" aria-labelledby="t-gl">
+      <h2 id="t-gl">Come cambia la ripartizione nel tempo</h2>
+      <p class="hint">Più ti avvicini alla fine del piano, meno azioni tieni: così un crollo vicino alla meta fa meno danni.</p>
+      <div id="adv-glide"></div>
+      <p class="small muted">Una volta all'anno controlla le percentuali e, se si sono spostate di oltre 5 punti, riporta tutto alla ripartizione di partenza con i nuovi versamenti.</p>
+    </section>
+    <section data-sub="consulente" class="card" aria-labelledby="t-ck">
+      <h2 id="t-ck">Il tuo check-up</h2>
+      <div id="adv-check"></div>
+    </section>
+    <section data-sub="consulente" class="card" aria-labelledby="t-co">
+      <h2 id="t-co">Quanto pesano i costi</h2>
+      <p class="hint">Confronto fra un ETF a basso costo (quello del tuo piano) e un fondo con commissioni, a parità di rendimento lordo.</p>
+      <div class="fields">
+        <label class="f" for="adv-entry">Commissione di ingresso (%)<input id="adv-entry" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="f" for="adv-mgmt">Costo di gestione annuo (%)<input id="adv-mgmt" type="text" inputmode="decimal" autocomplete="off"></label>
+      </div>
+      <div id="adv-cost"></div>
+      <p class="small muted">Valori di partenza presi da un esempio pubblicato: per i fondi Best Brands della linea Collection nel piano di accumulo di Banca Mediolanum si parla di commissioni di sottoscrizione fino al 3% e costi di gestione dell'1,9% l'anno (fonte: articolo di AffariMiei). Sostituiscili con i numeri del KID del prodotto che ti propongono. Un fondo gestito può fare meglio o peggio del mercato, ma i costi li paghi comunque.</p>
+    </section>
+    <section data-sub="consulente" class="card" aria-labelledby="t-ru">
+      <h2 id="t-ru">Le cinque regole del metodo</h2>
+      <div>
+        <div class="ck"><span class="ckd ok"></span><div><b>Prima il fondo di sicurezza.</b><small>Metti da parte i mesi di spese che hai scelto, poi investi.</small></div></div>
+        <div class="ck"><span class="ckd ok"></span><div><b>Stessa data ogni mese.</b><small>Un bonifico fisso il giorno dopo lo stipendio, senza pensarci.</small></div></div>
+        <div class="ck"><span class="ckd ok"></span><div><b>Non vendere nei crolli.</b><small>I cali fanno parte del gioco: il piano funziona perché continui a versare.</small></div></div>
+        <div class="ck"><span class="ckd ok"></span><div><b>Una revisione all'anno.</b><small>Rata, ripartizione e profilo: cambiali solo se cambia la tua vita.</small></div></div>
+        <div class="ck"><span class="ckd ok"></span><div><b>Guarda sempre i costi.</b><small>Leggi il KID: anche l'1% in più l'anno, in vent'anni, pesa moltissimo.</small></div></div>
+      </div>
+    </section>
+    <p data-sub="consulente" class="disclaimer">Strumento educativo: non è consulenza finanziaria personalizzata e non sostituisce un consulente abilitato. I rendimenti sono ipotesi costanti, non garanzie, e possono anche essere negativi. Le tasse e i costi sono stime.</p>
     <p data-sub="obiettivi" class="hint">Metti da parte per qualcosa di preciso e per le spese che arrivano una volta all'anno.</p>
     <section data-sub="obiettivi" class="card" aria-labelledby="t-g">
       <h2 id="t-g">I tuoi obiettivi</h2>
@@ -558,9 +651,9 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 <script>
 (function () {
   var KEY = "stipendio-pilota-v4";
-  var eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-  var eur2 = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  var nf = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
+  var eur = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", maximumFractionDigits: 0, useGrouping: "always" });
+  var eur2 = new Intl.NumberFormat("it-IT", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: "always" });
+  var nf = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1, useGrouping: "always" });
   var dfDay = new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" });
 
   var NOW = new Date();
@@ -571,7 +664,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   var DIM = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate();
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
-  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     days: 22, kmOne: 70, tollOne: 3.3, commuteCar: "diesel",
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -608,6 +701,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   if (!S.extra || typeof S.extra !== "object") S.extra = {};
   if (!S.history || typeof S.history !== "object") S.history = {};
   if (!S.monthKey) S.monthKey = CUR;
+  S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {};
   if (!S.dv || S.dv < 2) { if (S.tollOne === 4) S.tollOne = 3.3; S.dv = 2; }
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
   var warned = false;
@@ -624,6 +718,19 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   }
 
   /* ---------- calcolo ---------- */
+  var ICONS = {
+    home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>', bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
+    road: '<path d="M7 21L9.5 3M17 21L14.5 3M12 6v3M12 12v3M12 18v3"/>', fuel: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/><path d="M6 8h6"/>',
+    cart: '<path d="M3 4h2l2.4 11h9.2L19 7H6.2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>', smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.300 2 4 2s3-.5 4-2M9 9.500v.5M15 9.500v.5"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', trend: '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>', cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    tag: '<path d="M3 12V4h8l10 10-8 8z"/><path d="M7.500 7.500h.01"/>'
+  };
+  function iconKey(n) {
+    n = String(n).toLowerCase();
+    return /affitto|mutuo|casa/.test(n) ? "home" : /bollett|abbon|netflix|telefon|luce|gas|internet/.test(n) ? "bolt" : /assicur/.test(n) ? "shield" : /pedaggio|casello/.test(n) ? "road" : /benzina|diesel|carburante/.test(n) ? "fuel"
+      : /spesa alimentare|spesa/.test(n) ? "cart" : /tempo libero|svago/.test(n) ? "smile" : /da parte|risparmio/.test(n) ? "lock" : /investiment/.test(n) ? "trend" : /annual/.test(n) ? "cal" : "tag";
+  }
+  function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
   function plan() {
     var sal = S.salary;
     var sh = Math.min(100, Math.max(1, S.share)) / 100;
@@ -742,7 +849,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     meta.forEach(function (g) {
       html += '<div class="group"><div class="group-title">' + g[0] + "</div>";
       g[1].forEach(function (r, i) {
-        html += '<div class="row"><span class="dot" style="background:' + g[2][i] + '"></span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
+        html += '<div class="row"><span class="ico" style="--c:' + g[2][i] + '">' + iconSvg(iconKey(r[0])) + '</span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
         segs.push([r[2], g[2][i]]);
       });
       html += "</div>";
@@ -751,6 +858,15 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     var tot = Math.max(p.sal, p.spend, 1);
     $("bar").innerHTML = segs.filter(function (s) { return s[0] > 0; }).map(function (s) { return '<div style="width:' + (s[0] / tot * 100) + '%;background:' + s[1] + '"></div>'; }).join("");
 
+    var DC = { "var(--c-must)": "#93a3bd", "var(--c-move)": "#b794f0", "var(--c-daily)": "#eab04a", "var(--c-fun)": "#e77fa9", "var(--c-save)": "#6f9ef0", "var(--c-invest)": "#3fcab5" };
+    var RR = 88, CC = 2 * Math.PI * RR, tot2 = Math.max(p.sal + p.extra, p.spend, 1), acc = 0;
+    var rh = '<circle cx="110" cy="110" r="88" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="22"/>';
+    segs.filter(function (q) { return q[0] > 0; }).forEach(function (q) {
+      var len = q[0] / tot2 * CC, gap = Math.min(3, len * 0.3), seg = Math.max(0.5, len - gap);
+      rh += '<circle cx="110" cy="110" r="88" fill="none" stroke-width="22" stroke="' + (DC[q[1]] || "#888") + '" stroke-dasharray="' + seg.toFixed(2) + " " + (CC - seg).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '"/>';
+      acc += len;
+    });
+    $("ring").innerHTML = rh;
     var w = $("warn");
     if (p.over > 0) { w.hidden = false; w.textContent = "Le spese superano lo stipendio di " + eur.format(p.over) + ". Vai su Profilo e riduci qualcosa."; }
     else if (p.sal > 0 && p.left < p.sal * 0.1) { w.hidden = false; w.textContent = "Ti avanza meno del 10% dello stipendio. Prova a ridurre il tempo libero o la spesa per risparmiare di più."; }
@@ -780,11 +896,12 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
     $("pocket").textContent = eur2.format(m.pocket);
     $("pocket").style.color = m.pocket < 0 ? "var(--bad)" : "";
-    var nd = $("next-due"), un = m.fixed.filter(function (f) { return !m.pd[f.id] && dueInfo(f).diff !== null; });
+    var pacItem = (S.adv.day > 0 && p.inv > 0 && m.invested < p.inv) ? [{ id: "pac", name: "Versamento investimento", amt: p.inv, due: S.adv.day }] : [];
+    var nd = $("next-due"), un = m.fixed.filter(function (f) { return !m.pd[f.id]; }).concat(pacItem).filter(function (f) { return dueInfo(f).diff !== null; });
     var late = un.filter(function (f) { return dueInfo(f).diff < 0; });
     un = un.filter(function (f) { return dueInfo(f).diff >= 0; }).sort(function (a, b) { return dueInfo(a).diff - dueInfo(b).diff; });
     nd.hidden = !(late.length || un.length);
-    if (late.length) { nd.className = "small late-t"; nd.textContent = "Attenzione: " + late.map(function (f) { return f.name; }).join(", ") + (late.length > 1 ? " sono scadute." : " è scaduta."); }
+    if (late.length) { nd.className = "small late-t"; nd.textContent = "Scadenze passate: " + late.map(function (f) { return f.name; }).join(", ") + "."; }
     else if (un.length) { nd.className = "small muted"; var d0 = dueInfo(un[0]).diff; nd.textContent = "Prossima scadenza: " + un[0].name + (d0 === 0 ? " oggi." : " tra " + d0 + (d0 === 1 ? " giorno." : " giorni.")); }
     var cp = $("couple"); cp.hidden = !(S.sal2 > 0);
     if (S.sal2 > 0) {
@@ -801,7 +918,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     }).join("");
     $("rule-text").textContent = needs / inc * 100 > 50 ? "Le cose necessarie sono " + Math.round(needs / inc * 100) + "% delle entrate, più del 50% consigliato. Sono fisse, carburante e spesa le voci su cui puoi incidere. È una guida, non una regola: con affitto e auto alti è normale stare sopra."
       : p.left / inc * 100 >= 20 ? "Sei in linea con la regola: ti avanza almeno il 20%." : "Le necessarie sono nei limiti ma ti avanza meno del 20%: guarda il tempo libero.";
-    $("hm-pocket").textContent = $("pocket").textContent; $("hm-pocket").style.color = $("pocket").style.color;
+    $("hm-pocket").textContent = eur.format(m.pocket); $("hm-pocket").style.color = m.pocket < 0 ? "#ffb59a" : "";
+    $("hero-sub").textContent = "su " + eur.format(p.sal + p.extra) + " di entrate";
+    $("hero-fix").textContent = "Fisse " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
+    $("hero-budget").textContent = (m.V > 0 ? Math.round(m.A / m.V * 100) : 0) + "% del budget speso";
     var mm = liveMonth(), lf = mm.V - mm.A;
     $("hm-day").textContent = lf < 0 ? "Il budget di spesa, carburante e tempo libero è finito: hai superato di " + eur.format(-lf) + "."
       : S.monthKey === CUR ? "Per spesa, carburante e tempo libero ti restano " + eur.format(lf) + ": circa " + eur.format(lf / DAYS_LEFT) + " al giorno fino a fine mese." : "Budget di spesa, carburante e tempo libero: " + eur.format(lf) + " rimasti.";
@@ -883,7 +1003,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.3";
+  var APP_VERSION = "2026-11-12.4";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -980,6 +1100,115 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     toast(bad ? "Salvato. Alcuni valori non erano numeri: ho tenuto quelli di prima" : "Salvato ✓");
   }
 
+
+  /* ---------- consulente ---------- */
+  var QUESTIONS = [
+    { id: "when", t: "Quando ti serviranno questi soldi?", o: [["Entro 5 anni", 0], ["Tra 5 e 10 anni", 1], ["Fra più di 10 anni", 2]] },
+    { id: "exp", t: "Hai già investito?", o: [["Mai", 0], ["Qualche volta", 1], ["Spesso", 2]] },
+    { id: "react", t: "Se in un anno il valore scende del 20%, cosa fai?", o: [["Vendo per non perdere altro", 0], ["Aspetto", 1], ["Ne compro di più", 2]] },
+    { id: "income", t: "Quanto è stabile il tuo reddito?", o: [["Incerto", 0], ["Abbastanza stabile", 1], ["Molto stabile", 2]] }
+  ];
+  function kfmt(v) { return v >= 1e6 ? nf.format(Math.round(v / 1e5) / 10) + " mln" : Math.round(v / 1000) + "k"; }
+  function pct(n) { n = Math.round(n); return ((n === 8 || n === 11 || (n >= 80 && n <= 89)) ? "l'" : "il ") + n + "%"; }
+  function cap(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
+  function sim(o) {
+    var r = Math.pow(1 + (o.ret - o.cost) / 100, 1 / 12) - 1, v = o.init * (1 - o.entry / 100), contrib = o.init, out = [{ y: 0, c: contrib, v: o.init }];
+    for (var y = 0; y < o.years; y++) {
+      var c = o.monthly * Math.pow(1 + o.step / 100, y);
+      for (var m = 0; m < 12; m++) { contrib += c; v = (v + c * (1 - o.entry / 100)) * (1 + r); }
+      out.push({ y: y + 1, c: contrib, v: v - Math.max(0, v - contrib) * o.tax / 100 });
+    }
+    return out;
+  }
+  function needMonthly(o, target) {
+    var lo = 0, hi = 1e5;
+    for (var i = 0; i < 40; i++) { var mid = (lo + hi) / 2, f = sim(Object.assign({}, o, { monthly: mid })); if (f[f.length - 1].v >= target) hi = mid; else lo = mid; }
+    return hi;
+  }
+  function suggest() {
+    var q = S.adv.q;
+    if (QUESTIONS.some(function (x) { return typeof q[x.id] !== "number"; })) return null;
+    var score = QUESTIONS.reduce(function (a, x) { return a + q[x.id]; }, 0), prof = score <= 2 ? "prudente" : score <= 5 ? "bilanciato" : "dinamico", notes = [];
+    if (q.when === 0 && prof !== "prudente") { prof = "prudente"; notes.push("Ti servono i soldi entro 5 anni: con un orizzonte così corto conviene la strada prudente."); }
+    if (q.react === 0 && prof === "dinamico") { prof = "bilanciato"; notes.push("Se un calo del 20% ti farebbe vendere, un profilo dinamico è rischioso per te."); }
+    return { profile: prof, score: score, notes: notes };
+  }
+  function markOpts() {
+    QUESTIONS.forEach(function (x) {
+      document.querySelectorAll('input[name="adv-' + x.id + '"]').forEach(function (i) { i.checked = S.adv.q[x.id] === +i.value; i.parentNode.className = "opt" + (i.checked ? " on" : ""); });
+    });
+  }
+  function buildAdvisor() {
+    $("adv-q").innerHTML = QUESTIONS.map(function (x) {
+      return '<div class="qq" role="radiogroup" aria-label="' + esc(x.t) + '"><b>' + x.t + '</b><div class="opts">' + x.o.map(function (o) { return '<label class="opt"><input type="radio" name="adv-' + x.id + '" value="' + o[1] + '">' + o[0] + "</label>"; }).join("") + "</div></div>";
+    }).join("");
+    document.querySelectorAll('#adv-q input').forEach(function (i) { i.onchange = function () { S.adv.q[i.name.slice(4)] = +i.value; persist(); markOpts(); renderAdvisor(); }; });
+    function num(id, key, min, max) { $(id).oninput = function () { var n = pnum(this.value); S.adv[key] = isNaN(n) ? 0 : Math.min(max, Math.max(min, n)); persist(); renderAdvisor(); renderHome(); }; }
+    num("adv-rata", "rata", 0, 1e6); num("adv-init", "init", 0, 1e8); num("adv-target", "target", 0, 1e9); num("adv-day", "day", 0, 31); num("adv-entry", "entry", 0, 20); num("adv-mgmt", "mgmt", 0, 10);
+    $("adv-years").onchange = function () { S.adv.years = +this.value; persist(); renderAdvisor(); };
+    $("adv-step").onchange = function () { S.adv.step = +this.value; persist(); renderAdvisor(); };
+    markOpts();
+  }
+  function fillAdvisorInputs() {
+    var a = S.adv;
+    $("adv-rata").value = a.rata > 0 ? txt(a.rata) : ""; $("adv-init").value = a.init > 0 ? txt(a.init) : ""; $("adv-target").value = a.target > 0 ? txt(a.target) : "";
+    $("adv-day").value = a.day > 0 ? String(Math.round(a.day)) : ""; $("adv-entry").value = txt(a.entry); $("adv-mgmt").value = txt(a.mgmt);
+    $("adv-years").value = String(a.years); $("adv-step").value = String(a.step);
+  }
+  function renderAdvisor() {
+    var p = plan(), a = S.adv, P = PROFILES[S.profile] || PROFILES.bilanciato, sg = suggest();
+    $("adv-res").innerHTML = sg ? '<div class="notice info"><b>Profilo suggerito: ' + cap(sg.profile) + "</b><span>" + PROFILES[sg.profile].eq + "% azioni e " + (100 - PROFILES[sg.profile].eq) + "% obbligazioni, rendimento ipotizzato " + nf.format(PROFILES[sg.profile].ret) + "% l'anno (punteggio " + sg.score + " su 8). " + sg.notes.join(" ") + "</span>"
+      + (S.profile !== sg.profile ? '<button class="primary" id="adv-apply" type="button">Usa il profilo ' + sg.profile + " nel piano</button>" : "<span>È già il profilo che usi nel piano.</span>") + "</div>"
+      : '<p class="small muted">Rispondi a tutte le domande per vedere il profilo suggerito.</p>';
+    if ($("adv-apply")) $("adv-apply").onclick = function () { S.profile = sg.profile; persist(); renderAll(); toast("Profilo aggiornato ✓"); };
+    var monthly = a.rata > 0 ? a.rata : p.inv;
+    $("adv-rata").placeholder = "Quella del piano: " + eur.format(p.inv);
+    var base = { monthly: monthly, init: a.init, years: a.years, step: a.step, tax: S.taxPct, cost: S.costPct, entry: 0 };
+    var sc = [["Pessimistico", P.ret - 3, "var(--c-daily)"], ["Atteso", P.ret, "var(--accent)"], ["Ottimistico", P.ret + 2, "var(--c-invest)"]].map(function (x) { return { name: x[0], ret: x[1], col: x[2], d: sim(Object.assign({}, base, { ret: x[1] })) }; });
+    var last = function (d) { return d[d.length - 1]; };
+    var mx = Math.max(1, last(sc[2].d).v, last(sc[2].d).c), W = 360, H = 190, L = 8, R = 58, T = 14, B = 24, pw = W - L - R, ph = H - T - B;
+    var X = function (i) { return L + i / a.years * pw; }, Y = function (v) { return T + ph - v / mx * ph; };
+    function line(d, key, col, dash) { return '<polyline fill="none" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"' + (dash ? ' stroke-dasharray="5 5"' : "") + ' style="stroke:' + col + '" points="' + d.map(function (q, i) { return X(i).toFixed(1) + "," + Y(q[key]).toFixed(1); }).join(" ") + '"/>'; }
+    var svg = '<svg viewBox="0 0 ' + W + " " + H + '" width="' + W + '" role="img" aria-label="Crescita del capitale nei tre scenari">';
+    svg += '<line x1="' + L + '" x2="' + (L + pw) + '" y1="' + (T + ph) + '" y2="' + (T + ph) + '" style="stroke:var(--line)"/>';
+    svg += line(sc[1].d, "c", "var(--muted)", true);
+    sc.forEach(function (x) { svg += line(x.d, "v", x.col, false); svg += '<text x="' + (L + pw + 6) + '" y="' + (Y(last(x.d).v) + 4) + '" font-size="11" style="fill:' + x.col + '">' + kfmt(last(x.d).v) + "</text>"; });
+    [0, Math.round(a.years / 2), a.years].forEach(function (yy, i) { svg += '<text x="' + X(yy) + '" y="' + (H - 6) + '" font-size="11" text-anchor="' + (i === 0 ? "start" : i === 2 ? "end" : "middle") + '" style="fill:var(--muted)">' + (yy === 0 ? "Oggi" : yy + " anni") + "</text>"; });
+    svg += "</svg>";
+    $("adv-chart").innerHTML = svg;
+    $("adv-legend").innerHTML = '<span><i style="background:var(--muted)"></i>Versato</span>' + sc.map(function (x) { return '<span><i style="background:' + x.col + '"></i>' + x.name + "</span>"; }).join("");
+    var tail = last(sc[1].d), real = tail.v / Math.pow(1.02, a.years);
+    $("adv-table").innerHTML = '<div class="entry"><div class="t">Versato in tutto<small>Rata ' + eur.format(monthly) + " al mese" + (a.step > 0 ? ", +" + a.step + "% ogni anno" : "") + '</small></div><b class="num">' + eur.format(tail.c) + "</b><span></span></div>"
+      + sc.map(function (x) { return '<div class="entry"><div class="t"><span class="dot" style="background:' + x.col + ';margin-right:8px"></span>' + x.name + "<small>Rendimento lordo " + nf.format(x.ret) + "% l'anno</small></div><b class=\"num\">" + eur.format(last(x.d).v) + "</b><span></span></div>"; }).join("")
+      + '<div class="entry"><div class="t">Scenario atteso in euro di oggi<small>Con inflazione del 2% l\'anno</small></div><b class="num">' + eur.format(real) + "</b><span></span></div>";
+    var g = $("adv-goal");
+    if (a.target > 0) {
+      var need = needMonthly(Object.assign({}, base, { ret: P.ret }), a.target), ok = tail.v >= a.target;
+      g.textContent = ok ? "Con " + eur.format(monthly) + " al mese raggiungi " + eur.format(a.target) + " nello scenario atteso (circa " + eur.format(tail.v) + ")."
+        : "Con " + eur.format(monthly) + " al mese arrivi a circa " + eur.format(tail.v) + ". Per raggiungere " + eur.format(a.target) + " servono circa " + eur.format(Math.ceil(need)) + " al mese" + (need > p.inv ? ": è più di quello che il piano destina agli investimenti (" + eur.format(p.inv) + "). Allunga gli anni o abbassa l'obiettivo." : ".");
+    } else g.textContent = "";
+    $("adv-note").textContent = "I valori sono al netto di costi (" + nf.format(S.costPct) + "% l'anno) e tasse (" + nf.format(S.taxPct) + "% sui guadagni). Gli scenari sono ipotesi: pessimistico = rendimento −3 punti, ottimistico = +2 punti.";
+    // ripartizione nel tempo
+    var eq0 = P.eq, eqEnd = Math.max(15, Math.round(eq0 * 0.5));
+    function eqAt(rem) { return rem >= 10 ? eq0 : Math.round(eq0 - (eq0 - eqEnd) * (10 - rem) / 10); }
+    var pts = (a.years > 10 ? [[99, "Fino a 10 anni dalla fine"]] : [[a.years, "All'inizio"]]).concat([[5, "A 5 anni dalla fine"], [2, "A 2 anni dalla fine"], [0, "Nell'ultimo anno"]].filter(function (x) { return x[0] < a.years; }));
+    $("adv-glide").innerHTML = pts.map(function (x) { var e = eqAt(x[0]); return '<div class="entry"><div class="t">' + x[1] + "</div><b class=\"num\">" + e + "% azioni · " + (100 - e) + "% obbl.</b><span></span></div>"; }).join("");
+    // check-up
+    var inc = Math.max(1, p.sal + p.extra), needs = p.fixedTot + p.annualM + p.spesa + p.toll + p.fuelB + p.fuelD, m = liveMonth();
+    var fundPct = p.target > 0 ? S.savedNow / p.target * 100 : 100, rate = p.left / inc * 100, np = needs / inc * 100, items = [];
+    items.push([fundPct >= 100 ? "ok" : fundPct >= 50 ? "warn" : "bad", "Fondo di sicurezza", fundPct >= 100 ? "È completo: puoi concentrarti sugli investimenti." : "Hai " + pct(fundPct) + " dell'obiettivo (" + eur.format(S.savedNow) + " su " + eur.format(p.target) + "). Completalo prima di investire di più."]);
+    items.push([rate >= 20 ? "ok" : rate >= 10 ? "warn" : "bad", "Quanto metti da parte", "Ti avanza " + pct(rate) + " delle entrate. " + (rate >= 20 ? "Ottimo." : "L'obiettivo classico è almeno il 20%.")]);
+    items.push([np <= 50 ? "ok" : np <= 70 ? "warn" : "bad", "Peso delle spese necessarie", "Fisse, carburante, pedaggio e spesa valgono " + pct(np) + " delle entrate. " + (np <= 50 ? "Sei sotto il 50% consigliato." : "Il riferimento è il 50%: sono le voci su cui incidere.")]);
+    if (p.inv > 0) items.push([m.invested >= p.inv ? "ok" : "warn", "Versamenti di questo mese", m.invested >= p.inv ? "Hai versato quanto previsto (" + eur.format(m.invested) + ")." : "Hai versato " + eur.format(m.invested) + " su " + eur.format(p.inv) + " previsti."]);
+    if (sg) items.push([S.profile === sg.profile ? "ok" : (PROFILES[S.profile].eq > PROFILES[sg.profile].eq ? "bad" : "warn"), "Profilo di rischio", S.profile === sg.profile ? "Il profilo del piano (" + S.profile + ") coincide con quello suggerito." : "Il piano usa il profilo " + S.profile + ", il questionario suggerisce " + sg.profile + "."]);
+    if (a.years < 5 && P.eq > 40) items.push(["warn", "Orizzonte breve", "Con meno di 5 anni, molte azioni sono rischiose: valuta un profilo prudente."]);
+    $("adv-check").innerHTML = items.map(function (x) { return '<div class="ck"><span class="ckd ' + x[0] + '"></span><div><b>' + x[1] + "</b><small>" + esc(x[2]) + "</small></div></div>"; }).join("");
+    // costi
+    var etf = last(sim(Object.assign({}, base, { ret: P.ret }))).v, prod = last(sim(Object.assign({}, base, { ret: P.ret, cost: a.mgmt + 0.2, entry: a.entry }))).v;
+    $("adv-cost").innerHTML = '<div class="entry"><div class="t">ETF a basso costo<small>Costi e bollo ' + nf.format(S.costPct) + '% l\'anno</small></div><b class="num">' + eur.format(etf) + '</b><span></span></div>'
+      + '<div class="entry"><div class="t">Fondo con commissioni<small>Ingresso ' + nf.format(a.entry) + "% e gestione " + nf.format(a.mgmt) + '% + bollo 0,2%</small></div><b class="num">' + eur.format(prod) + '</b><span></span></div>'
+      + '<div class="entry"><div class="t"><b>Differenza dopo ' + a.years + ' anni</b></div><b class="num" style="color:var(--bad)">' + eur.format(Math.max(0, etf - prod)) + '</b><span></span></div>';
+  }
 
   /* ---------- editor spese fisse ---------- */
   function renderFixedEditor(list) {
@@ -1228,6 +1457,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       if (!S.extra || typeof S.extra !== "object") S.extra = {};
       if (!S.monthKey) S.monthKey = CUR;
       pending = S.monthKey < CUR ? CUR : null;
+      S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {}; fillAdvisorInputs(); markOpts();
       persist(); renderAll(); fillForm(S); $("bk-text").value = ""; toast("Dati ripristinati ✓");
     };
     $("split-prop").onclick = function () {
@@ -1239,7 +1469,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
 
   /* ---------- navigazione ---------- */
   var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Auto"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -1266,7 +1496,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     curView = h;
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -1293,6 +1523,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   setupBackup();
+  buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
   document.querySelectorAll('input[name="profile"]').forEach(function (r) { r.onchange = markProfile; });
   document.querySelectorAll('input[type="text"]').forEach(function (i) { i.addEventListener("focus", function () { var el = this; setTimeout(function () { try { el.select(); } catch (e) {} }, 0); }); });
