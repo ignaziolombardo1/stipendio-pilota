@@ -271,6 +271,26 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .stat3 div { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 12.5px; color: var(--muted); }
 .stat3 b { display: block; font-family: var(--font-head); font-size: 20px; color: var(--ink); }
 .hero #hm-ev { font-size: 13px; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .h { text-align: center; font-size: 11px; color: var(--muted); padding-bottom: 2px; }
+.cal button { aspect-ratio: 1 / 1.05; padding: 3px 0 2px; border-radius: 10px; border: 1.5px solid transparent; background: var(--soft); font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; }
+.cal button.out { background: transparent; color: var(--muted); opacity: 0.45; cursor: default; }
+.cal button.today { border-color: var(--accent); }
+.cal button.sel { background: var(--accent); color: var(--accent-ink); }
+.cal .dots { display: flex; gap: 3px; min-height: 8px; align-items: center; }
+.cal .dots i { width: 7px; height: 7px; border-radius: 50%; display: block; }
+.cal .dots i.pl { background: transparent !important; border: 1.5px solid; width: 7px; height: 7px; box-sizing: border-box; }
+.cal button.sel .dots i { box-shadow: 0 0 0 1.5px var(--accent); }
+.lgd { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+.lgd span { display: inline-flex; align-items: center; gap: 6px; }
+.lgd i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.wkrow { display: grid; grid-template-columns: 62px 1fr; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.wkrow.dis { opacity: 0.4; }
+.wkrow .chk { font-size: 13px; }
+.navline { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.navline button { width: 44px; padding: 8px 0; }
+.rpt { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.rpt small { color: var(--muted); }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { flex: 1; text-align: center; padding: 11px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -332,6 +352,11 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <h2 id="t-cmp">Completa il tuo profilo</h2>
       <p class="hint" id="cmp-text"></p>
       <button class="primary" type="button" id="cmp-go">Completa ora</button>
+    </section>
+    <section data-sub="home" class="card hl" id="wk-remind" aria-labelledby="t-wr" hidden>
+      <h2 id="t-wr">Com'è andata la settimana scorsa?</h2>
+      <p class="hint">Conferma o correggi i tuoi viaggi: così il resoconto confronta la stima con quello che è successo davvero.</p>
+      <button class="primary" type="button" id="wr-go">Apri il calendario</button>
     </section>
     <section data-sub="home" class="card" id="today" aria-labelledby="t-today" hidden>
       <div class="line"><h2 id="t-today">I tuoi viaggi</h2><input type="date" id="td-date" aria-label="Giorno da modificare"></div>
@@ -415,6 +440,29 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
         <div class="stat"><span>La tua quota</span><b class="num" id="cp-mine">0</b></div>
       </div>
       <p class="small muted" id="cp-text"></p>
+    </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-cal">
+      <h2 id="t-cal">Calendario dei viaggi</h2>
+      <p class="hint" id="cal-hint">Tocca un giorno e segna quali tragitti hai fatto davvero. I pallini pieni sono i viaggi fatti, quelli vuoti sono previsti dal tuo programma ma non ancora confermati.</p>
+      <div class="cal" id="cal-grid" role="grid" aria-label="Giorni del mese"></div>
+      <div class="lgd" id="cal-lgd"></div>
+      <div id="cal-day"></div>
+    </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-wk">
+      <h2 id="t-wk">Settimana per settimana</h2>
+      <p class="hint">Più veloce che giorno per giorno: scorri le settimane, correggi i giorni diversi dal programma e conferma.</p>
+      <div class="navline"><button type="button" id="wk-prev" aria-label="Settimana precedente">‹</button><b id="wk-title"></b><button type="button" id="wk-next" aria-label="Settimana successiva">›</button></div>
+      <div id="wk-grid"></div>
+      <div id="wk-quick"></div>
+      <button type="button" class="primary" id="wk-conf">Conferma questa settimana</button>
+      <p class="small muted" id="wk-st"></p>
+    </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-rp">
+      <h2 id="t-rp">Stima e reale dei tragitti</h2>
+      <p class="hint">La stima segue il tuo programma settimanale. Il reale tiene conto di quello che hai segnato.</p>
+      <div id="rp-box"></div>
+      <button type="button" id="cal-ics">Salva nel calendario del telefono (.ics)</button>
+      <p class="small muted">Scarica un file con i viaggi del mese: aprendolo, il telefono li aggiunge al tuo calendario.</p>
     </section>
     <section data-sub="auto" class="card" aria-labelledby="t-fu">
       <h2 id="t-fu">Rifornimenti</h2>
@@ -789,7 +837,7 @@ create policy "solo i miei dati" on stipendio_pilota
   var DAYS_LEFT = DIM - NOW.getDate() + 1;
 
   var DEFAULTS = { salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
-    m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
+    conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
   var PROFILES = {
@@ -847,6 +895,7 @@ create policy "solo i miei dati" on stipendio_pilota
     S.me = Object.assign({}, DEFAULTS.me, S.me && typeof S.me === "object" ? S.me : {});
     if (["affitto", "mutuo", "proprieta", "famiglia"].indexOf(S.me.housing) < 0) S.me.housing = "affitto";
     if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
+    if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
       return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "" });
     });
@@ -881,10 +930,10 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
-  function routeCount(r, mk) {
+  function routeCount(r, mk, planOnly) {
     var pr = mk.split("-"), y = +pr[0], m = +pr[1] - 1, dim = new Date(y, m + 1, 0).getDate(), n = 0;
     for (var d = 1; d <= dim; d++) {
-      var base = r.wd.indexOf(new Date(y, m, d).getDay()) >= 0, o = (S.dayo[mk + "-" + pad2(d)] || {})[r.id];
+      var base = r.wd.indexOf(new Date(y, m, d).getDay()) >= 0, o = planOnly ? undefined : (S.dayo[mk + "-" + pad2(d)] || {})[r.id];
       if (o === undefined ? base : !!o) n++;
     }
     return n;
@@ -899,7 +948,8 @@ create policy "solo i miei dati" on stipendio_pilota
     var rts = S.routes.map(function (r) {
       var n = routeCount(r, S.monthKey), km = n * 2 * r.km, tl = n * 2 * r.toll;
       var fu = r.car === "benzina" ? (S.kmlB > 0 ? km / S.kmlB * S.priceB : 0) : r.car === "diesel" ? (S.kmlD > 0 ? km / S.kmlD * S.priceD : 0) : 0;
-      return { id: r.id, name: r.name, n: n, km: km, tollRaw: tl, car: r.car, toll1: r.toll, cost: tl + fu };
+      var per = n > 0 ? (tl + fu) / n : 2 * r.toll + (r.car === "benzina" ? (S.kmlB > 0 ? 2 * r.km / S.kmlB * S.priceB : 0) : r.car === "diesel" ? (S.kmlD > 0 ? 2 * r.km / S.kmlD * S.priceD : 0) : 0), nPl = routeCount(r, S.monthKey, true);
+      return { id: r.id, name: r.name, n: n, nPlan: nPl, km: km, tollRaw: tl, car: r.car, toll1: r.toll, cost: tl + fu, costPlan: per * nPl };
     });
     var toll = Math.round(rts.reduce(function (a, r) { return a + r.tollRaw; }, 0));
     var kmB = S.extraB + rts.reduce(function (a, r) { return a + (r.car === "benzina" ? r.km : 0); }, 0);
@@ -913,7 +963,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var toSave = Math.round(left * Math.min(100, S.saveShare) / 100);
     var inv = left - toSave;
     var essentials = fixedTot + spesa + toll + fuelB + fuelD;
-    return { routes: rts, sal: sal, extra: E, fixed: fixed, fixedTot: fixedTot, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
+    return { tripCost: rts.reduce(function (a, r) { return a + r.cost; }, 0), tripCostPlan: rts.reduce(function (a, r) { return a + r.costPlan; }, 0), routes: rts, sal: sal, extra: E, fixed: fixed, fixedTot: fixedTot, annualM: annualM, spesa: spesa, toll: toll, fuelB: fuelB, fuelD: fuelD, litB: litB, litD: litD, kmB: kmB, kmD: kmD,
       svago: svago, spend: spend, left: left, toSave: toSave, inv: inv, essentials: essentials, target: S.months * essentials, over: spend - sal - E };
   }
   function project(monthly, years, ann) {
@@ -932,7 +982,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var pd = S.paid[S.monthKey] || {};
     var fixed = p.fixed, invM = S.invested.filter(function (x) { return x.monthKey === S.monthKey; }).reduce(function (a, x) { return a + x.amount; }, 0);
     var fixTot = p.fixedTot, paidSum = 0; fixed.forEach(function (f) { if (pd[f.id]) paidSum += f.amt; });
-    return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal + p.extra - paidSum - A, extra: p.extra, invested: invM, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left };
+    return { fixed: fixed, pd: pd, fixTot: fixTot, paidSum: paidSum, pocket: p.sal + p.extra - paidSum - A, extra: p.extra, invested: invM, key: S.monthKey, salary: p.sal, V: V, A: A, by: by, bud: bud, n: list.length, realSaved: p.left + V - A, plannedSave: p.toSave, plannedInv: p.inv, plannedLeft: p.left, tripPlan: Math.round(p.tripCostPlan), tripReal: Math.round(p.tripCost) };
   }
   function dueInfo(f) {
     var d = Math.min(f.due, DIM);
@@ -1166,7 +1216,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.8";
+  var APP_VERSION = "2026-11-12.9";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1207,7 +1257,7 @@ create policy "solo i miei dati" on stipendio_pilota
       : "Il piano prevedeva " + eur.format(m.plannedSave + m.plannedInv) + " tra risparmio e investimenti. " + (diff >= 0 ? "Ti sono avanzati " + eur.format(diff) + " in più." : "Ti sono mancati " + eur.format(-diff) + ".") + fx + " " + recap(m);
     return '<details class="month"' + (live ? " open" : "") + '><summary><div class="mhead"><b>' + mlabel(m.key) + (live ? ' <small style="text-transform:none;font-weight:500;color:var(--muted)">· in corso</small>' : "") + '</b><span class="badge ' + v.cls + '">' + v.text + '</span></div>'
       + '<div class="mnums"><div><span>Entrate</span><b class="num">' + eur.format(m.salary + (m.extra || 0)) + '</b></div><div><span>Speso</span><b class="num">' + eur.format(m.A) + ' / ' + eur.format(m.V) + '</b></div><div><span>Risparmiato</span><b class="num">' + saved + '</b></div></div></summary>'
-      + '<div class="mbody">' + cats + '<p class="small muted">' + det + "</p></div></details>";
+      + '<div class="mbody">' + cats + (m.tripPlan > 0 || m.tripReal > 0 ? '<p class="small">Tragitti: stimati ' + eur.format(m.tripPlan) + ", reali " + eur.format(m.tripReal) + (m.tripReal !== m.tripPlan ? " (" + (m.tripReal < m.tripPlan ? "meno di " + eur.format(m.tripPlan - m.tripReal) : "più di " + eur.format(m.tripReal - m.tripPlan)) + " rispetto alla stima)" : "") + ".</p>" : "") + '<p class="small muted">' + det + "</p></div></details>";
   }
   var yrSel = "";
   function renderYear() {
@@ -1581,6 +1631,90 @@ create policy "solo i miei dati" on stipendio_pilota
     return out;
   }
 
+
+  /* ---------- calendario dei viaggi ---------- */
+  var ROUTE_COL = ["var(--c-move)", "var(--c-save)", "var(--c-invest)", "var(--c-daily)", "var(--c-fun, #c084fc)"], calSel = "";
+  var WDN = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+  function dOf(k) { var q = k.split("-"); return new Date(+q[0], +q[1] - 1, +q[2]); }
+  function addDays(k, n) { var d = dOf(k); d.setDate(d.getDate() + n); return ymd(d); }
+  function mondayOf(k) { var d = dOf(k), w = d.getDay() || 7; d.setDate(d.getDate() - (w - 1)); return ymd(d); }
+  function didTrip(r, date) { var o = (S.dayo[date] || {})[r.id]; return o === undefined ? r.wd.indexOf(dOf(date).getDay()) >= 0 : !!o; }
+  function setTrip(date, r, did) {
+    var base = r.wd.indexOf(dOf(date).getDay()) >= 0, day = S.dayo[date] || (S.dayo[date] = {});
+    if (did === base) delete day[r.id]; else day[r.id] = did ? 1 : 0;
+    if (!Object.keys(day).length) delete S.dayo[date];
+  }
+  function inMonth(k) { return k.slice(0, 7) === S.monthKey; }
+  function renderCalendar() {
+    var has = S.routes.length > 0;
+    if (!calSel || !inMonth(calSel)) calSel = inMonth(TODAY_KEY) ? TODAY_KEY : S.monthKey + "-01";
+    var grid = $("cal-grid");
+    if (!has) { grid.innerHTML = '<p class="empty" style="grid-column:1/-1">Aggiungi i tuoi tragitti in Profilo → Viaggi per usare il calendario.</p>'; $("cal-day").innerHTML = ""; $("wk-grid").innerHTML = ""; $("wk-quick").innerHTML = ""; $("rp-box").innerHTML = ""; return; }
+    var pr = S.monthKey.split("-"), y = +pr[0], m = +pr[1] - 1, dim = new Date(y, m + 1, 0).getDate(), lead = ((new Date(y, m, 1).getDay() || 7) - 1), h = "";
+    ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
+    for (var i = 0; i < lead; i++) h += "<span></span>";
+    for (var d = 1; d <= dim; d++) {
+      var k = S.monthKey + "-" + pad2(d), dots = S.routes.map(function (r, ri) { var did = didTrip(r, k), confirmed = S.dayo[k] && S.dayo[k][r.id] !== undefined || S.conf[mondayOf(k)];
+        if (!did) return ""; return '<i class="' + (confirmed || k > TODAY_KEY ? (confirmed ? "" : "pl") : "pl") + '" style="background:' + ROUTE_COL[ri % 5] + ";border-color:" + ROUTE_COL[ri % 5] + '"></i>'; }).join("");
+      h += '<button type="button" data-d="' + k + '" class="' + (k === calSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + d + ' ' + mname(S.monthKey) + '">' + d + '<span class="dots">' + dots + "</span></button>";
+    }
+    grid.innerHTML = h;
+    grid.querySelectorAll("button").forEach(function (b) { b.onclick = function () { calSel = this.getAttribute("data-d"); renderCalendar(); }; });
+    $("cal-lgd").innerHTML = S.routes.map(function (r, ri) { return '<span><i style="background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span>"; }).join("");
+    // dettaglio del giorno
+    var wd = dOf(calSel).getDay(), dh = '<h3 style="margin:14px 0 4px;font-size:15px">' + WDN[wd] + " " + dOf(calSel).getDate() + " " + mname(S.monthKey) + "</h3>";
+    S.routes.forEach(function (r) { dh += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (didTrip(r, calSel) ? " checked" : "") + "><span>" + esc(r.name) + "<small>" + (r.wd.indexOf(wd) >= 0 ? "Previsto nel programma" : "Non previsto nel programma") + "</small></span></label></div>"; });
+    $("cal-day").innerHTML = dh;
+    $("cal-day").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(calSel, r, this.checked); persist(); renderAll(); }; });
+    // settimana
+    var mon = mondayOf(calSel), days = []; for (var j = 0; j < 7; j++) days.push(addDays(mon, j));
+    $("wk-title").textContent = dOf(days[0]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[0])) + " – " + dOf(days[6]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[6]));
+    $("wk-prev").disabled = !days.some(function (x) { return inMonth(addDays(mon, -7 + days.indexOf(x))); }) ; $("wk-next").disabled = !inMonth(addDays(mon, 7)) && !inMonth(addDays(mon, 13));
+    $("wk-grid").innerHTML = days.map(function (k) {
+      var inm = inMonth(k);
+      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + "</b><div>" + S.routes.map(function (r, ri) { return '<label class="chk"><input type="checkbox" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (didTrip(r, k) ? " checked" : "") + (inm ? "" : " disabled") + '><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span></label>"; }).join("") + "</div></div>";
+    }).join("");
+    $("wk-grid").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(this.getAttribute("data-d"), r, this.checked); persist(); renderAll(); }; });
+    $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="btnrow" style="margin-top:10px"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio: ' + esc(r.name) + '</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div>'; }).join("");
+    $("wk-quick").querySelectorAll("button").forEach(function (b) {
+      b.onclick = function () {
+        var r = S.routes.filter(function (x) { return x.id === b.getAttribute("data-r"); })[0], none = b.getAttribute("data-q") === "none"; if (!r) return;
+        days.filter(inMonth).forEach(function (k) { if (none) setTrip(k, r, false); else { var day = S.dayo[k]; if (day) { delete day[r.id]; if (!Object.keys(day).length) delete S.dayo[k]; } } });
+        persist(); renderAll(); toast(none ? "Segnato: nessun viaggio questa settimana" : "Ripristinato il programma");
+      };
+    });
+    var done = !!S.conf[mon]; $("wk-conf").textContent = done ? "Settimana confermata ✓ (tocca per togliere)" : "Conferma questa settimana";
+    $("wk-conf").onclick = function () { if (S.conf[mon]) delete S.conf[mon]; else S.conf[mon] = 1; persist(); renderAll(); };
+    $("wk-st").textContent = done ? "I viaggi di questa settimana contano come reali." : "Finché non confermi, i viaggi di questa settimana restano una stima del programma.";
+    $("wk-prev").onclick = function () { calSel = addDays(mon, -7); if (!inMonth(calSel)) calSel = addDays(mon, -1); if (!inMonth(calSel)) calSel = S.monthKey + "-01"; renderCalendar(); };
+    $("wk-next").onclick = function () { calSel = addDays(mon, 7); if (!inMonth(calSel)) calSel = S.monthKey + "-" + pad2(dim); renderCalendar(); };
+    // resoconto
+    var p = plan(), tp = 0, tr = 0;
+    var hh = p.routes.map(function (r) { tp += r.costPlan; tr += r.cost; return '<div class="rpt"><b>' + esc(r.name) + "</b><span class=\"num\">" + r.nPlan + " → " + r.n + '</span><span class="num">' + eur.format(r.costPlan) + " → " + eur.format(r.cost) + "</span></div>"; }).join("");
+    var df = tr - tp;
+    hh += '<p style="margin:10px 0 0"><b>Totale: stimati ' + eur.format(tp) + ", reali " + eur.format(tr) + "</b>" + (Math.round(df) === 0 ? "" : df < 0 ? ". Stai spendendo " + eur.format(-df) + " in meno del previsto." : ". Stai spendendo " + eur.format(df) + " in più del previsto.") + "</p><p class=\"small muted\">Colonne: viaggi stimati → reali, costo stimato → reale (pedaggi e carburante).</p>";
+    $("rp-box").innerHTML = hh;
+  }
+  function renderWeekReminder() {
+    var box = $("wk-remind"); box.hidden = true;
+    if (!S.saved || !S.routes.length || !inMonth(TODAY_KEY)) return;
+    var mon = addDays(mondayOf(TODAY_KEY), -7), days = []; for (var j = 0; j < 7; j++) days.push(addDays(mon, j));
+    var inm = days.filter(inMonth);
+    if (!inm.length || S.conf[mon]) return;
+    if (!inm.some(function (k) { return S.routes.some(function (r) { return didTrip(r, k); }); })) return;
+    box.hidden = false; box.setAttribute("data-mon", mon);
+  }
+  function icsExport() {
+    var pr = S.monthKey.split("-"), dim = new Date(+pr[0], +pr[1], 0).getDate(), L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Stipendio Pilota//IT", "CALSCALE:GREGORIAN"], n = 0;
+    for (var d = 1; d <= dim; d++) {
+      var k = S.monthKey + "-" + pad2(d), nk = addDays(k, 1);
+      S.routes.forEach(function (r) { if (didTrip(r, k)) { n++; L.push("BEGIN:VEVENT", "UID:" + r.id + "-" + k + "@stipendio-pilota", "DTSTAMP:" + k.replace(/-/g, "") + "T080000Z", "DTSTART;VALUE=DATE:" + k.replace(/-/g, ""), "DTEND;VALUE=DATE:" + nk.replace(/-/g, ""), "SUMMARY:" + r.name.replace(/[,;\n]/g, " "), "END:VEVENT"); } });
+    }
+    L.push("END:VCALENDAR");
+    if (!n) { toast("Nessun viaggio da salvare questo mese"); return; }
+    try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([L.join("\r\n")], { type: "text/calendar" })); a.download = "viaggi-" + S.monthKey + ".ics"; document.body.appendChild(a); a.click(); a.remove(); toast("File del calendario scaricato ✓"); } catch (e) { toast("Download non riuscito"); }
+  }
+
   /* ---------- viaggi di oggi, profilo da completare, debiti ---------- */
   var TODAY_KEY = NOW.getFullYear() + "-" + pad2(NOW.getMonth() + 1) + "-" + pad2(NOW.getDate()), tdDate = "";
   function renderToday() {
@@ -1942,7 +2076,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
   /* ---------- navigazione ---------- */
   var VIEWS = ["home", "spese", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -1969,7 +2103,7 @@ create policy "solo i miei dati" on stipendio_pilota
     curView = h;
     window.scrollTo(0, 0);
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -1999,6 +2133,8 @@ create policy "solo i miei dati" on stipendio_pilota
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5] }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
   document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
   $("mk-range").value = String(MK.range); $("mk-range").onchange = function () { MK.range = +this.value; renderMarket(); };
+  $("cal-ics").onclick = icsExport;
+  $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; if (!inMonth(calSel)) calSel = S.monthKey + "-01"; location.hash = "#spese/calendario"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
   $("td-date").onchange = function () { if (this.value && this.value.slice(0, 7) === S.monthKey) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
