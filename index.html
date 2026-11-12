@@ -820,24 +820,24 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <button type="button" id="bk-restore">Ripristina da codice</button>
     </section>
     <section data-sub="dati" class="card" id="sync-card" aria-labelledby="t-sy">
-      <h2 id="t-sy">Cloud e accesso con Google</h2>
-      <p class="hint">Con l'accesso con Google i tuoi dati sono al sicuro nel cloud e si aggiornano da soli su tutti i tuoi telefoni. Se perdi il telefono, accedi e ritrovi tutto. I dati sono salvati nel tuo progetto Supabase personale: li vedi solo tu.</p>
+      <h2 id="t-sy">Dati al sicuro nel cloud</h2>
+      <p class="hint">Con un account (email e password) i tuoi dati sono salvati nel cloud e si aggiornano da soli su tutti i tuoi telefoni. Se perdi il telefono, accedi e ritrovi tutto. I dati stanno nel tuo progetto Supabase personale.</p>
       <div id="sy-setup">
         <details>
-          <summary>Come si prepara (una volta sola, circa 10 minuti)</summary>
+          <summary>Come si prepara (una volta sola)</summary>
           <ol class="small">
-            <li>Su supabase.com crea un account gratuito e un nuovo progetto.</li>
-            <li>Apri "SQL Editor", incolla il testo qui sotto e premi Run.</li>
-            <li>In "Authentication → Sign In / Providers" attiva Google. Servono un ID client e un segreto che crei su console.cloud.google.com (Credenziali → ID client OAuth, tipo "Applicazione web"). Come "URI di reindirizzamento" metti l'indirizzo che Supabase ti mostra nella pagina di Google (finisce con /auth/v1/callback).</li>
-            <li>In "Authentication → URL Configuration" scrivi come Site URL l'indirizzo di questa app, e aggiungilo anche tra i Redirect URLs.</li>
+            <li>Apri il tuo progetto su supabase.com.</li>
+            <li>In "SQL Editor" incolla il testo qui sotto e premi Run.</li>
             <li>In "Project Settings → API" copia "Project URL" e la chiave "anon public" nei due campi qui sotto.</li>
+            <li>In "Authentication → Sign In / Providers" controlla che "Email" sia attivo (di solito lo è).</li>
           </ol>
-          <pre class="small" id="sy-sql" style="white-space:pre-wrap;user-select:all">create table stipendio_pilota (
+          <pre class="small" id="sy-sql" style="white-space:pre-wrap;user-select:all">create table if not exists stipendio_pilota (
   user_id uuid primary key references auth.users(id) on delete cascade,
   data jsonb not null,
   updated_at timestamptz not null default now()
 );
 alter table stipendio_pilota enable row level security;
+drop policy if exists "solo i miei dati" on stipendio_pilota;
 create policy "solo i miei dati" on stipendio_pilota
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);</pre>
           <button type="button" id="sy-sql-copy">Copia il testo SQL</button>
@@ -847,9 +847,17 @@ create policy "solo i miei dati" on stipendio_pilota
           <label class="f" for="sy-key">Chiave anon public<input id="sy-key" type="text" autocomplete="off" placeholder="eyJ…"></label>
         </div>
       </div>
-      <div class="btnrow"><button type="button" class="primary" id="sy-in">Accedi con Google</button><button type="button" id="sy-now" hidden>Sincronizza ora</button><button type="button" id="sy-out" hidden>Esci</button></div>
+      <div id="sy-auth">
+        <div class="fields">
+          <label class="f" for="sy-mail">Email<input id="sy-mail" type="text" inputmode="email" autocomplete="username" autocapitalize="off"></label>
+          <label class="f" for="sy-pw">Password (almeno 6 caratteri)<input id="sy-pw" type="password" autocomplete="current-password"></label>
+        </div>
+        <div class="btnrow"><button type="button" class="primary" id="sy-login">Accedi</button><button type="button" id="sy-signup">Crea account</button></div>
+        <p class="small muted">Prima volta? Premi "Crea account". Sugli altri telefoni usa "Accedi" con la stessa email e password.</p>
+      </div>
+      <div class="btnrow"><button type="button" id="sy-now" hidden>Sincronizza ora</button><button type="button" id="sy-out" hidden>Esci</button></div>
       <div id="sy-choice" hidden><p class="small" id="sy-choice-text"></p><div class="btnrow"><button type="button" id="sy-use-cloud">Usa i dati del cloud</button><button type="button" id="sy-use-local">Tieni quelli di questo telefono</button></div></div>
-      <p class="small" id="sy-status"></p>
+      <p class="small" id="sy-status" role="status"></p>
     </section>
     <button data-sub="dati" class="link" id="reset" type="button">Inserisci i valori di esempio</button>
   </main>
@@ -1255,7 +1263,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.10";
+  var APP_VERSION = "2026-11-12.11";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2114,15 +2122,30 @@ create policy "solo i miei dati" on stipendio_pilota
       return fetch(c.url + path, opt);
     });
   }
-  function syCapture() { // rientro da Google: i token arrivano nell'indirizzo
-    if (!/access_token=/.test(location.hash)) return Promise.resolve();
-    var q = new URLSearchParams(location.hash.replace(/^#/, ""));
-    sy.at = q.get("access_token") || ""; sy.rt = q.get("refresh_token") || ""; sy.exp = Date.now() + (+q.get("expires_in") || 3600) * 1000; sy.last = 0;
-    try { history.replaceState(null, "", location.pathname + "#profilo/dati"); } catch (e) { location.hash = "#profilo/dati"; }
-    var c = syCfg();
-    return fetch(c.url + "/auth/v1/user", { headers: { apikey: c.key, Authorization: "Bearer " + sy.at } }).then(function (r) { return r.json(); })
-      .then(function (u) { sy.uid = u.id || ""; sy.email = u.email || ""; sySave(); })
-      .catch(function () { sySave(); });
+  function syErr(j) {
+    var m = String((j && (j.error_description || j.msg || j.message || j.error)) || "").toLowerCase();
+    if (/invalid login|invalid credentials/.test(m)) return "Email o password non corrette.";
+    if (/already registered|already been registered/.test(m)) return "Questa email ha già un account: premi Accedi.";
+    if (/not confirmed/.test(m)) return "Devi prima confermare l'email: controlla la posta, poi premi Accedi.";
+    if (/password/.test(m) && /(short|least|weak|characters)/.test(m)) return "Password troppo corta: almeno 6 caratteri.";
+    if (/rate limit|too many/.test(m)) return "Troppi tentativi: aspetta qualche minuto e riprova.";
+    if (/signups? not allowed|disabled/.test(m)) return "Nel progetto la registrazione con email è disattivata: attivala in Authentication → Sign In / Providers.";
+    return "Non è andata: " + (m ? m.slice(0, 80) : "riprova tra poco") + ".";
+  }
+  function syAuth(signup) {
+    var c = syCfg(), email = $("sy-mail").value.trim(), pw = $("sy-pw").value;
+    if (!/^https:\/\//.test(c.url) || !c.key) { toast("Controlla indirizzo e chiave del progetto"); return; }
+    if (!/^\S+@\S+\.\S+$/.test(email)) { toast("Scrivi un'email valida"); $("sy-mail").focus(); return; }
+    if (pw.length < 6) { toast("La password deve avere almeno 6 caratteri"); $("sy-pw").focus(); return; }
+    syMsg = signup ? "Creo l'account…" : "Accedo…"; renderSync();
+    fetch(c.url + (signup ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password"), { method: "POST", headers: { apikey: c.key, "Content-Type": "application/json" }, body: JSON.stringify({ email: email, password: pw }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (x) {
+        if (!x.ok) { syMsg = syErr(x.j); renderSync(); return; }
+        if (!x.j.access_token) { syMsg = "Ti ho scritto un'email: apri il link per confermare, poi premi Accedi."; renderSync(); return; }
+        sy.at = x.j.access_token; sy.rt = x.j.refresh_token || ""; sy.exp = Date.now() + (x.j.expires_in || 3600) * 1000; sy.uid = (x.j.user || {}).id || ""; sy.email = (x.j.user || {}).email || email; sy.last = 0; sySave();
+        $("sy-pw").value = ""; syMsg = ""; renderSync(); syncNow(true);
+      }).catch(function () { syMsg = "Non riesco a collegarmi: controlla indirizzo e chiave del progetto."; renderSync(); });
   }
   function queueSync() { if (!syOn() || !sy.uid) return; clearTimeout(syTimer); syTimer = setTimeout(function () { syncNow(false); }, 2500); }
   function syncNow(manual) {
@@ -2150,8 +2173,8 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderSync() {
     var c = syCfg(), on = syOn(), has = !!(c.url && c.key);
     $("sy-setup").hidden = !!(SYNC_URL && SYNC_KEY) || on;
-    $("sy-in").hidden = on; $("sy-in").disabled = !has; $("sy-now").hidden = !on; $("sy-out").hidden = !on;
-    $("sy-status").textContent = on ? "Collegato come " + (sy.email || "il tuo account Google") + ". " + syMsg : (has ? "Premi Accedi con Google per collegare questo telefono." : "Prima inserisci i due dati del tuo progetto Supabase (passi qui sopra).");
+    $("sy-auth").hidden = on || !has; $("sy-now").hidden = !on; $("sy-out").hidden = !on;
+    $("sy-status").textContent = on ? "Collegato come " + (sy.email || "il tuo account") + ". " + syMsg : (has ? syMsg || "Inserisci email e password per collegare questo telefono." : "Prima inserisci i due dati del tuo progetto Supabase (passi qui sopra).");
     $("sy-choice").hidden = !syChoice;
     if (syChoice) $("sy-choice-text").textContent = "Nel cloud ci sono già dei dati (salvati " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(syChoice.rt)) + "). Quali vuoi tenere?";
   }
@@ -2159,7 +2182,8 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-url").value = sy.url || ""; $("sy-key").value = sy.key || "";
     $("sy-url").onchange = $("sy-key").onchange = function () { sy.url = $("sy-url").value.trim(); sy.key = $("sy-key").value.trim(); sySave(); renderSync(); };
     $("sy-url").oninput = $("sy-key").oninput = function () { sy.url = $("sy-url").value.trim(); sy.key = $("sy-key").value.trim(); sySave(); renderSync(); };
-    $("sy-in").onclick = function () { var c = syCfg(); if (!/^https:\/\//.test(c.url) || !c.key) { toast("Controlla indirizzo e chiave del progetto"); return; } location.href = c.url + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(location.origin + location.pathname); };
+    $("sy-login").onclick = function () { syAuth(false); }; $("sy-signup").onclick = function () { syAuth(true); };
+    $("sy-pw").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); syAuth(false); } };
     $("sy-now").onclick = function () { syncNow(true); };
     $("sy-out").onclick = function () { sy.at = ""; sy.rt = ""; sy.exp = 0; sy.uid = ""; sy.email = ""; sy.last = 0; sySave(); syChoice = null; syMsg = ""; renderSync(); toast("Scollegato. I dati restano in questo telefono."); };
     $("sy-use-cloud").onclick = function () { var ch = syChoice; syChoice = null; adoptState(ch.data, true); S.ts = ch.rt; persist(true); sy.last = ch.rt; sySave(); syMsg = "Dati del cloud caricati"; renderSync(); toast("Dati del cloud caricati ✓"); };
@@ -2167,7 +2191,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-sql-copy").onclick = function () { var t = $("sy-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
     renderSync();
   }
-  function syInit() { syCapture().then(function () { renderSync(); showView(); if (syOn() && sy.uid) syncNow(false); }); }
+  function syInit() { renderSync(); if (syOn() && sy.uid) syncNow(false); }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && syOn() && sy.uid && navigator.onLine) syncNow(false); });
 
   /* ---------- navigazione ---------- */
