@@ -12,9 +12,17 @@ FUNDS = [
 ]
 FEEDS = [
     ("ANSA Economia", "https://www.ansa.it/sito/notizie/economia/economia_rss.xml"),
-    ("Il Sole 24 Ore", "https://www.ilsole24ore.com/rss/finanza-e-mercati.xml"),
     ("Repubblica Economia", "https://www.repubblica.it/rss/economia/rss2.0.xml"),
+    ("Il Sole 24 Ore", "https://www.ilsole24ore.com/rss/finanza-e-mercati.xml"),
+    ("Il Sole 24 Ore", "https://www.ilsole24ore.com/rss/italia--economia.xml"),
     ("Corriere Economia", "https://xml2.corriereobjects.it/rss/economia.xml"),
+    ("Corriere Economia", "https://www.corriere.it/rss/economia.xml"),
+    ("Adnkronos Economia", "https://www.adnkronos.com/RSS_Economia.xml"),
+    ("Sky TG24 Economia", "https://tg24.sky.it/rss/economia.xml"),
+    ("Sky TG24 Economia", "https://tg24.sky.it/economia.rss"),
+    ("Il Post Economia", "https://www.ilpost.it/economia/feed/"),
+    ("La Stampa Economia", "https://www.lastampa.it/rss/economia.xml"),
+    ("Il Fatto Quotidiano", "https://www.ilfattoquotidiano.it/economia-e-lobby/feed/"),
 ]
 
 def get(url, timeout=25):
@@ -94,17 +102,22 @@ def main(path="data.json"):
         prev = oldf.get(f["id"], {})
         if s: data["funds"].append({"id": f["id"], "name": f["name"], "isin": f["isin"], "symbol": sym, "series": s})
         else: data["funds"].append({"id": f["id"], "name": f["name"], "isin": f["isin"], "symbol": prev.get("symbol", ""), "series": prev.get("series", [])})
-    seen, news = set(), []
+    seen, news, ok = set(), [], []
+    done = set()
     for name, url in FEEDS:
+        if name in done: continue
         try:
-            for n in feed(name, url):
+            items = feed(name, url)
+            if items: done.add(name); ok.append(name)
+            for n in items:
                 k = re.sub(r"\W+", "", n["t"].lower())[:60]
                 if k not in seen: seen.add(k); news.append(n)
         except Exception as e: print("feed", name, e, file=sys.stderr)
     news.sort(key=lambda n: n["d"], reverse=True)
-    data["news"] = news[:14] if news else old.get("news", [])
+    data["news"] = news[:30] if news else old.get("news", [])
+    data["sources"] = ok
     json.dump(data, open(path, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
-    print("fondi", [(f["id"], len(f["series"])) for f in data["funds"]], "notizie", len(data["news"]))
+    print("fondi", [(f["id"], len(f["series"])) for f in data["funds"]], "notizie", len(data["news"]), "fonti", ok)
 
 if __name__ == "__main__":
     main(*sys.argv[1:])

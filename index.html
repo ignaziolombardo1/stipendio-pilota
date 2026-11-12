@@ -291,6 +291,28 @@ select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 
 .navline button { width: 44px; padding: 8px 0; }
 .rpt { display: grid; grid-template-columns: 1fr auto auto; gap: 4px 12px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .rpt small { color: var(--muted); }
+.subtabs { padding-right: 24px; scroll-padding: 0 24px; }
+.qrow { margin-top: 12px; } .qrow > span { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.qrow .btnrow button { flex: 1 1 140px; }
+.fab { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px)); z-index: 26; width: 58px; height: 58px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); font-size: 32px; line-height: 1; font-weight: 400; box-shadow: 0 6px 18px rgba(0,0,0,0.28); cursor: pointer; padding: 0; }
+.fab:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.qs { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+.qs[hidden] { display: none; }
+.qs-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.45); }
+.qs-card { position: relative; width: 100%; max-width: 560px; background: var(--surface); border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; max-height: 92vh; overflow-y: auto; }
+.qs-card h2 { margin: 0; }
+.qs-amt { font-family: var(--font-head); font-size: 34px !important; font-weight: 700; text-align: center; padding: 14px !important; }
+.qchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.qchips button { flex: 0 0 auto; padding: 10px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--soft); font: inherit; font-weight: 600; font-size: 14px; color: var(--ink); cursor: pointer; }
+.qchips button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.qchips small { color: inherit; opacity: 0.7; font-weight: 500; margin-left: 4px; }
+.alrow { padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
+.alrow:last-child { border-bottom: 0; }
+.alrow.bad b { color: var(--bad); }
+.tchips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+.tchips::-webkit-scrollbar { display: none; }
+.tchips button { flex: 0 0 auto; padding: 9px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--soft); font: inherit; font-weight: 600; font-size: 13px; color: var(--muted); cursor: pointer; }
+.tchips button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .seg { display: flex; background: var(--soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { flex: 1; text-align: center; padding: 11px 6px; border-radius: 9px; cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -313,6 +335,18 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
   </div>
 
   <div class="subtabs" id="subtabs" hidden></div>
+  <button type="button" class="fab" id="fab" aria-label="Segna una spesa" hidden>+</button>
+  <div class="qs" id="qs" hidden>
+    <div class="qs-bg" id="qs-bg"></div>
+    <div class="qs-card" role="dialog" aria-modal="true" aria-labelledby="qs-t">
+      <div class="line"><h2 id="qs-t">Segna una spesa</h2><button type="button" id="qs-x" aria-label="Chiudi" style="width:44px;padding:8px 0">×</button></div>
+      <input id="qs-amt" class="qs-amt" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Importo in euro">
+      <div class="qchips" id="qs-cats" role="group" aria-label="Categoria"></div>
+      <div id="qs-freqw"><span class="small muted">Le tue spese frequenti</span><div class="qchips" id="qs-freq" style="margin-top:8px"></div></div>
+      <label class="f" for="qs-note">Nota (facoltativa)<input id="qs-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+      <button type="button" class="primary" id="qs-go">Aggiungi</button>
+    </div>
+  </div>
 
   <!-- NUOVO MESE: compare quando inizia un mese nuovo -->
   <section class="card hl" id="newmonth" aria-labelledby="nm-title" hidden>
@@ -347,6 +381,10 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
       <p id="hm-due" hidden></p>
       <p id="hm-ev" hidden></p>
       <div class="btnrow"><button class="primary" type="button" id="hm-exp">Segna una spesa</button><button type="button" id="hm-fix">Spunta una fissa</button></div>
+    </section>
+    <section data-sub="home" class="card hl" id="alerts" aria-labelledby="t-al" hidden>
+      <h2 id="t-al">Attenzione al budget</h2>
+      <div id="al-list"></div>
     </section>
     <section data-sub="home" class="card hl" id="complete" aria-labelledby="t-cmp" hidden>
       <h2 id="t-cmp">Completa il tuo profilo</h2>
@@ -606,6 +644,7 @@ button.link { background: transparent; border: 0; color: var(--muted); padding: 
     </section>
     <section data-sub="mercato" class="card" aria-labelledby="t-nw">
       <h2 id="t-nw">Notizie</h2>
+      <div class="tchips" id="nw-chips" role="group" aria-label="Argomento delle notizie"></div>
       <div id="nw-list"></div>
       <p class="small muted" id="nw-note"></p>
     </section>
@@ -1216,7 +1255,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.9";
+  var APP_VERSION = "2026-11-12.10";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1541,11 +1580,16 @@ create policy "solo i miei dati" on stipendio_pilota
     $("ev-list").innerHTML = evs.map(function (e) {
       return '<div class="evr"><div class="dd"><b>' + e.d.getDate() + "</b><small>" + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(e.d) + "</small></div><div><b>" + esc(e.t) + '</b> <small class="muted">' + inDays(e.diff) + "</small><p>" + esc(EV_TXT[e.kind]) + "</p></div></div>";
     }).join("");
-    var news = MK.data && Array.isArray(MK.data.news) ? MK.data.news.filter(function (n) { return n && /^https?:\/\//.test(n.u) && n.t; }).slice(0, 8) : [];
+    var allNews = MK.data && Array.isArray(MK.data.news) ? MK.data.news.filter(function (n) { return n && /^https?:\/\//.test(n.u) && n.t; }) : [], tp = S.newsTopic === undefined || S.newsTopic === "" ? -1 : +S.newsTopic;
+    var have = {}; allNews.forEach(function (n) { have[newsTopic(n.t)] = 1; });
+    $("nw-chips").hidden = allNews.length < 4;
+    $("nw-chips").innerHTML = '<button type="button" data-t="-1" class="' + (tp < 0 ? "on" : "") + '">Tutte</button>' + NEWS_TOPIC.map(function (nm, i) { return have[i] ? '<button type="button" data-t="' + i + '" class="' + (tp === i ? "on" : "") + '">' + nm + "</button>" : ""; }).join("");
+    $("nw-chips").querySelectorAll("button").forEach(function (b) { b.onclick = function () { S.newsTopic = +this.getAttribute("data-t"); persist(); renderMarket(); }; });
+    var news = (tp >= 0 ? allNews.filter(function (n) { return newsTopic(n.t) === tp; }) : allNews).slice(0, 12);
     $("nw-list").innerHTML = news.length ? news.map(function (n) {
       var w = newsWhy(n.t), dt = n.d ? new Date(n.d) : null;
       return '<a class="nw" href="' + esc(n.u) + '" target="_blank" rel="noopener noreferrer"><b>' + esc(n.t) + "</b><small>" + esc(n.s || "") + (dt && !isNaN(dt) ? " · " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "short" }).format(dt) : "") + "</small>" + (w ? '<span class="why">Per te: ' + esc(w) + "</span>" : "") + "</a>";
-    }).join("") : '<p class="empty">' + (MK.fail ? "Le notizie non sono raggiungibili adesso." : "Le notizie arrivano dopo il primo aggiornamento automatico.") + "</p>";
+    }).join("") : '<p class="empty">' + (MK.fail ? "Le notizie non sono raggiungibili adesso." : tp >= 0 ? "Nessuna notizia su questo argomento adesso." : "Le notizie arrivano dopo il primo aggiornamento automatico.") + "</p>";
     $("nw-note").textContent = news.length ? "Titoli dalle testate indicate. Sono contesto, non consigli: per un piano a lungo termine di solito non serve fare nulla." : "";
     var wk = Math.floor((NOW - new Date(NOW.getFullYear(), 0, 1)) / 6048e5), ls = LESSONS[wk % LESSONS.length];
     $("ls-box").innerHTML = "<b>" + esc(ls[0]) + '</b><p class="small" style="margin:6px 0 0">' + esc(ls[1]) + "</p>";
@@ -1632,6 +1676,55 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
 
+
+  /* ---------- spesa rapida ---------- */
+  var qsCat = "spesa", qsLast = null;
+  function qsFreq() {
+    var c = {};
+    Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (!n || /^Rifornimento /.test(n)) return; var o = c[n] || (c[n] = { n: n, c: 0 }); o.c++; o.cat = e.cat; o.amt = e.amount; }); });
+    return Object.keys(c).map(function (k) { return c[k]; }).sort(function (a, b) { return b.c - a.c; }).slice(0, 6);
+  }
+  function qsRender() {
+    $("qs-cats").innerHTML = CATS.map(function (c) { return '<button type="button" data-c="' + c.id + '" class="' + (c.id === qsCat ? "on" : "") + '" aria-pressed="' + (c.id === qsCat) + '">' + esc(c.name) + "</button>"; }).join("");
+    $("qs-cats").querySelectorAll("button").forEach(function (b) { b.onclick = function () { qsCat = this.getAttribute("data-c"); qsRender(); }; });
+    var fr = qsFreq(); $("qs-freqw").hidden = !fr.length;
+    $("qs-freq").innerHTML = fr.map(function (f, i) { return '<button type="button" data-i="' + i + '">' + esc(f.n) + "<small>" + eur2.format(f.amt) + "</small></button>"; }).join("");
+    $("qs-freq").querySelectorAll("button").forEach(function (b) { b.onclick = function () { var f = fr[+this.getAttribute("data-i")]; $("qs-note").value = f.n; qsCat = CATS.some(function (c) { return c.id === f.cat; }) ? f.cat : qsCat; if (!$("qs-amt").value.trim()) $("qs-amt").value = String(f.amt).replace(".", ","); qsRender(); $("qs-amt").focus(); $("qs-amt").select(); }; });
+  }
+  function qsOpen() {
+    if (pending) { toast("Prima avvia il nuovo mese in Home"); return; }
+    qsLast = document.activeElement; qsCat = S.cat || "spesa"; $("qs-amt").value = ""; $("qs-note").value = ""; qsRender(); $("qs").hidden = false; setTimeout(function () { $("qs-amt").focus(); }, 30);
+  }
+  function qsClose() { $("qs").hidden = true; try { if (qsLast) qsLast.focus(); } catch (e) {} }
+  function qsAdd() {
+    var n = pnum($("qs-amt").value);
+    if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("qs-amt").focus(); return; }
+    var list = (S.spent[S.monthKey] || []).slice();
+    list.push({ id: S.nextId++, amount: n, cat: qsCat, note: $("qs-note").value.trim().slice(0, 60), date: new Date().toISOString() });
+    S.spent[S.monthKey] = list; S.cat = qsCat; persist(); qsClose(); renderAll();
+    var m = liveMonth(), b = m.bud[qsCat] || 0, sp = m.by[qsCat] || 0, cn = (CATS.filter(function (c) { return c.id === qsCat; })[0] || {}).name || "";
+    toast("Aggiunta ✓" + (b > 0 ? " " + cn + ": " + eur.format(sp) + " su " + eur.format(b) : ""));
+  }
+  /* ---------- avvisi di budget ---------- */
+  function renderAlerts() {
+    var box = $("alerts"); box.hidden = true;
+    if (!S.saved || S.monthKey !== CUR) return;
+    var m = liveMonth(), dim = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 0).getDate(), day = NOW.getDate(), f = day / dim, out = [];
+    CATS.forEach(function (c) {
+      var sp = m.by[c.id] || 0, b = m.bud[c.id] || 0; if (!(b > 0) || !(sp > 0)) return;
+      var rest = dim - day, proj = f >= 0.25 ? sp / f : 0;
+      if (sp > b) out.push({ sev: 3, bad: true, t: "<b>" + esc(c.name) + "</b>: hai già superato il budget di " + eur.format(sp - b) + "." });
+      else if (sp >= 0.8 * b && f < 0.75) out.push({ sev: 2, bad: true, t: "<b>" + esc(c.name) + "</b>: sei all'" + Math.round(sp / b * 100) + "% del budget e mancano ancora " + rest + " giorni. Restano " + eur.format(b - sp) + "." });
+      else if (proj > 1.15 * b && f < 0.9) out.push({ sev: 1, bad: false, t: "<b>" + esc(c.name) + "</b>: di questo passo arriverai a circa " + eur.format(proj) + " contro un budget di " + eur.format(b) + "." });
+    });
+    if (!out.length) return;
+    out.sort(function (a, b) { return b.sev - a.sev; });
+    box.hidden = false;
+    $("al-list").innerHTML = out.slice(0, 3).map(function (o) { return '<div class="alrow' + (o.bad ? " bad" : "") + '">' + o.t + "</div>"; }).join("");
+  }
+  var NEWS_TOPIC = ["Tassi", "Inflazione", "Titoli di Stato", "Mercati", "Mutui e banche", "Carburanti"];
+  function newsTopic(t) { t = t.toLowerCase(); for (var i = 0; i < NEWS_WHY.length; i++) if (NEWS_WHY[i][0].test(t)) return i; return -1; }
+
   /* ---------- calendario dei viaggi ---------- */
   var ROUTE_COL = ["var(--c-move)", "var(--c-save)", "var(--c-invest)", "var(--c-daily)", "var(--c-fun, #c084fc)"], calSel = "";
   var WDN = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
@@ -1675,7 +1768,7 @@ create policy "solo i miei dati" on stipendio_pilota
       return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + "</b><div>" + S.routes.map(function (r, ri) { return '<label class="chk"><input type="checkbox" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (didTrip(r, k) ? " checked" : "") + (inm ? "" : " disabled") + '><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span></label>"; }).join("") + "</div></div>";
     }).join("");
     $("wk-grid").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(this.getAttribute("data-d"), r, this.checked); persist(); renderAll(); }; });
-    $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="btnrow" style="margin-top:10px"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio: ' + esc(r.name) + '</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div>'; }).join("");
+    $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="qrow"><span>' + esc(r.name) + '</span><div class="btnrow"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div></div>'; }).join("");
     $("wk-quick").querySelectorAll("button").forEach(function (b) {
       b.onclick = function () {
         var r = S.routes.filter(function (x) { return x.id === b.getAttribute("data-r"); })[0], none = b.getAttribute("data-q") === "none"; if (!r) return;
@@ -1867,6 +1960,9 @@ create policy "solo i miei dati" on stipendio_pilota
         + '<div class="meter blue" role="progressbar" aria-label="' + esc(g.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>'
         + '<p class="small muted">' + eur.format(g.saved) + " di " + eur.format(g.target) + " · entro " + mlabel(g.when) + (left > 0 ? " · servono circa " + eur.format(Math.ceil(per)) + " al mese" : " · raggiunto 🎉") + '</p>'
         + '<div class="addrow"><input type="text" inputmode="decimal" autocomplete="off" placeholder="Quanto versi (€)" aria-label="Versamento per ' + esc(g.name) + '"><button type="button">Versa</button></div>';
+      var tot = g.start ? Math.max(1, (+g.when.slice(0, 4) - +g.start.slice(0, 4)) * 12 + (+g.when.slice(5) - +g.start.slice(5))) : 0, el = g.start ? Math.min(tot, (+CUR.slice(0, 4) - +g.start.slice(0, 4)) * 12 + (+CUR.slice(5) - +g.start.slice(5))) : 0, exp = tot ? g.target * el / tot : 0;
+      if (left > 0 && tot && el > 0) { var st2 = document.createElement("p"); st2.className = "small"; st2.innerHTML = g.saved + 1 >= exp ? "<b>In pari</b> con il programma." : "<b>Sei indietro di " + eur.format(Math.ceil(exp - g.saved)) + "</b> rispetto a dove dovresti essere oggi."; d.insertBefore(st2, d.querySelector(".addrow")); }
+      if (left > 0) { var qb = document.createElement("button"); qb.type = "button"; qb.textContent = "Versa la quota del mese (" + eur.format(Math.ceil(per)) + ")"; qb.style.marginTop = "8px"; qb.onclick = function () { g.saved += Math.ceil(per); persist(); renderAll(); toast("Quota versata ✓"); }; d.appendChild(qb); }
       d.querySelector(".x").onclick = function () { S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); persist(); renderAll(); toast("Obiettivo eliminato"); };
       var inp = d.querySelector("input");
       d.querySelector(".addrow button").onclick = function () {
@@ -1890,7 +1986,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ev.preventDefault();
     var name = $("g-name").value.trim().slice(0, 40), t = pnum($("g-target").value);
     if (!name || !(t > 0)) { toast("Scrivi cosa vuoi e quanto serve"); return; }
-    S.goals.push({ id: S.nextId++, name: name, target: t, saved: 0, when: $("g-when").value });
+    S.goals.push({ id: S.nextId++, name: name, target: t, saved: 0, when: $("g-when").value, start: CUR });
     persist(); $("g-name").value = ""; $("g-target").value = ""; renderAll(); toast("Obiettivo aggiunto ✓");
   }
   function addAnnual(ev) {
@@ -2101,9 +2197,11 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     if (h === "profilo" && curView !== "profilo") fillForm(S);
     curView = h;
+    $("fab").hidden = h === "profilo" || !S.saved;
     window.scrollTo(0, 0);
+    var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); }
+  function renderAll() { renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -2133,6 +2231,9 @@ create policy "solo i miei dati" on stipendio_pilota
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5] }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
   document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
   $("mk-range").value = String(MK.range); $("mk-range").onchange = function () { MK.range = +this.value; renderMarket(); };
+  $("fab").onclick = qsOpen; $("qs-x").onclick = qsClose; $("qs-bg").onclick = qsClose; $("qs-go").onclick = qsAdd;
+  $("qs-amt").onkeydown = $("qs-note").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); qsAdd(); } };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("qs").hidden) qsClose(); });
   $("cal-ics").onclick = icsExport;
   $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; if (!inMonth(calSel)) calSel = S.monthKey + "-01"; location.hash = "#spese/calendario"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
