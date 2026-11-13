@@ -448,6 +448,12 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .he small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; }
 .he .mini { min-width: 40px; }
 .he .mini:disabled { opacity: 0.35; }
+.sd-cal button { justify-content: center; gap: 1px; }
+.sd-cal .sdv { font-size: 10px; font-weight: 700; min-height: 12px; }
+.sd-cal button.ok { background: var(--ok-bg); }
+.sd-cal button.over { background: var(--warn-bg); color: var(--warn); }
+.sd-cal button.sel { background: var(--accent); color: var(--accent-ink); }
+.sd-ok { color: #1f9d7a; } .sd-over { color: var(--warn); }
 </style>
 </head>
 <body>
@@ -588,6 +594,22 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <h2 id="t-cats">Per categoria</h2>
       <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
       <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
+    </section>
+    <section data-sub="giorni" class="card" aria-labelledby="t-sd">
+      <h2 id="t-sd">Giorno per giorno</h2>
+      <p class="small muted" id="sd-info"></p>
+      <div class="cal sd-cal" id="sd-grid" role="group" aria-label="Giorni del mese"></div>
+      <p class="small muted sd-lgd"><span class="sd-ok">●</span> dentro la quota del giorno &nbsp; <span class="sd-over">●</span> sopra la quota</p>
+    </section>
+    <section data-sub="giorni" class="card" aria-labelledby="t-sdd">
+      <h2 id="t-sdd">Spese del giorno</h2>
+      <div id="sd-day"></div>
+      <form id="sd-form" style="display:flex;flex-direction:column;gap:12px;margin-top:6px">
+        <label class="f" for="sd-amount">Quanto hai speso? (€)<input id="sd-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="Per esempio 12,50"></label>
+        <label class="f" for="sd-cat">Categoria<select id="sd-cat"></select></label>
+        <label class="f" for="sd-note">Nota (facoltativa)<input id="sd-note" type="text" autocomplete="off" placeholder="Per esempio supermercato"></label>
+        <button class="primary" type="submit" id="sd-add">Aggiungi a questo giorno</button>
+      </form>
     </section>
     <section data-sub="importa" class="card" aria-labelledby="t-imp">
       <h2 id="t-imp">Importa dall'estratto conto</h2>
@@ -1597,7 +1619,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.21";
+  var APP_VERSION = "2026-11-13.22";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3177,8 +3199,58 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
 
+  /* ---------- spese giorno per giorno ---------- */
+  var sdSel = "";
+  function expDay(e) { return ymd(new Date(e.date)); }
+  function renderSpeseDays() {
+    var grid = $("sd-grid"); if (!grid) return;
+    var sD = startOf(S.monthKey), eD = endOf(S.monthKey), sK = ymd(sD), eK = ymd(eD), isCur = S.monthKey === CUR, lm = liveMonth();
+    var list = S.spent[S.monthKey] || [], per = {}, nDays = Math.round((eD - sD) / 864e5) + 1;
+    list.forEach(function (e) { var k = expDay(e); per[k] = (per[k] || 0) + e.amount; });
+    var quota = nDays > 0 ? lm.V / nDays : 0;
+    if (!sdSel || sdSel < sK || sdSel > eK) sdSel = isCur ? TODAY_KEY : eK;
+    var net = 0, past = 0;
+    if (isCur) for (var d1 = new Date(sD); ymd(d1) < TODAY_KEY && ymd(d1) <= eK; d1.setDate(d1.getDate() + 1)) { net += quota - (per[ymd(d1)] || 0); past++; }
+    var info = "Quota base: " + eur.format(quota) + " al giorno (" + eur.format(lm.V) + " di budget su " + nDays + " giorni).";
+    if (isCur && past > 0) info += net >= 0 ? " Fino a ieri hai messo da parte " + eur.format(net) + ": per questo la cifra di oggi cresce." : " Fino a ieri hai superato la quota di " + eur.format(-net) + ": per questo la cifra di oggi scende.";
+    if (isCur) info += " Oggi puoi spendere circa " + eur.format((lm.V - lm.A) / Math.max(1, DAYS_LEFT)) + ".";
+    $("sd-info").textContent = info;
+    var h = "";
+    ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
+    for (var i = 0; i < (sD.getDay() || 7) - 1; i++) h += "<span></span>";
+    for (var dd = new Date(sD); dd <= eD; dd.setDate(dd.getDate() + 1)) {
+      var k = ymd(dd), v = per[k] || 0, cls = (k === sdSel ? "sel " : "") + (k === TODAY_KEY ? "today " : "") + (v > 0 ? (v > quota + 0.005 ? "over" : "ok") : "");
+      h += '<button type="button" data-d="' + k + '" class="' + cls + '" aria-label="' + dd.getDate() + " " + mnameD(dd) + (v > 0 ? ", speso " + eur2.format(v) : ", nessuna spesa") + '">' + dd.getDate() + '<span class="sdv">' + (v > 0 ? Math.round(v) : "") + "</span></button>";
+    }
+    grid.innerHTML = h;
+    grid.querySelectorAll("button").forEach(function (b) { b.onclick = function () { sdSel = this.getAttribute("data-d"); renderSpeseDays(); }; });
+    var dl = list.filter(function (e) { return expDay(e) === sdSel; }), tot = per[sdSel] || 0, dobj = dOf(sdSel);
+    var box = $("sd-day");
+    box.innerHTML = '<h3 style="margin:0 0 6px;font-size:15px">' + WDN[dobj.getDay()] + " " + dobj.getDate() + " " + mnameD(dobj) + (tot > 0 ? " · " + eur2.format(tot) : "") + "</h3>";
+    if (!dl.length) box.insertAdjacentHTML("beforeend", '<p class="empty">Nessuna spesa in questo giorno.</p>');
+    dl.forEach(function (e) {
+      var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3], row = document.createElement("div"); row.className = "entry e4";
+      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><span></span><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      row.querySelector(".del").onclick = function () {
+        var mk = S.monthKey; S.spent[mk] = (S.spent[mk] || []).filter(function (x) { return x.id !== e.id; }); persist(); renderAll();
+        toast("Spesa eliminata", "Annulla", function () { S.spent[mk] = (S.spent[mk] || []).concat([e]); persist(); renderAll(); });
+      };
+      box.appendChild(row);
+    });
+    var sel = $("sd-cat"); if (!sel.options.length) CATS.forEach(function (c) { var o = document.createElement("option"); o.value = c.id; o.textContent = c.name; sel.appendChild(o); });
+  }
+  function addDayExpense(ev) {
+    ev.preventDefault();
+    if (pending) { toast("Prima avvia il nuovo mese nella Home"); return; }
+    var n = pnum($("sd-amount").value);
+    if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("sd-amount").focus(); return; }
+    var list = (S.spent[S.monthKey] || []).slice();
+    list.push({ id: S.nextId++, amount: n, cat: $("sd-cat").value, note: $("sd-note").value.trim().slice(0, 60), date: new Date(sdSel + "T12:00:00").toISOString() });
+    S.spent[S.monthKey] = list; persist(); $("sd-amount").value = ""; $("sd-note").value = ""; renderAll(); toast("Spesa aggiunta ✓");
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["home", "Home"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -3208,7 +3280,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderSpeseDays(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -3262,6 +3334,7 @@ create policy "solo i miei dati" on stipendio_pilota
   });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
+  $("sd-form").onsubmit = addDayExpense;
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
   $("home-custom").onclick = function () { location.hash = "#profilo/home"; };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };
