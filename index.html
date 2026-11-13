@@ -482,6 +482,32 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .menu a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Home essenziale: il cerchio e due tasti, il resto sta nelle schede sotto */
 .hero .chips2, .hero #hm-day, .hero #hm-due, .hero #hm-ev, .hero #hm-fix { display: none !important; }
+/* Home a riquadri */
+#v-home { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+#v-home > * { grid-column: 1 / -1; min-width: 0; }
+#v-home > .tile { grid-column: span 1; }
+.tile { border-radius: 24px; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 124px; color: var(--ink); text-decoration: none; background: var(--surface); }
+.tile .tl { font-weight: 700; font-size: 12.5px; color: var(--muted); }
+.tile .tv { font-size: clamp(24px, 8vw, 30px); line-height: 1.1; }
+.tile .ts { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.tile .tb { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; margin-top: auto; }
+.tile .tb i { display: block; height: 100%; width: 0; border-radius: 4px; background: var(--ink); opacity: 0.7; transition: width 0.6s; }
+.tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.t-mese { background: color-mix(in srgb, var(--c-move) 20%, var(--surface)); }
+.t-acc { background: color-mix(in srgb, var(--pos) 18%, var(--surface)); }
+.t-pay { background: color-mix(in srgb, var(--c-daily) 24%, var(--surface)); }
+.t-day { background: color-mix(in srgb, var(--c-save) 18%, var(--surface)); }
+.t-inv { background: color-mix(in srgb, var(--c-invest) 20%, var(--surface)); }
+.t-goals { background: color-mix(in srgb, var(--c-fun) 18%, var(--surface)); }
+#home-dl { background: color-mix(in srgb, var(--bad) 11%, var(--surface)); border-radius: 24px; }
+#v-home .hero { align-items: flex-start; text-align: left; padding: 22px 20px 20px; gap: 8px; }
+#v-home .hero .ringbox { width: auto; aspect-ratio: auto; position: static; }
+#v-home .hero #ring { display: none; }
+#v-home .hero .ringc { position: static; inset: auto; align-items: flex-start; text-align: left; padding: 0; }
+#v-home .hero .ringc b { font-size: clamp(58px, 21vw, 80px); letter-spacing: -0.03em; margin: 2px 0; }
+#v-home .hero .btnrow { justify-content: flex-start; }
+#v-home .hero .hello { text-align: left; }
+#v-home .hero .primary { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
 </style>
 </head>
 <body>
@@ -562,6 +588,13 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <div id="td-list"></div>
       <p class="small muted" id="td-sum"></p>
     </section>
+    <a class="tile t-mese" id="tile-mese" href="#spese"><small class="tl">Mese</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-acc" id="tile-acc" href="#piano/obiettivi"><small class="tl">Da parte</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-pay" id="tile-pay" href="#profilo/io"><small class="tl">Stipendio</small><b class="tv num"></b><span class="ts"></span></a>
+    <a class="tile t-day" id="tile-day" href="#spese/giorni"><small class="tl">Oggi</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-inv" id="tile-inv" href="#piano/investire"><small class="tl">Investimento</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-goals" id="tile-goals" href="#piano/obiettivi"><small class="tl">Obiettivo</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <div id="legacy-home" hidden>
     <section data-sub="home" class="card" id="home-sal" aria-labelledby="sal-label">
       <div class="line">
         <div><div class="salary-label" id="sal-label"></div><div class="salary-big num" id="sal-big"></div></div>
@@ -594,6 +627,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <div class="meter blue" id="hac-meter" role="progressbar" aria-labelledby="t-hac" aria-valuemin="0" aria-valuemax="100"><div id="hac-fill" style="width:0%"></div></div>
       <div class="btnrow" style="margin-top:12px"><button type="button" id="hac-go">Metti da parte</button></div>
     </section>
+    </div>
     <button type="button" class="link" id="home-custom" style="order:99">Personalizza questa pagina</button>
   </main>
 
@@ -1293,14 +1327,15 @@ create policy "solo i miei dati" on stipendio_pilota
   var HOME_W = [
     ["alerts", "Avvisi sul budget", "Ti avvisa quando una categoria sta finendo il budget.", true],
     ["complete", "Completa il profilo", "Ti dice cosa manca per avere un piano preciso.", true],
-    ["home-dl", "Da pagare a breve", "Le scadenze dei prossimi giorni, da spuntare con un tocco.", true],
     ["wk-remind", "Promemoria viaggi", "Ogni settimana ti ricorda di confermare i viaggi fatti.", false],
-    ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", false],
-    ["home-sal", "Stipendio e ripartizione", "Quanto prendi e come si divide.", false],
-    ["home-now", "Spese del mese", "Quanto hai speso rispetto al budget.", true],
-    ["home-acc", "Da parte per le spese di ogni anno", "Quanto hai messo da parte questo mese per assicurazione, bollo e simili.", true],
-    ["home-inv", "Investimento del mese", "Quanto hai versato e un tasto per aprire il broker.", false],
-    ["home-goals", "Obiettivi", "I tuoi obiettivi di risparmio e quanto manca.", false]
+    ["home-dl", "Da pagare a breve", "Le scadenze dei prossimi giorni, da spuntare con un tocco.", true],
+    ["tile-mese", "Mese", "Quanto del budget hai speso.", true],
+    ["tile-acc", "Da parte", "Quanto hai messo da parte per le spese di ogni anno.", true],
+    ["tile-pay", "Stipendio", "Quanti giorni mancano alla prossima paga.", true],
+    ["tile-day", "Oggi", "Quanto hai speso oggi.", true],
+    ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", true],
+    ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
+    ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
   var DEFAULTS = { skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
@@ -1710,7 +1745,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.27";
+  var APP_VERSION = "2026-11-13.28";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3321,7 +3356,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function homeNorm() {
     annNorm();
     var h = S.home && typeof S.home === "object" ? S.home : {}, ids = HOME_W.map(function (w) { return w[0]; });
-    var order = (Array.isArray(h.order) ? h.order : []).filter(function (x) { return ids.indexOf(x) >= 0; });
+    var order = (h.custom && Array.isArray(h.order) ? h.order : []).filter(function (x) { return ids.indexOf(x) >= 0; });
     ids.forEach(function (x) { if (order.indexOf(x) < 0) order.push(x); });
     var off = h.custom && Array.isArray(h.off) ? h.off.filter(function (x) { return ids.indexOf(x) >= 0; }) : HOME_W.filter(function (w) { return !w[3]; }).map(function (w) { return w[0]; });
     S.home = { order: order, off: off, custom: !!h.custom };
@@ -3330,7 +3365,31 @@ create policy "solo i miei dati" on stipendio_pilota
     homeNorm();
     S.home.order.forEach(function (id, i) { var el = $(id); if (!el) return; el.style.order = String(i + 1); el.classList.toggle("home-off", S.home.off.indexOf(id) >= 0); });
   }
+  function setTile(id, val, sub, pct) {
+    var el = $(id); if (!el) return;
+    el.querySelector(".tv").textContent = val; el.querySelector(".ts").textContent = sub;
+    var tb = el.querySelector(".tb"); if (tb) { tb.hidden = pct === null; if (pct !== null) tb.firstChild.style.width = Math.max(0, Math.min(100, pct)) + "%"; }
+  }
+  function renderTiles() {
+    if (!$("tile-mese")) return;
+    var m = liveMonth(), p = plan(), pct = m.V > 0 ? Math.round(m.A / m.V * 100) : 0;
+    setTile("tile-mese", pct + " %", "del budget · restano " + eur.format(Math.max(0, Math.round(m.V - m.A))), pct);
+    var t = annTotals();
+    if (!S.annual.length) setTile("tile-acc", "—", "aggiungi una spesa di ogni anno", null);
+    else if (t.base <= 0) setTile("tile-acc", "✓", "tutte le voci sono pronte", 100);
+    else setTile("tile-acc", eur.format(Math.round(t.dep)), "su " + eur.format(Math.round(t.base)) + " del mese", t.dep / t.base * 100);
+    var nd = startOf(nextKey(CUR)), dd = Math.max(0, Math.round((nd - todayStart()) / 864e5));
+    setTile("tile-pay", dd + (dd === 1 ? " giorno" : " giorni"), "arriva il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(nd) + " · " + eur.format(S.salary), null);
+    var today = (S.spent[S.monthKey] || []).reduce(function (a, e) { return ymd(new Date(e.date)) === TODAY_KEY ? a + e.amount : a; }, 0);
+    var quota = m.V > 0 ? m.V / Math.max(1, Math.round((endOf(S.monthKey) - startOf(S.monthKey)) / 864e5) + 1) : 0;
+    setTile("tile-day", eur.format(Math.round(today)), "speso oggi · quota " + eur.format(Math.round(quota)), quota > 0 ? today / quota * 100 : null);
+    setTile("tile-inv", eur.format(Math.round(m.invested)), p.inv > 0 ? "su " + eur.format(Math.round(p.inv)) + " previsti" : "nessun piano questo mese", p.inv > 0 ? m.invested / p.inv * 100 : null);
+    var g = S.goals[0];
+    if (g) setTile("tile-goals", g.target > 0 ? Math.round(g.saved / g.target * 100) + " %" : "—", g.name + " · " + eur.format(Math.round(g.saved)) + " di " + eur.format(Math.round(g.target)), g.target > 0 ? g.saved / g.target * 100 : null);
+    else setTile("tile-goals", "—", "aggiungi un obiettivo", null);
+  }
   function renderHomeExtra() {
+    renderTiles();
     var inv = $("home-inv"), gl = $("home-goals");
     if (inv && !inv.classList.contains("home-off")) {
       var p = plan(), m = liveMonth(), pct = p.inv > 0 ? Math.min(100, m.invested / p.inv * 100) : 0, b = S.broker || {};
