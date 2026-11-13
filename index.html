@@ -759,6 +759,7 @@ html, body { touch-action: pan-x pan-y; }
     <section data-sub="calendario" class="card" aria-labelledby="t-cal">
       <h2 id="t-cal">Calendario del lavoro e dei viaggi</h2>
       <p class="hint" id="cal-hint">Tocca un giorno e segna quali tragitti hai fatto davvero. I pallini pieni sono i viaggi fatti, quelli vuoti sono previsti dal tuo programma ma non ancora confermati.</p>
+      <div class="navline"><button type="button" id="cm-prev" aria-label="Mese precedente">‹</button><b id="cm-title"></b><button type="button" id="cm-next" aria-label="Mese successivo">›</button></div>
       <div class="cal" id="cal-grid" role="grid" aria-label="Giorni del mese"></div>
       <div class="lgd" id="cal-lgd"></div>
       <div id="cal-day"></div>
@@ -774,7 +775,7 @@ html, body { touch-action: pan-x pan-y; }
       <p class="small muted" id="wk-st"></p>
     </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-reg">
-      <h2 id="t-reg">Il tuo registro</h2>
+      <h2 id="t-reg">Il tuo registro</h2><p class="small muted" id="reg-month"></p>
       <div class="regstats" id="reg-stats"></div>
       <p class="small muted" id="reg-todo"></p>
       <button type="button" id="reg-fill"></button>
@@ -1839,7 +1840,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.38";
+  var APP_VERSION = "2026-11-13.39";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2336,12 +2337,20 @@ create policy "solo i miei dati" on stipendio_pilota
   function tripSel(r, k, dis, label) { return '<label class="tksel"><span>' + label + '</span><select class="tk" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (dis ? " disabled" : "") + ">" + TK.map(function (t) { return '<option value="' + t[0] + '"' + (tripKind(r, k) === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></label>"; }
   function bindTrips(box) { box.querySelectorAll("select.tk").forEach(function (se) { se.onchange = function () { var r = S.routes.filter(function (x) { return x.id === se.getAttribute("data-r"); })[0]; if (!r) return; setTripKind(se.getAttribute("data-d"), r, se.value); persist(); renderAll(); }; }); }
   function inMonth(k) { return k >= psStr(S.monthKey) && k <= peStr(S.monthKey); }
+  function cmOf(k) { return k.slice(0, 7); }
+  function cmDays(cm) { var q = cm.split("-"), out = [], n = new Date(+q[0], +q[1], 0).getDate(); for (var i = 1; i <= n; i++) out.push(cm + "-" + (i < 10 ? "0" : "") + i); return out; }
+  function cmLabel(cm) { var q = cm.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(new Date(+q[0], +q[1] - 1, 1)); }
+  function cmShift(cm, d) { var q = cm.split("-"), x = new Date(+q[0], +q[1] - 1 + d, 1); return x.getFullYear() + "-" + (x.getMonth() + 1 < 10 ? "0" : "") + (x.getMonth() + 1); }
   function renderCalendar() {
     var has = S.routes.length > 0;
-    if (!calSel || !inMonth(calSel)) calSel = inMonth(TODAY_KEY) ? TODAY_KEY : psStr(S.monthKey);
+    if (!calSel) calSel = TODAY_KEY;
+    var CM = cmOf(calSel);
+    $("cm-title").textContent = cmLabel(CM);
+    $("cm-prev").onclick = function () { var n = cmShift(CM, -1); calSel = cmOf(TODAY_KEY) === n ? TODAY_KEY : n + "-01"; renderAll(); };
+    $("cm-next").onclick = function () { var n = cmShift(CM, 1); calSel = cmOf(TODAY_KEY) === n ? TODAY_KEY : n + "-01"; renderAll(); };
     var grid = $("cal-grid");
     if (!has) { grid.innerHTML = '<p class="empty" style="grid-column:1/-1">Aggiungi i tuoi tragitti in Profilo → Viaggi per usare il calendario.</p>'; $("cal-day").innerHTML = ""; $("wk-grid").innerHTML = ""; $("wk-quick").innerHTML = ""; $("rp-box").innerHTML = ""; return; }
-    var sD = startOf(S.monthKey), eD = endOf(S.monthKey), lead = ((sD.getDay() || 7) - 1), h = "";
+    var cd0 = cmDays(CM), sD = dOf(cd0[0]), eD = dOf(cd0[cd0.length - 1]), lead = ((sD.getDay() || 7) - 1), h = "";
     ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
     for (var i = 0; i < lead; i++) h += "<span></span>";
     for (var dd0 = new Date(sD); dd0 <= eD; dd0.setDate(dd0.getDate() + 1)) {
@@ -2360,9 +2369,9 @@ create policy "solo i miei dati" on stipendio_pilota
     // settimana
     var mon = mondayOf(calSel), days = []; for (var j = 0; j < 7; j++) days.push(addDays(mon, j));
     $("wk-title").textContent = dOf(days[0]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[0])) + " – " + dOf(days[6]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[6]));
-    $("wk-prev").disabled = !days.some(function (x) { return inMonth(addDays(mon, -7 + days.indexOf(x))); }) ; $("wk-next").disabled = !inMonth(addDays(mon, 7)) && !inMonth(addDays(mon, 13));
+    $("wk-prev").disabled = false; $("wk-next").disabled = false;
     $("wk-grid").innerHTML = days.map(function (k) {
-      var inm = inMonth(k);
+      var inm = true;
       var sh = S.shifts[k];
       return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select>" + S.routes.map(function (r, ri) { return tripSel(r, k, !inm, '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name)); }).join("") + "</div></div>";
     }).join("");
@@ -2378,19 +2387,19 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     var tw = 0, tk = 0, tt = 0, tf = 0, ws = "";
     S.routes.forEach(function (r, ri) {
-      var dk = days.filter(inMonth), legs = dk.reduce(function (a, k) { return a + legsOf(r, k); }, 0); if (!legs) return;
+      var dk = days, legs = dk.reduce(function (a, k) { return a + legsOf(r, k); }, 0); if (!legs) return;
       var cA = dk.filter(function (k) { return tripKind(r, k) === "ar"; }).length, cO = dk.filter(function (k) { return tripKind(r, k) === "a"; }).length, cR = dk.filter(function (k) { return tripKind(r, k) === "r"; }).length, n = legs / 2;
       var km = legs * r.km, tl = legs * r.toll, kl = r.car === "benzina" ? S.kmlB : S.kmlD, pr = r.car === "benzina" ? S.priceB : S.priceD, fu = r.car === "none" || !(kl > 0) ? 0 : km / kl * pr;
       tw += legs / 2; tk += km; tt += tl; tf += fu;
       ws += '<div class="rpt"><b><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + '</b><span class="num">' + [cA ? cA + " a/r" : "", cO ? cO + (cO === 1 ? " andata" : " andate") : "", cR ? cR + (cR === 1 ? " ritorno" : " ritorni") : ""].filter(Boolean).join(" + ") + '</span><span class="num">' + eur.format(tl + fu) + "</span></div>";
     });
-    var lav = days.filter(function (k) { return inMonth(k) && S.shifts[k] && S.shifts[k].t === "L"; }).length;
+    var lav = days.filter(function (k) { return S.shifts[k] && S.shifts[k].t === "L"; }).length;
     $("wk-sum").innerHTML = '<h3 style="margin:12px 0 4px;font-size:15px">Questa settimana</h3>' + (lav ? '<p class="small muted" style="margin:0 0 6px">Giorni di lavoro segnati: ' + lav + "</p>" : "") + (ws ? ws + '<p style="margin:8px 0 0"><b>' + fmtN(tw) + (tw === 1 ? " viaggio" : " viaggi") + " · " + Math.round(tk) + " km · pedaggi " + eur.format(tt) + " · benzina/gasolio " + eur.format(tf) + " · totale " + eur.format(tt + tf) + "</b></p>" : '<p class="empty">Nessun viaggio questa settimana.</p>');
     var done = !!S.conf[mon]; $("wk-conf").textContent = done ? "Settimana confermata ✓ (tocca per togliere)" : "Conferma questa settimana";
     $("wk-conf").onclick = function () { if (S.conf[mon]) delete S.conf[mon]; else S.conf[mon] = 1; persist(); renderAll(); };
     $("wk-st").textContent = done ? "I viaggi di questa settimana contano come reali." : "Finché non confermi, i viaggi di questa settimana restano una stima del programma.";
-    $("wk-prev").onclick = function () { calSel = addDays(mon, -7); if (!inMonth(calSel)) calSel = addDays(mon, -1); if (!inMonth(calSel)) calSel = psStr(S.monthKey); renderCalendar(); };
-    $("wk-next").onclick = function () { calSel = addDays(mon, 7); if (!inMonth(calSel)) calSel = peStr(S.monthKey); renderCalendar(); };
+    $("wk-prev").onclick = function () { calSel = addDays(mon, -7); renderCalendar(); };
+    $("wk-next").onclick = function () { calSel = addDays(mon, 7); renderCalendar(); };
     // resoconto
     var p = plan(), tp = 0, tr = 0;
     var hh = p.routes.map(function (r) { tp += r.costPlan; tr += r.cost; return '<div class="rpt"><b>' + esc(r.name) + "</b><span class=\"num\">" + fmtN(r.nPlan) + " → " + fmtN(r.n) + '</span><span class="num">' + eur.format(r.costPlan) + " → " + eur.format(r.cost) + "</span></div>"; }).join("");
@@ -2423,9 +2432,8 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderToday() {
     var sec = $("today"); sec.hidden = !S.saved || !S.routes.length;
     if (sec.hidden) return;
-    var first = psStr(S.monthKey), last = peStr(S.monthKey), inp = $("td-date");
-    inp.min = first; inp.max = last;
-    if (!tdDate || !inMonth(tdDate)) tdDate = inMonth(TODAY_KEY) ? TODAY_KEY : first;
+    var inp = $("td-date"); inp.removeAttribute("min"); inp.removeAttribute("max");
+    if (!tdDate) tdDate = TODAY_KEY;
     inp.value = tdDate;
     var dd = tdDate.split("-"), wd = new Date(+dd[0], +dd[1] - 1, +dd[2]).getDay(), p = plan(), tot = 0, html = "";
     S.routes.forEach(function (r) {
@@ -2440,7 +2448,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (S.workMode === "turni") {
       var mon = mondayOf(tdDate);
       for (var j = 0; j < 7; j++) (function (k) {
-        var sh = S.shifts[k], b = document.createElement("button"); b.type = "button"; b.disabled = !inMonth(k); b.setAttribute("aria-pressed", k === tdDate ? "true" : "false");
+        var sh = S.shifts[k], b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-pressed", k === tdDate ? "true" : "false");
         b.innerHTML = "<small>" + WDN[dOf(k).getDay()] + "</small><b>" + dOf(k).getDate() + "</b><i>" + (sh ? sh.t : "·") + "</i>";
         b.onclick = function () { tdDate = k; renderToday(); }; wkb.appendChild(b);
       })(addDays(mon, j));
@@ -3778,7 +3786,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function fmtH(m) { return Math.floor(m / 60) + "h" + (m % 60 ? " " + (m % 60) + "m" : ""); }
   function proData(key) {
     var rows = [], cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, mins = 0, none = 0;
-    periodDays(key).forEach(function (k) {
+    cmDays(key).forEach(function (k) {
       var sh = S.shifts[k], d = dOf(k), sb = sh ? SHIFT_S.filter(function (x) { return x[0] === sh.s; })[0] : null, m = sh && sh.t === "L" ? durMin(sh.h1, sh.h2) : 0;
       if (sh) cnt[sh.t]++; else none++; mins += m;
       rows.push({ k: k, day: WDN[d.getDay()] + " " + d.getDate(), st: sh ? (SHIFT_T.filter(function (x) { return x[0] === sh.t; })[0] || [0, ""])[1] : "—", tr: sh && sh.t === "L" && sb && sh.s ? sb[1] : "", ori: sh && sh.h1 && sh.h2 ? sh.h1 + "–" + sh.h2 : "", ore: m ? fmtH(m) : "", n: sh ? sh.n || "" : "" });
@@ -3787,14 +3795,14 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function renderProspetto() {
     var box = $("pro-tbl"); if (!box) return;
-    if (!proKey) proKey = S.monthKey;
+    var curCM = cmOf(TODAY_KEY); if (!proKey) proKey = curCM;
     var D = proData(proKey);
-    $("pro-title").textContent = mlabel(proKey);
-    $("pro-next").disabled = proKey >= S.monthKey;
+    $("pro-title").textContent = cmLabel(proKey);
+    $("pro-next").disabled = proKey >= curCM;
     $("pro-stats").innerHTML = SHIFT_T.map(function (t) { return '<span class="regchip"><b class="num">' + D.cnt[t[0]] + "</b> " + t[1].toLowerCase() + "</span>"; }).join("") + '<span class="regchip"><b class="num">' + (D.mins ? fmtH(D.mins) : "0h") + "</b> ore</span>";
     box.innerHTML = "<table><thead><tr><th>Giorno</th><th>Stato</th><th>Turno</th><th>Orario</th><th>Ore</th></tr></thead><tbody>" + D.rows.map(function (r) { return '<tr class="' + (r.st === "—" ? "no" : "") + '"><td>' + r.day + "</td><td>" + r.st + (r.n ? "<small>" + esc(r.n) + "</small>" : "") + "</td><td>" + r.tr + "</td><td>" + r.ori + "</td><td>" + r.ore + "</td></tr>"; }).join("") + "</tbody></table>";
-    $("pro-prev").onclick = function () { proKey = prevKey(proKey); renderProspetto(); };
-    $("pro-next").onclick = function () { if (proKey < S.monthKey) { proKey = nextKey(proKey); renderProspetto(); } };
+    $("pro-prev").onclick = function () { proKey = cmShift(proKey, -1); renderProspetto(); };
+    $("pro-next").onclick = function () { if (proKey < curCM) { proKey = cmShift(proKey, 1); renderProspetto(); } };
     $("pro-csv").onclick = function () {
       var L = [["Data", "Giorno", "Stato", "Turno", "Dalle", "Alle", "Ore", "Nota"]];
       D.rows.forEach(function (r) { var sh = S.shifts[r.k] || {}; L.push([r.k.split("-").reverse().join("/"), r.day.split(" ")[0], r.st === "—" ? "" : r.st, r.tr, sh.h1 || "", sh.h2 || "", r.ore, r.n]); });
@@ -3803,7 +3811,7 @@ create policy "solo i miei dati" on stipendio_pilota
       try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "lavoro-" + proKey + ".csv"; document.body.appendChild(a); a.click(); a.remove(); toast("File scaricato ✓"); } catch (e) { toast("Download non riuscito"); }
     };
     $("pro-copy").onclick = function () {
-      var t = "Lavoro " + mlabel(proKey) + "\n" + SHIFT_T.map(function (x) { return x[1] + ": " + D.cnt[x[0]]; }).join(" · ") + "\nOre totali: " + fmtH(D.mins) + "\n" + D.rows.filter(function (r) { return r.st !== "—"; }).map(function (r) { return r.day + " " + r.st + (r.tr ? " " + r.tr : "") + (r.ori ? " " + r.ori : ""); }).join("\n");
+      var t = "Lavoro " + cmLabel(proKey) + "\n" + SHIFT_T.map(function (x) { return x[1] + ": " + D.cnt[x[0]]; }).join(" · ") + "\nOre totali: " + fmtH(D.mins) + "\n" + D.rows.filter(function (r) { return r.st !== "—"; }).map(function (r) { return r.day + " " + r.st + (r.tr ? " " + r.tr : "") + (r.ori ? " " + r.ori : ""); }).join("\n");
       try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Copia non riuscita"); }); } catch (e) { toast("Copia non riuscita"); }
     };
   }
@@ -3815,8 +3823,9 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     $("wm-hint").textContent = S.workMode === "turni" ? "Il programma dei tragitti è solo una stima. Segna giorno per giorno (o settimana per settimana) quando lavori, riposi o sei in ferie: i viaggi e il carburante si aggiornano da soli." : "Vai al lavoro negli stessi giorni ogni settimana. Qui correggi solo le eccezioni (ferie, malattia, permessi) e tieni il tuo registro.";
     // registro
-    var days = periodDays(S.monthKey), cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, list = [], todo = 0;
-    days.forEach(function (k) { var sh = S.shifts[k]; if (sh) { cnt[sh.t]++; list.push([k, sh]); } else if (k < TODAY_KEY && S.monthKey === CUR) todo++; });
+    var RM = cmOf(calSel || TODAY_KEY), days = cmDays(RM), cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, list = [], todo = 0;
+    days.forEach(function (k) { var sh = S.shifts[k]; if (sh) { cnt[sh.t]++; list.push([k, sh]); } else if (k < TODAY_KEY) todo++; });
+    $("reg-month").textContent = cmLabel(RM);
     $("reg-stats").innerHTML = SHIFT_T.map(function (t) { return '<span class="regchip"><b class="num">' + cnt[t[0]] + "</b> " + t[1].toLowerCase() + "</span>"; }).join("");
     $("reg-todo").textContent = todo > 0 ? "Hai " + todo + (todo === 1 ? " giorno" : " giorni") + " passati senza indicazione." : "Tutti i giorni passati sono segnati ✓";
     $("reg-fill").textContent = "Riempi i giorni vuoti dal programma";
@@ -3829,11 +3838,11 @@ create policy "solo i miei dati" on stipendio_pilota
       box.appendChild(row);
     });
     // mesi passati
-    var by = {}; Object.keys(S.shifts).forEach(function (k) { var pk = periodKeyFor(dOf(k)); if (pk === S.monthKey) return; (by[pk] = by[pk] || { L: 0, R: 0, F: 0, M: 0, P: 0 })[S.shifts[k].t]++; });
+    var by = {}; Object.keys(S.shifts).forEach(function (k) { var pk = cmOf(k); if (pk === RM) return; (by[pk] = by[pk] || { L: 0, R: 0, F: 0, M: 0, P: 0 })[S.shifts[k].t]++; });
     var hist = $("reg-hist"); hist.innerHTML = "";
     var keys = Object.keys(by).sort().reverse().slice(0, 6);
     if (!keys.length) hist.innerHTML = '<p class="empty">Appena avrai segnato qualche mese, qui trovi il riepilogo.</p>';
-    keys.forEach(function (pk) { var c = by[pk], row = document.createElement("div"); row.className = "entry"; row.innerHTML = '<div class="t">' + mlabel(pk) + "<small>" + SHIFT_T.filter(function (t) { return c[t[0]]; }).map(function (t) { return c[t[0]] + " " + t[1].toLowerCase(); }).join(" · ") + "</small></div>"; hist.appendChild(row); });
+    keys.forEach(function (pk) { var c = by[pk], row = document.createElement("div"); row.className = "entry"; row.innerHTML = '<div class="t">' + cmLabel(pk) + "<small>" + SHIFT_T.filter(function (t) { return c[t[0]]; }).map(function (t) { return c[t[0]] + " " + t[1].toLowerCase(); }).join(" · ") + "</small></div>"; hist.appendChild(row); });
   }
 
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
@@ -3902,14 +3911,14 @@ create policy "solo i miei dati" on stipendio_pilota
   $("qs-amt").onkeydown = $("qs-note").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); qsAdd(); } };
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("qs").hidden) qsClose(); });
   $("cal-ics").onclick = icsExport;
-  $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; if (!inMonth(calSel)) calSel = S.monthKey + "-01"; location.hash = "#spese/calendario"; renderCalendar(); };
+  $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; location.hash = "#spese/calendario"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
   $("payDay").oninput = function () {
     var v = Math.min(31, Math.max(1, Math.round(pnum(this.value)) || 1)), keep = PAYDAY, el = $("pay-prev"); PAYDAY = v;
     var k = periodKeyFor(NOW); el.textContent = "Con il giorno " + v + " il mese in corso va dal " + dfDay.format(startOf(k)) + " al " + dfDay.format(endOf(k)) + "."; PAYDAY = keep;
   };
   initArchivio(); $("br-save").onclick = saveBroker;
-  $("td-date").onchange = function () { if (this.value && inMonth(this.value)) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
+  $("td-date").onchange = function () { if (this.value) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
   setupBackup();
   setupSync();
