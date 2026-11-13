@@ -1810,7 +1810,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.33";
+  var APP_VERSION = "2026-11-13.34";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3325,8 +3325,9 @@ create policy "solo i miei dati" on stipendio_pilota
       h += wf("bills", "Bollette e abbonamenti al mese (€)", "num", W.bills, "Luce, gas, acqua, internet, telefono, abbonamenti. Una stima va bene.");
     } else if (wStep === 3) {
       h += wf("live", "Dove vivi?", "t", W.live) + wf("work", "Dove lavori?", "t", W.work);
+      h += '<label class="f" for="w-wm">Che orario fai?<select id="w-wm"><option value="fisso"' + (W.wm !== "turni" ? " selected" : "") + '>Fisso, stessi giorni ogni settimana</option><option value="turni"' + (W.wm === "turni" ? " selected" : "") + '>Su turni, cambia di settimana in settimana</option></select></label><p class="hint">Poi nel calendario segni i giorni in cui lavori davvero e ti tieni un registro tuo.</p>';
       h += '<label class="f" for="w-car">Come vai al lavoro?<select id="w-car"><option value="diesel"' + (W.car === "diesel" ? " selected" : "") + '>In auto a diesel</option><option value="benzina"' + (W.car === "benzina" ? " selected" : "") + '>In auto a benzina</option><option value="none"' + (W.car === "none" ? " selected" : "") + ">Mezzi pubblici, a piedi o in bici</option></select></label>";
-      h += '<div id="w-carbox">' + wf("km", "Km per ogni tragitto casa-lavoro (solo andata)", "num", W.km) + wf("toll", "Pedaggio per ogni tragitto (€)", "num", W.toll, "Metti 0 se non c'è autostrada.") + '<div class="f"><span>In quali giorni ci vai?</span>' + wDays("w-wd", W.wd) + "</div></div>";
+      h += '<div id="w-carbox">' + wf("km", "Km per ogni tragitto casa-lavoro (solo andata)", "num", W.km) + wf("toll", "Pedaggio per ogni tragitto (€)", "num", W.toll, "Metti 0 se non c'è autostrada.") + '<div class="f"><span>In quali giorni ci vai di solito?</span>' + wDays("w-wd", W.wd) + "</div></div>";
       h += wf("home", "Torni ogni tanto altrove? (famiglia, partner)", "t", W.home, "Lascia vuoto se non serve.");
       h += '<div id="w-homebox">' + wf("hkm", "Km per ogni viaggio (solo andata)", "num", W.hkm) + wf("htoll", "Pedaggio per ogni viaggio (€)", "num", W.htoll) + '<div class="f"><span>In quali giorni di solito?</span>' + wDays("w-hwd", W.hwd) + '<span class="help">Poi puoi correggere giorno per giorno dal calendario dei viaggi.</span></div></div>';
     } else if (wStep === 4) {
@@ -3362,7 +3363,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (wStep === 0) document.querySelectorAll("#wiz-body input[data-mod]").forEach(function (i) { W.mods[i.getAttribute("data-mod")] = i.checked; });
     if (wStep === 1) { W.name = wv("name").slice(0, 30); W.salary = wv("salary"); W.payDay = wv("payDay"); }
     else if (wStep === 2) { W.hs = wv("hs") || "affitto"; W.rent = wv("rent"); W.dueRent = wv("dueRent"); W.bills = wv("bills"); }
-    else if (wStep === 3) { W.live = wv("live").slice(0, 40); W.work = wv("work").slice(0, 40); W.car = wv("car"); W.km = wv("km"); W.toll = wv("toll"); W.wd = wReadDays("w-wd"); W.home = wv("home").slice(0, 40); W.hkm = wv("hkm"); W.htoll = wv("htoll"); W.hwd = wReadDays("w-hwd"); }
+    else if (wStep === 3) { W.live = wv("live").slice(0, 40); W.work = wv("work").slice(0, 40); W.wm = wv("wm"); W.car = wv("car"); W.km = wv("km"); W.toll = wv("toll"); W.wd = wReadDays("w-wd"); W.home = wv("home").slice(0, 40); W.hkm = wv("hkm"); W.htoll = wv("htoll"); W.hwd = wReadDays("w-hwd"); }
     else if (wStep === 4) { W.ins = wv("ins"); W.dueIns = wv("dueIns"); W.loanOn = $("w-loanOn").checked; W.loanName = wv("loanName"); W.loanAmt = wv("loanAmt"); W.loanDue = wv("loanDue"); W.loanEnd = wv("loanEnd"); }
     else if (wStep === 5) { W.savedNow = wv("savedNow"); W.pac = wv("pac"); W.pacDay = wv("pacDay"); W.brName = wv("brName"); W.brUrl = wv("brUrl"); }
   }
@@ -3378,7 +3379,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function wApply() {
     var n = function (v) { var x = pnum(v); return isNaN(x) ? 0 : Math.max(0, x); }, dd = function (v, def) { var x = Math.round(pnum(v)); return x >= 1 && x <= 31 ? x : def; };
-    S.mods = Object.assign({}, W.mods); S.home = null;
+    S.mods = Object.assign({}, W.mods); S.home = null; S.workMode = W.wm === "turni" ? "turni" : "fisso";
     S.salary = n(W.salary); S.payDay = dd(W.payDay, 1); applyPay(); S.monthKey = CUR; pending = null;
     S.me = { name: W.name, live: W.live, work: W.work, home: W.home, housing: W.hs };
     var fl = [
