@@ -401,6 +401,19 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .btnlink { display: inline-flex; align-items: center; justify-content: center; padding: 13px 18px; border-radius: 16px; font-weight: 700; text-decoration: none; flex: 1 1 auto; background: var(--soft); color: var(--ink); }
 .btnlink.primary { background: var(--accent); color: var(--accent-ink, #fff); }
 @media (max-width: 400px) { .dl { grid-template-columns: auto minmax(0, 1fr) auto; } .dl > b.num { grid-column: 2; grid-row: 2; justify-self: start; } .dl > .tick, .dl > .acts { grid-column: 3; grid-row: 1 / span 2; } }
+
+.imp { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.imp .chk { grid-column: 1; min-width: 0; overflow-wrap: anywhere; }
+.imp .chk small { display: block; color: var(--muted); font-size: 13px; }
+.imp > b.num { grid-column: 2; }
+.imp select { grid-column: 1 / -1; padding: 9px 12px; }
+.imp.dup { opacity: 0.6; }
+.rc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0; }
+.rcb { background: var(--soft); border-radius: 18px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rcb span { font-size: 13px; color: var(--muted); font-weight: 700; }
+.rcb b { font-size: 24px; }
+.rcb small { color: var(--muted); font-size: 12.5px; }
+.tip { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; font-size: 14.5px; }
 </style>
 </head>
 <body>
@@ -429,6 +442,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
   <section class="card hl" id="newmonth" aria-labelledby="nm-title" hidden>
     <h2 id="nm-title"></h2>
     <p class="hint" id="nm-text"></p>
+    <div id="nm-recap"></div>
     <label class="f" for="nm-salary">Quanto hai preso questo mese? (€)<input id="nm-salary" type="text" inputmode="decimal" autocomplete="off"></label>
     <label class="chk" id="nm-fund-l"><input type="checkbox" id="nm-fund" checked><span id="nm-fund-t"></span></label>
     <button class="primary" id="nm-start" type="button"></button>
@@ -532,6 +546,14 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <h2 id="t-cats">Per categoria</h2>
       <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
       <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
+    </section>
+    <section data-sub="importa" class="card" aria-labelledby="t-imp">
+      <h2 id="t-imp">Importa dall'estratto conto</h2>
+      <p class="hint">Scarica i movimenti dalla tua banca in formato CSV e caricali qui: l'app riconosce data, importo e descrizione e propone la categoria. Il file resta sul tuo telefono, non viene inviato a nessuno. Se la banca dà solo Excel (.xlsx), aprilo e salvalo come CSV.</p>
+      <label class="f" for="imp-file">Scegli il file CSV<input id="imp-file" type="file" accept=".csv,.txt,text/csv,text/plain"></label>
+      <p class="small muted" id="imp-msg"></p>
+      <div id="imp-list"></div>
+      <button class="primary" type="button" id="imp-go" hidden style="margin-top:12px;width:100%"></button>
     </section>
     <section data-sub="fisse" class="card" aria-labelledby="t-fix">
       <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
@@ -815,6 +837,11 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
         <button type="button" id="dl-cancel" hidden>Annulla modifica</button>
       </form>
     </section>
+    <section data-sub="scadenze" class="card" aria-labelledby="t-ics">
+      <h2 id="t-ics">Promemoria sul telefono</h2>
+      <p class="hint">Metti scadenze, spese fisse, versamento al broker e giorno di paga nel calendario del telefono per i prossimi 12 mesi. Il calendario ti avvisa il giorno prima alle 9 e il giorno stesso alle 9. Se aggiungi altre scadenze, ripeti l'operazione: i promemoria già presenti si aggiornano.</p>
+      <button type="button" class="primary" id="dl-ics" style="width:100%">Aggiungi al calendario</button>
+    </section>
     <section data-sub="scadenze" class="card" aria-labelledby="t-dll">
       <h2 id="t-dll">Tutte le scadenze</h2>
       <div id="dl-list"></div>
@@ -1087,7 +1114,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var DEFAULTS = { deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1149,6 +1176,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["deadlines", "docs"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; S[k] = S[k].filter(function (x) { return x && typeof x === "object" && x.id; }); });
     S.deadlines.forEach(function (d) { d.name = String(d.name || "Scadenza"); d.amount = +d.amount > 0 ? +d.amount : 0; d.repeat = ["none", "month", "year"].indexOf(d.repeat) >= 0 ? d.repeat : "none"; if (!d.done || typeof d.done !== "object") d.done = {}; });
     if (!S.broker || typeof S.broker !== "object") S.broker = { name: "", url: "" };
+    if (!S.catRules || typeof S.catRules !== "object" || Array.isArray(S.catRules)) S.catRules = {};
     if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
@@ -1264,6 +1292,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var cnt = win.filter(function (x) { return (x.bud[c.id] || 0) > 0 && (x.by[c.id] || 0) > x.bud[c.id]; }).length;
       if (win.length >= 3 && cnt >= 3) out.push(c.name + " è sforata in " + cnt + " degli ultimi " + win.length + " mesi: alza il budget nel Profilo oppure taglia.");
     });
+    var tp = periodTip(m); if (tp) out.push(tp);
     return out.join(" ");
   }
   function verdict(m) {
@@ -1281,7 +1310,8 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!pending) return;
     var m = liveMonth(), v = verdict(m);
     $("nm-title").textContent = "È iniziato " + mlabel(pending);
-    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo. " + recap(m) + (monthGap(S.monthKey, pending) > 1 ? " Sono passati " + monthGap(S.monthKey, pending) + " mesi dall'ultimo aggiornamento: quelli in mezzo non entrano nello storico." : "") + " Controlla lo stipendio e avvia.";
+    $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo." + (monthGap(S.monthKey, pending) > 1 ? " Sono passati " + monthGap(S.monthKey, pending) + " mesi dall'ultimo aggiornamento: quelli in mezzo non entrano nello storico." : "") + " Controlla lo stipendio e avvia.";
+    $("nm-recap").innerHTML = recapHtml(m);
     var fa = fundAdd(m); $("nm-fund-l").hidden = !(fa > 0); $("nm-fund-t").textContent = "Aggiungi " + eur.format(fa) + " al fondo di sicurezza";
     if (!$("nm-salary").value) $("nm-salary").value = txt(S.salary);
     $("nm-start").textContent = "Avvia " + mname(pending);
@@ -1489,7 +1519,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-12.16";
+  var APP_VERSION = "2026-11-13.17";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2698,6 +2728,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("doc-sql-copy").onclick = function () { var t = $("doc-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
     $("ov-go").onclick = function () { location.hash = "#archivio/scadenze"; };
     $("ov-godoc").onclick = function () { location.hash = "#archivio/documenti"; };
+    $("dl-ics").onclick = icsDownload; $("imp-file").onchange = function () { if (this.files[0]) readBank(this.files[0]); }; $("imp-go").onclick = commitImport;
     var hg = $("home-dl-go"); if (hg) hg.onclick = function () { location.hash = "#archivio/panoramica"; };
   }
   /* broker */
@@ -2719,8 +2750,194 @@ create policy "solo i miei dati" on stipendio_pilota
     S.broker = { name: $("br-name").value.trim().slice(0, 40), url: u }; persist(); renderAll(); toast("Broker salvato ✓");
   }
 
+  /* ---------- importa estratto conto (CSV) ---------- */
+  var IMP = { rows: [], skippedOut: 0, msg: "" };
+  var GENERIC = /^(pagamento|carta|acquisto|pos|operazione|addebito|bonifico|prelievo|spesa|visa|mastercard|debit|credit|italia|del|della|presso|tramite|mediante|compravendita|data|ora|euro|eur|importo)$/;
+  var CAT_RULES = [
+    ["skip", /(affitto|canone loc|mutuo|\brata\b|finanziamento|prestito|assicuraz|giroconto|saldo carta|estratto conto|pagamento carta)/i],
+    ["carb", /(\beni\b|\bq8\b|\bip\b|\besso\b|tamoil|total ?energies|kuwait|agip|carburant|benzin|gasolio|autostrad|telepass|pedaggio|viacard|stazione di servizio|self service)/i],
+    ["spesa", /(conad|\bcoop\b|lidl|eurospin|carrefour|\bmd\b|despar|famila|esselunga|penny|\bard\b|supermerc|alimentar|sigma|todis|\biper|minimarket|salumeria|panificio|macelleria|fruttivend|pescheria|spesa)/i],
+    ["svago", /(ristorant|pizzeri|trattoria|osteria|\bbar\b|caffe|caffè|netflix|spotify|disney|prime video|cinema|teatro|\bpub\b|gelateria|sushi|mcdonald|burger|playstation|steam|biglietto|discoteca|lido|hotel|booking|airbnb|ticketone|palestra)/i]
+  ];
+  function splitCsvLine(line, d) {
+    var out = [], cur = "", q = false;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+      else if (ch === '"') q = true; else if (ch === d) { out.push(cur); cur = ""; } else cur += ch;
+    }
+    out.push(cur); return out;
+  }
+  function parseCsvText(text) {
+    var lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(function (l) { return l.trim(); });
+    if (!lines.length) return [];
+    var head = lines.slice(0, 8).join("\n"), best = ";", bc = -1;
+    [";", ",", "\t", "|"].forEach(function (d) { var c = head.split(d).length; if (c > bc) { bc = c; best = d; } });
+    return lines.map(function (l) { return splitCsvLine(l, best).map(function (x) { return x.trim(); }); });
+  }
+  function csvNum(v) {
+    var t = String(v == null ? "" : v).replace(/[€\s]|EUR/gi, ""), neg = /^\(.*\)$/.test(t) || /-$/.test(t) || /^-/.test(t);
+    t = t.replace(/[()+-]/g, "");
+    if (!t) return NaN;
+    if (t.indexOf(",") >= 0 && t.indexOf(".") >= 0) t = t.replace(/\./g, "").replace(",", ".");
+    else if (t.indexOf(",") >= 0) t = t.replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+    var n = parseFloat(t); return isNaN(n) || !/^[\d.]+$/.test(t) ? NaN : (neg ? -n : n);
+  }
+  function csvDate(v) {
+    var m = String(v || "").trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/) , d, mo, y;
+    if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else { m = String(v || "").trim().match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/); if (!m) return ""; d = +m[1]; mo = +m[2]; y = +m[3]; if (y < 100) y += 2000; }
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+    return y + "-" + pad2(mo) + "-" + pad2(d);
+  }
+  function descTokens(desc) { return (String(desc).toLowerCase().match(/[a-zà-ù]{4,}/g) || []).filter(function (w) { return !GENERIC.test(w); }); }
+  function guessCat(desc) {
+    var toks = descTokens(desc), r = S.catRules || {};
+    for (var i = 0; i < toks.length; i++) if (r[toks[i]]) return r[toks[i]];
+    for (var j = 0; j < CAT_RULES.length; j++) if (CAT_RULES[j][1].test(desc)) return CAT_RULES[j][0];
+    return "altro";
+  }
+  function parseBank(text) {
+    var rows = parseCsvText(text), hi = -1, col = {};
+    for (var i = 0; i < Math.min(rows.length, 20) && hi < 0; i++) {
+      var r = rows[i], dc = -1, ac = -1;
+      r.forEach(function (c, j) { if (/data/i.test(c) && dc < 0) dc = j; if (/importo|amount|dare|avere|uscit|entrat|addebit|accredit/i.test(c) && ac < 0) ac = j; });
+      if (dc >= 0 && ac >= 0) { hi = i; col = { r: r }; }
+    }
+    var out = [];
+    if (hi >= 0) {
+      var h = rows[hi], dateC = -1, amtC = -1, dareC = -1, avereC = -1, descC = [];
+      h.forEach(function (c, j) {
+        if (/data/i.test(c)) { if (dateC < 0 || /oper|contab/i.test(c)) dateC = j; }
+        if (/^importo|amount/i.test(c) && amtC < 0) amtC = j;
+        if (/dare|uscit|addebit/i.test(c) && dareC < 0) dareC = j;
+        if (/avere|entrat|accredit/i.test(c) && avereC < 0) avereC = j;
+        if (/descri|causale|dettagli|operazione|movimento|beneficiari|esercente|note/i.test(c) && !/data/i.test(c)) descC.push(j);
+      });
+      for (var k = hi + 1; k < rows.length; k++) {
+        var rw = rows[k], dt = csvDate(rw[dateC]); if (!dt) continue;
+        var amt = NaN;
+        if (amtC >= 0) amt = csvNum(rw[amtC]);
+        if (isNaN(amt) && dareC >= 0) { var dv = csvNum(rw[dareC]); if (!isNaN(dv) && dv !== 0) amt = -Math.abs(dv); }
+        if (isNaN(amt) && avereC >= 0) { var av = csvNum(rw[avereC]); if (!isNaN(av) && av !== 0) amt = Math.abs(av); }
+        if (isNaN(amt)) continue;
+        out.push({ date: dt, amt: amt, desc: descC.map(function (j) { return rw[j] || ""; }).filter(Boolean).join(" · ").replace(/\s+/g, " ").trim() });
+      }
+    } else {
+      rows.forEach(function (rw) {
+        var dt = "", amt = NaN, ds = "";
+        rw.forEach(function (c) { if (!dt && csvDate(c)) dt = csvDate(c); else if (isNaN(amt) && !isNaN(csvNum(c)) && /\d[,.]\d{2}\b|\d/.test(c) && !csvDate(c)) amt = csvNum(c); else if (c.length > ds.length) ds = c; });
+        if (dt && !isNaN(amt)) out.push({ date: dt, amt: amt, desc: ds });
+      });
+    }
+    return out;
+  }
+  function renderImportPreview() {
+    var box = $("imp-list"), g = $("imp-go"); box.innerHTML = "";
+    $("imp-msg").textContent = IMP.msg;
+    if (!IMP.rows.length) { g.hidden = true; return; }
+    IMP.rows.forEach(function (r, i) {
+      var row = document.createElement("div"); row.className = "imp" + (r.dup ? " dup" : "");
+      row.innerHTML = '<label class="chk"><input type="checkbox"' + (r.on ? " checked" : "") + '><span><b>' + esc(r.desc || "Movimento") + "</b><small>" + dfDay.format(dOf(r.date)) + (r.dup ? " · sembra già inserita" : "") + '</small></span></label><b class="num">' + eur2.format(r.amt) + '</b><select aria-label="Categoria">' + CATS.map(function (c) { return '<option value="' + c.id + '"' + (c.id === r.cat ? " selected" : "") + ">" + c.name + "</option>"; }).join("") + '<option value="skip"' + (r.cat === "skip" ? " selected" : "") + ">Non contare</option></select>";
+      var cb = row.querySelector("input"), sel = row.querySelector("select");
+      cb.onchange = function () { r.on = cb.checked; impTotals(); };
+      sel.onchange = function () { r.cat = sel.value; r.on = sel.value !== "skip"; cb.checked = r.on; r.touched = true; impTotals(); };
+      box.appendChild(row);
+    });
+    impTotals();
+  }
+  function impTotals() {
+    var l = IMP.rows.filter(function (r) { return r.on && r.cat !== "skip"; }), t = l.reduce(function (a, r) { return a + r.amt; }, 0), g = $("imp-go");
+    g.hidden = false; g.disabled = !l.length; g.textContent = l.length ? "Aggiungi " + l.length + (l.length === 1 ? " spesa" : " spese") + " (" + eur.format(t) + ")" : "Nessuna spesa selezionata";
+  }
+  function readBank(file) {
+    IMP = { rows: [], msg: "" };
+    if (pending) { IMP.msg = "Prima avvia il nuovo mese qui sopra."; renderImportPreview(); return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var text = String(fr.result || ""), all = parseBank(text), s0 = psStr(S.monthKey), e0 = peStr(S.monthKey), out = 0, inc = 0, have = (S.spent[S.monthKey] || []).map(function (x) { return x.date.slice(0, 10) + "|" + Math.round(x.amount * 100); });
+      all.forEach(function (r) {
+        if (r.amt >= 0) { inc++; return; }
+        if (r.date < s0 || r.date > e0) { out++; return; }
+        var amt = Math.abs(r.amt), cat = guessCat(r.desc), hk = r.date + "|" + Math.round(amt * 100), hx = have.indexOf(hk), dup = hx >= 0; if (dup) have.splice(hx, 1);
+        IMP.rows.push({ date: r.date, amt: amt, desc: r.desc.slice(0, 70), cat: cat, on: cat !== "skip" && !dup, dup: dup });
+      });
+      IMP.rows.sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+      IMP.msg = !all.length ? "Non riesco a leggere questo file. Serve un CSV con almeno data e importo (se hai un Excel, salvalo come CSV)." : "Trovati " + all.length + " movimenti: " + IMP.rows.length + " uscite del periodo (dal " + dfDay.format(startOf(S.monthKey)) + " al " + dfDay.format(endOf(S.monthKey)) + ")" + (inc ? ", " + inc + " entrate ignorate" : "") + (out ? ", " + out + " fuori periodo ignorati" : "") + ". Controlla le categorie e conferma.";
+      renderImportPreview();
+    };
+    fr.onerror = function () { IMP.msg = "Non riesco a leggere il file."; renderImportPreview(); };
+    fr.readAsText(file, "utf-8");
+  }
+  function commitImport() {
+    var l = IMP.rows.filter(function (r) { return r.on && r.cat !== "skip"; }); if (!l.length) return;
+    var list = (S.spent[S.monthKey] || []).slice(); S.catRules = S.catRules || {};
+    l.forEach(function (r) {
+      list.push({ id: S.nextId++, amount: r.amt, cat: r.cat, note: r.desc.slice(0, 60), date: new Date(r.date + "T12:00:00").toISOString() });
+      if (r.touched) { var t = descTokens(r.desc)[0]; if (t) S.catRules[t] = r.cat; }
+    });
+    IMP.rows.forEach(function (r) { if (r.touched && r.cat === "skip") { var t = descTokens(r.desc)[0]; if (t) S.catRules[t] = "skip"; } });
+    S.spent[S.monthKey] = list; persist(); var n = l.length; IMP = { rows: [], msg: n + (n === 1 ? " spesa aggiunta ✓" : " spese aggiunte ✓") }; $("imp-file").value = ""; renderAll(); renderImportPreview(); toast(IMP.msg);
+  }
+  /* ---------- scadenze nel calendario del telefono ---------- */
+  function icsText(t) { return String(t).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n"); }
+  function icsAll() {
+    var td = ymd(todayStart()), to = addDays(td, 365), ev = [], p = plan();
+    function add(uid, date, title, desc) { ev.push([uid, date, title, desc]); }
+    S.deadlines.forEach(function (d) {
+      dlOccs(d, d.repeat === "none" ? "0000-01-01" : td, to).forEach(function (o) { if (d.done && d.done[o]) return; if (d.repeat === "none" && o < td) return; add("dl" + d.id + "-" + o, o, d.name + (d.amount ? " – " + eur2.format(d.amount) : ""), (dlCat(d.cat).name) + (d.note ? " · " + d.note : "")); });
+    });
+    var k = S.monthKey;
+    for (var i = 0; i < 13; i++, k = nextKey(k)) {
+      p.fixed.forEach(function (f) {
+        if (f.end && f.end < k) return;
+        var dd = ymd(dueDate(f, k)); if (dd < td || dd > to) return;
+        if (k === S.monthKey && (S.paid[k] || {})[f.id]) return;
+        add("fx" + f.id + "-" + dd, dd, f.name + " – " + eur2.format(f.amt), "Spesa fissa");
+      });
+      if (S.adv && +S.adv.day > 0) { var s0 = startOf(k), y = s0.getFullYear(), m = s0.getMonth(), dm = ymd(new Date(y, m, Math.min(+S.adv.day, dimOf(y, m)))); if (dm < psStr(k)) dm = ymd(new Date(y, m + 1, Math.min(+S.adv.day, dimOf(y, m + 1)))); if (dm >= td && dm <= to) add("pac-" + dm, dm, "Versamento piano d'accumulo", S.broker && S.broker.name ? "Da versare su " + S.broker.name : "Versa dal tuo broker"); }
+      var ps = psStr(k); if (ps >= td && ps <= to && PAYDAY > 0) add("pay-" + ps, ps, "Arriva lo stipendio", "Nuovo periodo: aggiorna l'app");
+    }
+    return ev;
+  }
+  function icsDownload() {
+    var ev = icsAll();
+    if (!ev.length) { toast("Non ci sono scadenze da salvare"); return; }
+    var L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Stipendio Pilota//IT", "CALSCALE:GREGORIAN", "X-WR-CALNAME:Stipendio Pilota"];
+    ev.forEach(function (e) {
+      var d = e[1].replace(/-/g, ""), nd = addDays(e[1], 1).replace(/-/g, "");
+      L.push("BEGIN:VEVENT", "UID:" + e[0] + "@stipendio-pilota", "DTSTAMP:20260101T080000Z", "DTSTART;VALUE=DATE:" + d, "DTEND;VALUE=DATE:" + nd, "SUMMARY:" + icsText(e[2]), "DESCRIPTION:" + icsText(e[3] || ""), "TRANSP:TRANSPARENT",
+        "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsText(e[2]), "TRIGGER:-PT15H", "END:VALARM", "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsText(e[2]), "TRIGGER:PT9H", "END:VALARM", "END:VEVENT");
+    });
+    L.push("END:VCALENDAR");
+    try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([L.join("\r\n")], { type: "text/calendar" })); a.download = "scadenze-stipendio-pilota.ics"; document.body.appendChild(a); a.click(); a.remove(); toast(ev.length + " promemoria pronti: aprili per aggiungerli al calendario"); } catch (e) { toast("Non riesco a creare il file"); }
+  }
+  /* ---------- riepilogo di fine periodo ---------- */
+  function prevSnap(m) { var ks = Object.keys(S.history).filter(function (k) { return k < m.key && k !== S.monthKey && S.history[k].n > 0; }).sort(); return ks.length ? S.history[ks[ks.length - 1]] : null; }
+  function periodTip(m) {
+    if (!m.n) return "Per avere un riepilogo utile segna anche le spese piccole: il caffè e la spesa veloce fanno la differenza.";
+    var worst = null; CATS.slice(0, 3).forEach(function (c) { var b = m.bud[c.id] || 0, x = m.by[c.id] || 0; if (b > 0 && x > b && (!worst || x - b > worst.over)) worst = { c: c, over: x - b, b: b }; });
+    var tip = "";
+    if (worst) tip = worst.c.name + " ha superato il budget di " + eur.format(worst.over) + ". Nel prossimo periodo prova a stare sui " + eur.format(Math.max(1, Math.round(worst.b / 4.3))) + " a settimana.";
+    else if (m.A <= m.V && m.V - m.A >= 20) tip = "Ti sono avanzati " + eur.format(m.V - m.A) + " dal budget: puoi aggiungerli al fondo di sicurezza o al piano d'accumulo.";
+    if (typeof m.invested === "number" && m.plannedInv > 0 && m.invested < m.plannedInv) tip += (tip ? " " : "") + "Hai versato " + eur.format(m.plannedInv - m.invested) + " in meno del previsto negli investimenti: ricordalo alla prossima paga.";
+    return tip;
+  }
+  function recapHtml(m) {
+    if (!m.n) return "";
+    var pv = prevSnap(m), ch = pv && pv.A > 0 ? Math.round((m.A - pv.A) / pv.A * 100) : null, sv = m.realSaved || 0;
+    function box(l, v, sub) { return '<div class="rcb"><span>' + l + '</span><b class="num">' + v + "</b><small>" + sub + "</small></div>"; }
+    var h = '<div class="rc">' + box("Speso", eur.format(m.A), "su " + eur.format(m.V) + " di budget")
+      + box("Messo da parte", eur.format(Math.max(0, sv)), "previsti " + eur.format(m.plannedSave + (m.plannedInv || 0)))
+      + box("Investito", eur.format(m.invested || 0), "previsti " + eur.format(m.plannedInv || 0))
+      + box("Rispetto al periodo prima", ch === null ? "—" : (ch > 0 ? "+" : "") + ch + "%", ch === null ? "serve almeno un periodo chiuso" : ch > 0 ? "hai speso di più" : ch < 0 ? "hai speso di meno" : "uguale") + "</div>";
+    var tip = periodTip(m); if (tip) h += '<p class="tip"><b>Consiglio:</b> ' + esc(tip) + "</p>";
+    return h;
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -2745,11 +2962,11 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     if (h === "profilo" && curView !== "profilo") fillForm(S);
     curView = h;
-    $("fab").hidden = h === "profilo" || h === "archivio" || (h === "spese" && sub === "spese") || !S.saved;
+    $("fab").hidden = h === "profilo" || h === "archivio" || (h === "spese" && (sub === "spese" || sub === "importa")) || !S.saved;
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && lastSub.spese === "spese") || !S.saved; }
+  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
