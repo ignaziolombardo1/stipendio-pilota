@@ -474,7 +474,9 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .skins button { display: flex; align-items: center; gap: 10px; padding: 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
 .skins button[aria-pressed="true"] { border-color: var(--accent); }
 .skins i { width: 28px; height: 28px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
-.menu { display: flex; flex-direction: column; gap: 10px; }
+.menu { display: flex; flex-direction: column; gap: 18px; }
+.mg { display: flex; flex-direction: column; gap: 10px; }
+.mgl { font-weight: 800; font-size: 13px; color: var(--muted); margin: 0 4px; }
 .menu a { display: flex; flex-direction: column; gap: 2px; padding: 16px 44px 16px 18px; border-radius: 20px; background: var(--surface); color: var(--ink); text-decoration: none; position: relative; box-shadow: 0 1px 2px rgba(16,36,62,0.05), 0 8px 22px -14px rgba(16,36,62,0.2); }
 .menu a b { font-family: var(--font-head); font-size: 16px; }
 .menu a small { color: var(--muted); font-size: 13px; }
@@ -1050,19 +1052,23 @@ create policy "stipendio pilota documenti" on storage.objects
 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
-    <div data-sub="menu"><h1>Impostazioni</h1><p class="hint">Scegli cosa vuoi cambiare.</p></div>
-    <nav data-sub="menu" class="menu" aria-label="Impostazioni">
-      <a href="#profilo/io"><b>Io e il mio lavoro</b><small>Nome, lavoro, stipendio, notifica, contatti</small></a>
-      <a href="#profilo/comp"><b>Composizione dell'app</b><small>Cosa usare, icone in basso, Home e colori</small></a>
-      <a href="#profilo/casa"><b>Casa e spese fisse</b><small>Affitto, bollette, assicurazioni, rate</small></a>
-      <a href="#profilo/auto" data-mod="viaggi"><b>Viaggi e auto</b><small>Tragitti, carburante, pedaggi</small></a>
-      <a href="#profilo/budget"><b>Budget</b><small>Quanto metti da parte e come dividi il mese</small></a>
-      <a href="#profilo/investi" data-mod="invest"><b>Investimenti</b><small>Risparmi, piano d'accumulo, broker</small></a>
-      <a href="#storico" data-tab="storico"><b>Storico dei mesi</b><small>Come sono andati i mesi passati</small></a>
-      <a href="#archivio" data-tab="archivio" data-mod="scad,doc"><b>Archivio</b><small>Scadenze e documenti</small></a>
-      <a href="#piano" data-tab="piano"><b>Piano</b><small>Mese, investire, obiettivi</small></a>
-      <a href="#spese" data-tab="spese"><b>Spese</b><small>Segna e guarda le spese</small></a>
-      <a href="#profilo/dati"><b>Dati, cloud e backup</b><small>Account cloud, esporta, importa, cancella</small></a>
+    <div data-sub="menu"><h1>Altro</h1><p class="hint">Le altre sezioni dell'app e le impostazioni.</p></div>
+    <nav data-sub="menu" class="menu" aria-label="Altro">
+      <div class="mg" id="mg-sec"><p class="mgl">Sezioni</p>
+        <a href="#archivio" data-tab="archivio" data-mod="scad,doc"><b>Archivio</b><small>Scadenze e documenti</small></a>
+        <a href="#storico" data-tab="storico"><b>Storico dei mesi</b><small>Come sono andati i mesi passati</small></a>
+        <a href="#piano" data-tab="piano"><b>Piano</b><small>Mese, investire, obiettivi</small></a>
+        <a href="#spese" data-tab="spese"><b>Spese</b><small>Segna e guarda le spese</small></a>
+      </div>
+      <div class="mg"><p class="mgl">Impostazioni</p>
+        <a href="#profilo/comp"><b>Composizione dell'app</b><small>Cosa usare, icone in basso, Home e colori</small></a>
+        <a href="#profilo/io"><b>Io e il mio lavoro</b><small>Nome, lavoro, stipendio, notifica, contatti</small></a>
+        <a href="#profilo/casa"><b>Casa e spese fisse</b><small>Affitto, bollette, assicurazioni, rate</small></a>
+        <a href="#profilo/auto" data-mod="viaggi"><b>Viaggi e auto</b><small>Tragitti, carburante, pedaggi</small></a>
+        <a href="#profilo/budget"><b>Budget</b><small>Quanto metti da parte e come dividi il mese</small></a>
+        <a href="#profilo/investi" data-mod="invest"><b>Investimenti</b><small>Risparmi, piano d'accumulo, broker</small></a>
+        <a href="#profilo/dati"><b>Dati, cloud e backup</b><small>Account cloud, esporta, importa, cancella</small></a>
+      </div>
     </nav>
     <section data-sub="io" class="card" aria-labelledby="t-me">
       <h2 id="t-me">Chi sei</h2>
@@ -1102,7 +1108,7 @@ create policy "stipendio pilota documenti" on storage.objects
     </section>
     <section data-sub="io" class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
-      <label class="f" for="salary">Stipendio netto di questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"></label>
+      <label class="f" for="salary">Stipendio percepito questo mese (€)<input id="salary" type="text" inputmode="decimal" autocomplete="off"><span class="help">Ogni mese, nel giorno della paga, ti invieremo una notifica per inserire il nuovo stipendio e fare la nuova suddivisione.</span></label>
     </section>
     <section data-sub="io" class="card" aria-labelledby="t-pay">
       <h2 id="t-pay">Quando arriva lo stipendio</h2>
@@ -1218,7 +1224,7 @@ create policy "stipendio pilota documenti" on storage.objects
     </section>
     <section data-sub="comp" class="card" aria-labelledby="t-bar">
       <h2 id="t-bar">Icone in basso</h2>
-      <p class="hint">Scegli fino a 5 sezioni da tenere nella barra in basso. Home e Profilo ci sono sempre. Le altre le trovi comunque in Impostazioni.</p>
+      <p class="hint">Scegli fino a 5 sezioni da tenere nella barra in basso. Home e Altro ci sono sempre. Le altre sezioni le trovi in Altro.</p>
       <div id="bar-list"></div>
     </section>
     <section data-sub="comp" class="card" aria-labelledby="t-sk">
@@ -1303,7 +1309,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
 <div class="savebar" id="savebar" hidden><div class="in"><button class="primary" id="save" type="button">Salva</button></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profilo</a></nav>
+<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Altro</a></nav>
 
 <div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-labelledby="wiz-t" hidden>
   <div class="wiz-in">
@@ -1352,7 +1358,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var TABS = [["home", "Home", "Il riepilogo di oggi."], ["spese", "Spese", "Segna e guarda le spese."], ["archivio", "Archivio", "Scadenze e documenti."], ["piano", "Piano", "Mese, investire, obiettivi."], ["storico", "Storico", "I mesi passati."], ["profilo", "Impostazioni", "Profilo e composizione."]];
+  var TABS = [["home", "Home", "Il riepilogo di oggi."], ["spese", "Spese", "Segna e guarda le spese."], ["archivio", "Archivio", "Scadenze e documenti."], ["piano", "Piano", "Mese, investire, obiettivi."], ["storico", "Storico", "I mesi passati."], ["profilo", "Altro", "Le altre sezioni e le impostazioni."]];
   var HOME_W = [
     ["alerts", "Avvisi sul budget", "Ti avvisa quando una categoria sta finendo il budget.", true],
     ["complete", "Completa il profilo", "Ti dice cosa manca per avere un piano preciso.", true],
@@ -1776,7 +1782,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.31";
+  var APP_VERSION = "2026-11-13.32";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3283,7 +3289,7 @@ create policy "solo i miei dati" on stipendio_pilota
       return '<p class="wl">Parto da zero, solo con i tuoi numeri. Prima dimmi cosa ti serve: il budget del mese c\'è sempre, il resto lo scegli tu e puoi cambiarlo quando vuoi in Profilo.</p>' + MODS.map(function (m) { return '<label class="chk modrow"><input type="checkbox" data-mod="' + m[0] + '"' + (W.mods[m[0]] ? " checked" : "") + "><span><b>" + m[1] + "</b><small>" + m[2] + "</small></span></label>"; }).join("");
     }
     if (wStep === 1) {
-      h += wf("name", "Come ti chiami?", "t", W.name) + wf("salary", "Stipendio netto al mese (€)", "num", W.salary, "Quello che ti arriva sul conto, già senza tasse.") + wf("payDay", "Che giorno del mese lo ricevi? (1–31)", "num", W.payDay, "Ogni mese, in quel giorno, l'app ti chiede quanto hai preso davvero e apre il nuovo periodo. Il tuo mese va da una paga alla successiva.");
+      h += wf("name", "Come ti chiami?", "t", W.name) + wf("salary", "Stipendio percepito questo mese (€)", "num", W.salary, "Ogni mese, nel giorno che scegli qui sotto, ti invieremo una notifica per inserire il nuovo stipendio e fare la nuova suddivisione.") + wf("payDay", "Che giorno del mese lo ricevi? (1–31)", "num", W.payDay, "Ogni mese, in quel giorno, l'app ti chiede quanto hai preso davvero e apre il nuovo periodo. Il tuo mese va da una paga alla successiva.");
     } else if (wStep === 2) {
       h += '<label class="f" for="w-hs">Come abiti<select id="w-hs">' + Object.keys(HOUSING).map(function (k) { return '<option value="' + k + '"' + (k === W.hs ? " selected" : "") + ">" + { affitto: "In affitto", mutuo: "Con un mutuo", proprieta: "Casa di proprietà, senza mutuo", famiglia: "Con la famiglia" }[k] + "</option>"; }).join("") + "</select></label>";
       h += '<div id="w-rentbox">' + wf("rent", HOUSING[W.hs][1], "num", W.rent, "Se la dividi con qualcuno, scrivi solo la tua parte.") + wf("dueRent", "Giorno del mese in cui lo paghi", "num", W.dueRent) + "</div>";
@@ -3396,7 +3402,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function modOn(k) { return !S.mods || S.mods[k] !== false; }
   function anyMod(list) { return !list || list.some(modOn); }
   function tabsNorm() {
-    var ids = TABS.map(function (t) { return t[0]; }), t = Array.isArray(S.tabs) ? S.tabs.filter(function (x) { return ids.indexOf(x) >= 0; }) : ["home", "spese", "archivio", "piano", "profilo"];
+    var ids = TABS.map(function (t) { return t[0]; }), t = S.tabsC && Array.isArray(S.tabs) ? S.tabs.filter(function (x) { return ids.indexOf(x) >= 0; }) : ["home", "spese", "piano", "profilo"];
     if (t.indexOf("home") < 0) t.unshift("home"); if (t.indexOf("profilo") < 0) t.push("profilo");
     while (t.length > 5) { var k = t.filter(function (x) { return x !== "home" && x !== "profilo"; }); t.splice(t.indexOf(k[k.length - 1]), 1); }
     S.tabs = ids.filter(function (x) { return t.indexOf(x) >= 0; });
@@ -3409,7 +3415,7 @@ create policy "solo i miei dati" on stipendio_pilota
       row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + (fixed ? " disabled" : "") + "><span><b>" + t[1] + "</b><small>" + t[2] + (fixed ? " Sempre presente." : "") + "</small></span>";
       row.querySelector("input").onchange = function () {
         if (this.checked && S.tabs.length >= 5) { this.checked = false; toast("Massimo 5 icone: toglierne una prima"); return; }
-        S.tabs = this.checked ? S.tabs.concat([t[0]]) : S.tabs.filter(function (x) { return x !== t[0]; }); persist(); showView(); renderBarEditor();
+        S.tabsC = true; S.tabs = this.checked ? S.tabs.concat([t[0]]) : S.tabs.filter(function (x) { return x !== t[0]; }); persist(); showView(); renderBarEditor();
       };
       box.appendChild(row);
     });
@@ -3672,10 +3678,11 @@ create policy "solo i miei dati" on stipendio_pilota
     VIEWS.forEach(function (v) { $("v-" + v).hidden = v !== h; });
     document.querySelectorAll("#v-" + h + " [data-sub]").forEach(function (el) { el.classList.toggle("sub-off", !!sub && el.getAttribute("data-sub") !== sub && h !== "home"); });
     var st = $("subtabs"); st.hidden = !subs.length || (h === "profilo" && sub === "menu");
-    if (h === "profilo") st.innerHTML = '<a href="#profilo" class="on">‹ Tutte le impostazioni</a>'; else st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
+    if (h === "profilo") st.innerHTML = '<a href="#profilo" class="on">‹ Altro</a>'; else st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
     tabsNorm();
     document.querySelectorAll("#tabs a").forEach(function (a) { var v = a.getAttribute("data-v"); a.hidden = S.tabs.indexOf(v) < 0 || (v === "archivio" && !anyMod(["scad", "doc"])); });
     document.querySelectorAll(".menu a[data-mod], .menu a[data-tab]").forEach(function (a) { var md = a.getAttribute("data-mod"), tb = a.getAttribute("data-tab"); a.hidden = (md && !anyMod(md.split(","))) || (tb && S.tabs.indexOf(tb) >= 0); });
+    var sec = $("mg-sec"); if (sec) sec.hidden = !sec.querySelectorAll("a:not([hidden])").length;
     var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu";
     $("savebar").hidden = !showSave;
     document.body.className = showSave ? "has-save" : "";
