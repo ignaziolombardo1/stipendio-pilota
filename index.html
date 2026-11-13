@@ -523,6 +523,14 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .regchip { background: var(--soft); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
 .regchip b { font-size: 15px; }
 .wk-sh { width: 100%; padding: 8px; margin-bottom: 4px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
+.tksel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; padding: 4px 0; font-size: 13px; font-weight: 600; }
+.tksel small { display: block; color: var(--muted); font-weight: 500; }
+.tksel select { padding: 9px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
+.tdweek { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 4px 0 8px; }
+.tdweek button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 0; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.tdweek button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.tdweek button:disabled { opacity: 0.35; }
+.tdweek small { font-size: 10px; color: var(--muted); } .tdweek i { font-style: normal; font-weight: 800; font-size: 11px; color: var(--accent); }
 .wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
 .wkshift span { font-weight: 700; font-size: 14px; }
 .wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
@@ -602,8 +610,10 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <button class="primary" type="button" id="wr-go">Apri il calendario</button>
     </section>
     <section data-sub="home" class="card" id="today" aria-labelledby="t-today" hidden>
-      <div class="line"><h2 id="t-today">I tuoi viaggi</h2><input type="date" id="td-date" aria-label="Giorno da modificare"></div>
-      <p class="hint">Spunta quello che hai fatto davvero nel giorno scelto. Carburante e pedaggi del piano si aggiornano da soli.</p>
+      <div class="line"><h2 id="t-today">Lavoro e viaggi</h2><input type="date" id="td-date" aria-label="Giorno da modificare"></div>
+      <div id="td-week" class="tdweek"></div>
+      <div id="td-shift"></div>
+      <p class="hint">Per ogni tragitto scegli andata e ritorno, solo andata o solo ritorno. Carburante e pedaggi si aggiornano da soli.</p>
       <div id="td-list"></div>
       <p class="small muted" id="td-sum"></p>
     </section>
@@ -1397,7 +1407,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-acc", "Da parte", "Quanto hai messo da parte per le spese di ogni anno.", true],
     ["tile-pay", "Stipendio", "Quanti giorni mancano alla prossima paga.", true],
     ["tile-day", "Oggi", "Quanto hai speso oggi.", true],
-    ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", true],
+    ["today", "Lavoro e viaggi", "Segna se lavori e i tragitti fatti nel giorno scelto.", true],
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
@@ -1504,11 +1514,15 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  var TK = [["ar", "Andata e ritorno"], ["a", "Solo andata"], ["r", "Solo ritorno"], ["n", "Non ci vado"]];
+  function tripKind(r, k, planOnly) { var base = r.wd.indexOf(dOf(k).getDay()) >= 0, o = planOnly ? undefined : (S.dayo[k] || {})[r.id]; if (o === undefined) return base ? "ar" : "n"; o = +o; return o === 1 ? "ar" : o === 2 ? "a" : o === 3 ? "r" : "n"; }
+  function legsOf(r, k, planOnly) { var t = tripKind(r, k, planOnly); return t === "ar" ? 2 : t === "n" ? 0 : 1; }
+  function fmtN(n) { n = Math.round(n * 2) / 2; return String(n).replace(".", ","); }
   function routeCount(r, mk, planOnly) {
     var n = 0, e0 = endOf(mk);
     for (var d = new Date(startOf(mk)); d <= e0; d.setDate(d.getDate() + 1)) {
       var k = ymd(d), base = r.wd.indexOf(d.getDay()) >= 0, o = planOnly ? undefined : (S.dayo[k] || {})[r.id];
-      if (o === undefined ? base : !!o) n++;
+      n += legsOf(r, k, planOnly) / 2;
     }
     return n;
   }
@@ -1811,7 +1825,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.35";
+  var APP_VERSION = "2026-11-13.36";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2298,12 +2312,15 @@ create policy "solo i miei dati" on stipendio_pilota
   function dOf(k) { var q = k.split("-"); return new Date(+q[0], +q[1] - 1, +q[2]); }
   function addDays(k, n) { var d = dOf(k); d.setDate(d.getDate() + n); return ymd(d); }
   function mondayOf(k) { var d = dOf(k), w = d.getDay() || 7; d.setDate(d.getDate() - (w - 1)); return ymd(d); }
-  function didTrip(r, date) { var o = (S.dayo[date] || {})[r.id]; return o === undefined ? r.wd.indexOf(dOf(date).getDay()) >= 0 : !!o; }
-  function setTrip(date, r, did) {
-    var base = r.wd.indexOf(dOf(date).getDay()) >= 0, day = S.dayo[date] || (S.dayo[date] = {});
-    if (did === base) delete day[r.id]; else day[r.id] = did ? 1 : 0;
+  function didTrip(r, date) { return tripKind(r, date) !== "n"; }
+  function setTripKind(date, r, kind) {
+    var day = S.dayo[date] || (S.dayo[date] = {});
+    if (kind === tripKind(r, date, true)) delete day[r.id]; else day[r.id] = { ar: 1, a: 2, r: 3, n: 0 }[kind];
     if (!Object.keys(day).length) delete S.dayo[date];
   }
+  function setTrip(date, r, did) { setTripKind(date, r, did ? "ar" : "n"); }
+  function tripSel(r, k, dis, label) { return '<label class="tksel"><span>' + label + '</span><select class="tk" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (dis ? " disabled" : "") + ">" + TK.map(function (t) { return '<option value="' + t[0] + '"' + (tripKind(r, k) === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select></label>"; }
+  function bindTrips(box) { box.querySelectorAll("select.tk").forEach(function (se) { se.onchange = function () { var r = S.routes.filter(function (x) { return x.id === se.getAttribute("data-r"); })[0]; if (!r) return; setTripKind(se.getAttribute("data-d"), r, se.value); persist(); renderAll(); }; }); }
   function inMonth(k) { return k >= psStr(S.monthKey) && k <= peStr(S.monthKey); }
   function renderCalendar() {
     var has = S.routes.length > 0;
@@ -2323,9 +2340,9 @@ create policy "solo i miei dati" on stipendio_pilota
     $("cal-lgd").innerHTML = S.routes.map(function (r, ri) { return '<span><i style="background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span>"; }).join("");
     // dettaglio del giorno
     var wd = dOf(calSel).getDay(), dh = '<h3 style="margin:14px 0 4px;font-size:15px">' + WDN[wd] + " " + dOf(calSel).getDate() + " " + mnameD(dOf(calSel)) + "</h3>";
-    S.routes.forEach(function (r) { dh += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (didTrip(r, calSel) ? " checked" : "") + "><span>" + esc(r.name) + "<small>" + (r.wd.indexOf(wd) >= 0 ? "Previsto nel programma" : "Non previsto nel programma") + "</small></span></label></div>"; });
+    S.routes.forEach(function (r) { dh += tripSel(r, calSel, false, esc(r.name)); });
     $("cal-day").innerHTML = dh; renderDayShift(calSel);
-    $("cal-day").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(calSel, r, this.checked); persist(); renderAll(); }; });
+    bindTrips($("cal-day"));
     // settimana
     var mon = mondayOf(calSel), days = []; for (var j = 0; j < 7; j++) days.push(addDays(mon, j));
     $("wk-title").textContent = dOf(days[0]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[0])) + " – " + dOf(days[6]).getDate() + " " + new Intl.DateTimeFormat("it-IT", { month: "short" }).format(dOf(days[6]));
@@ -2333,10 +2350,10 @@ create policy "solo i miei dati" on stipendio_pilota
     $("wk-grid").innerHTML = days.map(function (k) {
       var inm = inMonth(k);
       var sh = S.shifts[k];
-      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select>" + S.routes.map(function (r, ri) { return '<label class="chk"><input type="checkbox" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (didTrip(r, k) ? " checked" : "") + (inm ? "" : " disabled") + '><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span></label>"; }).join("") + "</div></div>";
+      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select>" + S.routes.map(function (r, ri) { return tripSel(r, k, !inm, '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name)); }).join("") + "</div></div>";
     }).join("");
-    $("wk-grid").querySelectorAll("select").forEach(function (se) { se.onchange = function () { var k = this.getAttribute("data-d"), o = S.shifts[k]; setShift(k, this.value, o ? o.s : "", o ? o.n : ""); persist(); renderAll(); }; });
-    $("wk-grid").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(this.getAttribute("data-d"), r, this.checked); persist(); renderAll(); }; });
+    $("wk-grid").querySelectorAll("select.wk-sh").forEach(function (se) { se.onchange = function () { var k = this.getAttribute("data-d"), o = S.shifts[k]; setShift(k, this.value, o ? o.s : "", o ? o.n : ""); persist(); renderAll(); }; });
+    bindTrips($("wk-grid"));
     $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="qrow"><span>' + esc(r.name) + '</span><div class="btnrow"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div></div>'; }).join("");
     $("wk-quick").querySelectorAll("button").forEach(function (b) {
       b.onclick = function () {
@@ -2347,13 +2364,14 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     var tw = 0, tk = 0, tt = 0, tf = 0, ws = "";
     S.routes.forEach(function (r, ri) {
-      var n = days.filter(function (k) { return inMonth(k) && didTrip(r, k); }).length; if (!n) return;
-      var km = n * 2 * r.km, tl = n * 2 * r.toll, kl = r.car === "benzina" ? S.kmlB : S.kmlD, pr = r.car === "benzina" ? S.priceB : S.priceD, fu = r.car === "none" || !(kl > 0) ? 0 : km / kl * pr;
-      tw += n; tk += km; tt += tl; tf += fu;
-      ws += '<div class="rpt"><b><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + '</b><span class="num">' + n + (n === 1 ? " volta" : " volte") + '</span><span class="num">' + eur.format(tl + fu) + "</span></div>";
+      var dk = days.filter(inMonth), legs = dk.reduce(function (a, k) { return a + legsOf(r, k); }, 0); if (!legs) return;
+      var cA = dk.filter(function (k) { return tripKind(r, k) === "ar"; }).length, cO = dk.filter(function (k) { return tripKind(r, k) === "a"; }).length, cR = dk.filter(function (k) { return tripKind(r, k) === "r"; }).length, n = legs / 2;
+      var km = legs * r.km, tl = legs * r.toll, kl = r.car === "benzina" ? S.kmlB : S.kmlD, pr = r.car === "benzina" ? S.priceB : S.priceD, fu = r.car === "none" || !(kl > 0) ? 0 : km / kl * pr;
+      tw += legs / 2; tk += km; tt += tl; tf += fu;
+      ws += '<div class="rpt"><b><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + '</b><span class="num">' + [cA ? cA + " a/r" : "", cO ? cO + (cO === 1 ? " andata" : " andate") : "", cR ? cR + (cR === 1 ? " ritorno" : " ritorni") : ""].filter(Boolean).join(" + ") + '</span><span class="num">' + eur.format(tl + fu) + "</span></div>";
     });
     var lav = days.filter(function (k) { return inMonth(k) && S.shifts[k] && S.shifts[k].t === "L"; }).length;
-    $("wk-sum").innerHTML = '<h3 style="margin:12px 0 4px;font-size:15px">Questa settimana</h3>' + (lav ? '<p class="small muted" style="margin:0 0 6px">Giorni di lavoro segnati: ' + lav + "</p>" : "") + (ws ? ws + '<p style="margin:8px 0 0"><b>' + tw + " viaggi · " + Math.round(tk) + " km · pedaggi " + eur.format(tt) + " · benzina/gasolio " + eur.format(tf) + " · totale " + eur.format(tt + tf) + "</b></p>" : '<p class="empty">Nessun viaggio questa settimana.</p>');
+    $("wk-sum").innerHTML = '<h3 style="margin:12px 0 4px;font-size:15px">Questa settimana</h3>' + (lav ? '<p class="small muted" style="margin:0 0 6px">Giorni di lavoro segnati: ' + lav + "</p>" : "") + (ws ? ws + '<p style="margin:8px 0 0"><b>' + fmtN(tw) + (tw === 1 ? " viaggio" : " viaggi") + " · " + Math.round(tk) + " km · pedaggi " + eur.format(tt) + " · benzina/gasolio " + eur.format(tf) + " · totale " + eur.format(tt + tf) + "</b></p>" : '<p class="empty">Nessun viaggio questa settimana.</p>');
     var done = !!S.conf[mon]; $("wk-conf").textContent = done ? "Settimana confermata ✓ (tocca per togliere)" : "Conferma questa settimana";
     $("wk-conf").onclick = function () { if (S.conf[mon]) delete S.conf[mon]; else S.conf[mon] = 1; persist(); renderAll(); };
     $("wk-st").textContent = done ? "I viaggi di questa settimana contano come reali." : "Finché non confermi, i viaggi di questa settimana restano una stima del programma.";
@@ -2361,7 +2379,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("wk-next").onclick = function () { calSel = addDays(mon, 7); if (!inMonth(calSel)) calSel = peStr(S.monthKey); renderCalendar(); };
     // resoconto
     var p = plan(), tp = 0, tr = 0;
-    var hh = p.routes.map(function (r) { tp += r.costPlan; tr += r.cost; return '<div class="rpt"><b>' + esc(r.name) + "</b><span class=\"num\">" + r.nPlan + " → " + r.n + '</span><span class="num">' + eur.format(r.costPlan) + " → " + eur.format(r.cost) + "</span></div>"; }).join("");
+    var hh = p.routes.map(function (r) { tp += r.costPlan; tr += r.cost; return '<div class="rpt"><b>' + esc(r.name) + "</b><span class=\"num\">" + fmtN(r.nPlan) + " → " + fmtN(r.n) + '</span><span class="num">' + eur.format(r.costPlan) + " → " + eur.format(r.cost) + "</span></div>"; }).join("");
     var df = tr - tp;
     hh += '<p style="margin:10px 0 0"><b>Totale: stimati ' + eur.format(tp) + ", reali " + eur.format(tr) + "</b>" + (Math.round(df) === 0 ? "" : df < 0 ? ". Stai spendendo " + eur.format(-df) + " in meno del previsto." : ". Stai spendendo " + eur.format(df) + " in più del previsto.") + "</p><p class=\"small muted\">Colonne: viaggi stimati → reali, costo stimato → reale (pedaggi e carburante).</p>";
     $("rp-box").innerHTML = hh;
@@ -2397,21 +2415,25 @@ create policy "solo i miei dati" on stipendio_pilota
     inp.value = tdDate;
     var dd = tdDate.split("-"), wd = new Date(+dd[0], +dd[1] - 1, +dd[2]).getDay(), p = plan(), tot = 0, html = "";
     S.routes.forEach(function (r) {
-      var base = r.wd.indexOf(wd) >= 0, o = (S.dayo[tdDate] || {})[r.id], did = o === undefined ? base : !!o, pr2 = p.routes.filter(function (x) { return x.id === r.id; })[0] || { n: 0, cost: 0 };
+      var pr2 = p.routes.filter(function (x) { return x.id === r.id; })[0] || { n: 0, cost: 0 };
       tot += pr2.cost;
-      html += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (did ? " checked" : "") + '><span>' + esc(r.name) + "<small>" + (base ? "Previsto" : "Non previsto") + " in questo giorno · " + pr2.n + (pr2.n === 1 ? " viaggio" : " viaggi") + " nel mese</small></span></label><b class=\"num\">" + eur.format(pr2.cost) + "</b></div>";
+      html += tripSel(r, tdDate, false, esc(r.name) + "<small>" + fmtN(pr2.n) + (pr2.n === 1 ? " viaggio" : " viaggi") + " nel mese · " + eur.format(pr2.cost) + "</small>");
     });
-    $("td-list").innerHTML = html;
+    $("td-list").innerHTML = html; bindTrips($("td-list"));
     $("td-sum").textContent = "Costo dei tragitti questo mese (pedaggi e carburante): " + eur.format(tot) + ".";
-    $("td-list").querySelectorAll("input").forEach(function (i) {
-      i.onchange = function () {
-        var rid = this.getAttribute("data-r"), r = S.routes.filter(function (x) { return x.id === rid; })[0]; if (!r) return;
-        var base = r.wd.indexOf(wd) >= 0, day = S.dayo[tdDate] || (S.dayo[tdDate] = {});
-        if (this.checked === base) delete day[rid]; else day[rid] = this.checked ? 1 : 0;
-        if (!Object.keys(day).length) delete S.dayo[tdDate];
-        persist(); renderAll();
-      };
-    });
+    // turni: settimana e giorno
+    var wkb = $("td-week"), shb = $("td-shift"); wkb.innerHTML = ""; shb.innerHTML = "";
+    if (S.workMode === "turni") {
+      var mon = mondayOf(tdDate);
+      for (var j = 0; j < 7; j++) (function (k) {
+        var sh = S.shifts[k], b = document.createElement("button"); b.type = "button"; b.disabled = !inMonth(k); b.setAttribute("aria-pressed", k === tdDate ? "true" : "false");
+        b.innerHTML = "<small>" + WDN[dOf(k).getDay()] + "</small><b>" + dOf(k).getDate() + "</b><i>" + (sh ? sh.t : "·") + "</i>";
+        b.onclick = function () { tdDate = k; renderToday(); }; wkb.appendChild(b);
+      })(addDays(mon, j));
+      var cur = S.shifts[tdDate], row = document.createElement("div"); row.className = "shchips";
+      SHIFT_T.forEach(function (t) { var b = document.createElement("button"); b.type = "button"; b.textContent = t[1]; b.setAttribute("aria-pressed", cur && cur.t === t[0] ? "true" : "false"); b.onclick = function () { setShift(tdDate, cur && cur.t === t[0] ? "" : t[0], cur ? cur.s : "", cur ? cur.n : ""); persist(); renderAll(); }; row.appendChild(b); });
+      shb.appendChild(row);
+    }
   }
   function renderComplete() {
     var miss = [], casa = S.fixedList.filter(function (f) { return f.kind === "casa"; })[0];
