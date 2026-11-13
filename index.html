@@ -512,6 +512,19 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 #v-home .hero .primary { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
 .modrow { padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
 .modrow small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; }
+.shchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+.shchips button { padding: 10px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.shchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.shd { margin: 6px 0 12px; }
+.shl { font-style: normal; font-weight: 800; font-size: 10px; line-height: 1; margin-right: 2px; }
+.shl.sL { color: var(--accent); } .shl.sR { color: var(--muted); } .shl.sF { color: var(--pos); } .shl.sM, .shl.sP { color: var(--warn); }
+.cal button.sel .shl { color: inherit; }
+.regstats { display: flex; flex-wrap: wrap; gap: 8px; }
+.regchip { background: var(--soft); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
+.regchip b { font-size: 15px; }
+.wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
+.wkshift span { font-weight: 700; font-size: 14px; }
+.wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
 </style>
 </head>
 <body>
@@ -720,8 +733,13 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       </div>
       <p class="small muted" id="cp-text"></p>
     </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-wm">
+      <h2 id="t-wm">Il tuo lavoro</h2>
+      <div class="skins" id="wm-seg" role="group" aria-label="Tipo di orario"></div>
+      <p class="hint" id="wm-hint"></p>
+    </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-cal">
-      <h2 id="t-cal">Calendario dei viaggi</h2>
+      <h2 id="t-cal">Calendario del lavoro e dei viaggi</h2>
       <p class="hint" id="cal-hint">Tocca un giorno e segna quali tragitti hai fatto davvero. I pallini pieni sono i viaggi fatti, quelli vuoti sono previsti dal tuo programma ma non ancora confermati.</p>
       <div class="cal" id="cal-grid" role="grid" aria-label="Giorni del mese"></div>
       <div class="lgd" id="cal-lgd"></div>
@@ -732,9 +750,19 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <p class="hint">Più veloce che giorno per giorno: scorri le settimane, correggi i giorni diversi dal programma e conferma.</p>
       <div class="navline"><button type="button" id="wk-prev" aria-label="Settimana precedente">‹</button><b id="wk-title"></b><button type="button" id="wk-next" aria-label="Settimana successiva">›</button></div>
       <div id="wk-grid"></div>
+      <div id="wk-shifts"></div>
       <div id="wk-quick"></div>
       <button type="button" class="primary" id="wk-conf">Conferma questa settimana</button>
       <p class="small muted" id="wk-st"></p>
+    </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-reg">
+      <h2 id="t-reg">Il tuo registro</h2>
+      <div class="regstats" id="reg-stats"></div>
+      <p class="small muted" id="reg-todo"></p>
+      <button type="button" id="reg-fill"></button>
+      <div id="reg-list"></div>
+      <h3 style="margin:10px 0 0;font-size:15px">Mesi passati</h3>
+      <div id="reg-hist"></div>
     </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-rp">
       <h2 id="t-rp">Stima e reale dei tragitti</h2>
@@ -1372,7 +1400,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { workMode: "fisso", shifts: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1782,7 +1810,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.32";
+  var APP_VERSION = "2026-11-13.33";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2194,6 +2222,7 @@ create policy "solo i miei dati" on stipendio_pilota
         + '<div class="fields"><label class="f">Km di sola andata<input type="text" class="rt-km" inputmode="decimal" autocomplete="off" value="' + txt(r.km) + '"></label>'
         + '<label class="f">Pedaggio o biglietto, solo andata (€)<input type="text" class="rt-toll" inputmode="decimal" autocomplete="off" value="' + txt(r.toll) + '"></label></div>'
         + '<label class="f">Come ti muovi<select class="rt-car"><option value="diesel">Auto diesel</option><option value="benzina">Auto a benzina</option><option value="none">Senza auto (treno, bus, a piedi)</option></select></label>'
+        + '<label class="chk"><input type="checkbox" class="rt-work"' + (r.work ? " checked" : "") + '><span>È il tragitto per andare al lavoro<small style="display:block;color:var(--muted);font-weight:500">Nel registro, i giorni di lavoro segnano questo tragitto come fatto.</small></span></label>'
         + '<div class="f"><span style="font-weight:500">Giorni in cui lo fai, andata e ritorno</span><div class="wds">' + WD.map(function (w) { return '<label><input type="checkbox" class="rt-wd" value="' + w[0] + '"' + (r.wd.indexOf(w[0]) >= 0 ? " checked" : "") + ">" + w[1] + "</label>"; }).join("") + "</div></div>"
         + '<button type="button" class="link rt-del">Elimina questo tragitto</button>';
       d.querySelector(".rt-car").value = r.car;
@@ -2207,7 +2236,7 @@ create policy "solo i miei dati" on stipendio_pilota
     document.querySelectorAll("#rt-edit .rte").forEach(function (d) {
       var km = pnum(d.querySelector(".rt-km").value), tl = pnum(d.querySelector(".rt-toll").value), wd = [];
       d.querySelectorAll(".rt-wd").forEach(function (i) { if (i.checked) wd.push(+i.value); });
-      out.push({ id: d.getAttribute("data-id"), name: d.querySelector(".rt-name").value.trim().slice(0, 40) || "Tragitto", km: isNaN(km) ? 0 : Math.min(1000, km), toll: isNaN(tl) ? 0 : Math.min(500, tl), car: d.querySelector(".rt-car").value, wd: wd });
+      out.push({ id: d.getAttribute("data-id"), name: d.querySelector(".rt-name").value.trim().slice(0, 40) || "Tragitto", km: isNaN(km) ? 0 : Math.min(1000, km), toll: isNaN(tl) ? 0 : Math.min(500, tl), car: d.querySelector(".rt-car").value, wd: wd, work: d.querySelector(".rt-work").checked });
     });
     return out;
   }
@@ -2286,7 +2315,7 @@ create policy "solo i miei dati" on stipendio_pilota
     for (var dd0 = new Date(sD); dd0 <= eD; dd0.setDate(dd0.getDate() + 1)) {
       var d = dd0.getDate(), k = ymd(dd0), dots = S.routes.map(function (r, ri) { var did = didTrip(r, k), confirmed = S.dayo[k] && S.dayo[k][r.id] !== undefined || S.conf[mondayOf(k)];
         if (!did) return ""; return '<i class="' + (confirmed || k > TODAY_KEY ? (confirmed ? "" : "pl") : "pl") + '" style="background:' + ROUTE_COL[ri % 5] + ";border-color:" + ROUTE_COL[ri % 5] + '"></i>'; }).join("");
-      h += '<button type="button" data-d="' + k + '" class="' + (k === calSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + d + ' ' + mnameD(dd0) + '">' + d + '<span class="dots">' + dots + "</span></button>";
+      h += '<button type="button" data-d="' + k + '" class="' + (k === calSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + d + ' ' + mnameD(dd0) + '">' + d + '<span class="dots">' + (S.shifts[k] ? '<em class="shl s' + S.shifts[k].t + '">' + S.shifts[k].t + "</em>" : "") + dots + "</span></button>";
     }
     grid.innerHTML = h;
     grid.querySelectorAll("button").forEach(function (b) { b.onclick = function () { calSel = this.getAttribute("data-d"); renderCalendar(); }; });
@@ -2294,7 +2323,7 @@ create policy "solo i miei dati" on stipendio_pilota
     // dettaglio del giorno
     var wd = dOf(calSel).getDay(), dh = '<h3 style="margin:14px 0 4px;font-size:15px">' + WDN[wd] + " " + dOf(calSel).getDate() + " " + mnameD(dOf(calSel)) + "</h3>";
     S.routes.forEach(function (r) { dh += '<div class="tdrow"><label class="chk"><input type="checkbox" data-r="' + esc(r.id) + '"' + (didTrip(r, calSel) ? " checked" : "") + "><span>" + esc(r.name) + "<small>" + (r.wd.indexOf(wd) >= 0 ? "Previsto nel programma" : "Non previsto nel programma") + "</small></span></label></div>"; });
-    $("cal-day").innerHTML = dh;
+    $("cal-day").innerHTML = dh; renderDayShift(calSel);
     $("cal-day").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(calSel, r, this.checked); persist(); renderAll(); }; });
     // settimana
     var mon = mondayOf(calSel), days = []; for (var j = 0; j < 7; j++) days.push(addDays(mon, j));
@@ -3361,7 +3390,7 @@ create policy "solo i miei dati" on stipendio_pilota
     S.fixedList = fl;
     var rt = [];
     if (W.mods.viaggi && W.car !== "none") {
-      if (n(W.km) > 0 || W.work) rt.push({ id: "r1", name: (W.live && W.work ? W.live + " → " + W.work : "Casa → lavoro").slice(0, 40), km: n(W.km), toll: n(W.toll), car: W.car, wd: W.wd.slice() });
+      if (n(W.km) > 0 || W.work) rt.push({ id: "r1", name: (W.live && W.work ? W.live + " → " + W.work : "Casa → lavoro").slice(0, 40), km: n(W.km), toll: n(W.toll), car: W.car, wd: W.wd.slice(), work: true });
       if (W.home && n(W.hkm) > 0) rt.push({ id: "r2", name: (W.live ? W.live + " → " + W.home : "Casa → " + W.home).slice(0, 40), km: n(W.hkm), toll: n(W.htoll), car: W.car, wd: W.hwd.slice() });
     }
     S.routes = rt; S.dayo = {};
@@ -3391,7 +3420,7 @@ create policy "solo i miei dati" on stipendio_pilota
   var MODS = [
     ["scad", "Scadenze e bollette", "Ti ricorda cosa devi pagare e quando."],
     ["doc", "Documenti", "Foto e PDF in ordine, nel cloud."],
-    ["viaggi", "Viaggi e carburante", "Tragitti in auto, pedaggi e benzina."],
+    ["viaggi", "Lavoro e viaggi", "Giorni di lavoro o turni, registro personale, tragitti e carburante."],
     ["annuali", "Da parte per le spese di ogni anno", "Assicurazione, bollo, tagliando."],
     ["invest", "Investimenti", "Piano d'accumulo, broker e consulente."],
     ["obiett", "Obiettivi di risparmio", "Mettere da parte per qualcosa di preciso."],
@@ -3423,6 +3452,9 @@ create policy "solo i miei dati" on stipendio_pilota
     box.insertAdjacentHTML("beforeend", '<p class="small muted">Ora hai ' + n + " icone su 5.</p>");
   }
   function annNorm() {
+    if (!S.shifts || typeof S.shifts !== "object" || Array.isArray(S.shifts)) S.shifts = {};
+    if (S.workMode !== "turni") S.workMode = "fisso";
+    if (Array.isArray(S.routes) && S.routes.length && !S.routes.some(function (r) { return r.work; })) S.routes[0].work = true;
     if (!Array.isArray(S.annual)) S.annual = [];
     S.annual.forEach(function (a) { a.due = typeof a.due === "string" ? a.due : ""; a.saved = Math.max(0, +a.saved || 0); if (!Array.isArray(a.log)) a.log = []; });
     var r = S.annRem && typeof S.annRem === "object" ? S.annRem : {}; S.annRem = { on: r.on !== false, day: Math.min(28, Math.max(1, Math.round(+r.day) || 5)) };
@@ -3660,8 +3692,74 @@ create policy "solo i miei dati" on stipendio_pilota
     $("rz-yes").onclick = resetAll;
   }
 
+  /* ---------- lavoro: turni e registro ---------- */
+  var SHIFT_T = [["L", "Lavoro"], ["R", "Riposo"], ["F", "Ferie"], ["M", "Malattia"], ["P", "Permesso"]];
+  var SHIFT_S = [["", "Giornata"], ["m", "Mattina"], ["p", "Pomeriggio"], ["s", "Sera"], ["n", "Notte"], ["x", "Spezzato"]];
+  function shText(sh) { var t = SHIFT_T.filter(function (x) { return x[0] === sh.t; })[0], sb = SHIFT_S.filter(function (x) { return x[0] === sh.s; })[0]; return (t ? t[1] : "") + (sh.t === "L" && sh.s && sb ? " · " + sb[1] : ""); }
+  function workRoutes() { return S.routes.filter(function (r) { return r.work; }); }
+  function setShift(k, t, sub, note) {
+    if (!t) { delete S.shifts[k]; workRoutes().forEach(function (r) { var d = S.dayo[k]; if (d) { delete d[r.id]; if (!Object.keys(d).length) delete S.dayo[k]; } }); return; }
+    S.shifts[k] = { t: t, s: t === "L" ? sub || "" : "", n: (note || "").slice(0, 60) };
+    workRoutes().forEach(function (r) { setTrip(k, r, t === "L"); });
+  }
+  function programWorks(k) { return workRoutes().some(function (r) { return r.wd.indexOf(dOf(k).getDay()) >= 0; }); }
+  function renderDayShift(k) {
+    var cd = $("cal-day"); if (!cd) return;
+    var sh = S.shifts[k] || null, wrap = document.createElement("div"); wrap.className = "shd";
+    wrap.innerHTML = '<p class="small muted">Com\'è andata questo giorno? ' + (workRoutes().length ? "Dal programma: " + (programWorks(k) ? "lavoro." : "riposo.") : "") + '</p><div class="shchips">' + SHIFT_T.map(function (t) { return '<button type="button" data-t="' + t[0] + '" aria-pressed="' + !!(sh && sh.t === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>"
+      + '<div class="fields" id="sh-x"' + (sh && sh.t === "L" ? "" : " hidden") + '><label class="f">Turno<select id="sh-s">' + SHIFT_S.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + "</option>"; }).join("") + '</select></label><label class="f">Nota<input id="sh-n" type="text" maxlength="60" autocomplete="off"></label></div>'
+      + (sh ? '<button type="button" class="link" id="sh-clr">Togli l\'indicazione</button>' : "");
+    cd.insertBefore(wrap, cd.children[1] || null);
+    if (sh) { $("sh-s").value = sh.s || ""; $("sh-n").value = sh.n || ""; }
+    var save = function (t) { setShift(k, t, $("sh-s") ? $("sh-s").value : "", $("sh-n") ? $("sh-n").value : ""); persist(); renderAll(); };
+    wrap.querySelectorAll("button[data-t]").forEach(function (b) { b.onclick = function () { save(this.getAttribute("data-t")); }; });
+    if ($("sh-s")) { $("sh-s").onchange = function () { save("L"); }; $("sh-n").onchange = function () { save(S.shifts[k] ? S.shifts[k].t : "L"); }; }
+    if ($("sh-clr")) $("sh-clr").onclick = function () { setShift(k, "", "", ""); persist(); renderAll(); };
+  }
+  function periodDays(key) { var out = [], e = endOf(key); for (var d = new Date(startOf(key)); d <= e; d.setDate(d.getDate() + 1)) out.push(ymd(d)); return out; }
+  function renderWork() {
+    var seg = $("wm-seg"); if (!seg) return; seg.innerHTML = "";
+    [["fisso", "Orario fisso"], ["turni", "Su turni"]].forEach(function (m) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-pressed", S.workMode === m[0] ? "true" : "false"); b.textContent = m[1];
+      b.onclick = function () { S.workMode = m[0]; persist(); renderAll(); }; seg.appendChild(b);
+    });
+    $("wm-hint").textContent = S.workMode === "turni" ? "Il programma dei tragitti è solo una stima. Segna giorno per giorno (o settimana per settimana) quando lavori, riposi o sei in ferie: i viaggi e il carburante si aggiornano da soli." : "Vai al lavoro negli stessi giorni ogni settimana. Qui correggi solo le eccezioni (ferie, malattia, permessi) e tieni il tuo registro.";
+    // settimana
+    var wk = $("wk-shifts"); wk.innerHTML = "";
+    var mon = mondayOf(calSel || TODAY_KEY);
+    for (var j = 0; j < 7; j++) {
+      (function (k) {
+        var sh = S.shifts[k], inm = inMonth(k), lab = document.createElement("label"); lab.className = "wkshift";
+        lab.innerHTML = "<span>" + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</span><select aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">—</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '">' + t[1] + "</option>"; }).join("") + "</select>";
+        var se = lab.querySelector("select"); se.value = sh ? sh.t : "";
+        se.onchange = function () { setShift(k, this.value, sh ? sh.s : "", sh ? sh.n : ""); persist(); renderAll(); };
+        wk.appendChild(lab);
+      })(addDays(mon, j));
+    }
+    // registro
+    var days = periodDays(S.monthKey), cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, list = [], todo = 0;
+    days.forEach(function (k) { var sh = S.shifts[k]; if (sh) { cnt[sh.t]++; list.push([k, sh]); } else if (k < TODAY_KEY && S.monthKey === CUR) todo++; });
+    $("reg-stats").innerHTML = SHIFT_T.map(function (t) { return '<span class="regchip"><b class="num">' + cnt[t[0]] + "</b> " + t[1].toLowerCase() + "</span>"; }).join("");
+    $("reg-todo").textContent = todo > 0 ? "Hai " + todo + (todo === 1 ? " giorno" : " giorni") + " passati senza indicazione." : "Tutti i giorni passati sono segnati ✓";
+    $("reg-fill").textContent = "Riempi i giorni vuoti dal programma";
+    $("reg-fill").onclick = function () { var n = 0; days.forEach(function (k) { if (!S.shifts[k]) { setShift(k, programWorks(k) ? "L" : "R", "", ""); n++; } }); persist(); renderAll(); toast(n ? n + " giorni riempiti dal programma ✓" : "Non c'era nulla da riempire"); };
+    var box = $("reg-list"); box.innerHTML = "";
+    list.sort(function (a, b) { return a[0] < b[0] ? 1 : -1; }).slice(0, 31).forEach(function (it) {
+      var d = dOf(it[0]), row = document.createElement("div"); row.className = "entry e4";
+      row.innerHTML = '<div class="t">' + WDN[d.getDay()] + " " + d.getDate() + " " + mnameD(d) + "<small>" + esc(shText(it[1])) + (it[1].n ? " · " + esc(it[1].n) : "") + '</small></div><span></span><span></span><button type="button" class="x del" aria-label="Togli">×</button>';
+      row.querySelector(".del").onclick = function () { setShift(it[0], "", "", ""); persist(); renderAll(); };
+      box.appendChild(row);
+    });
+    // mesi passati
+    var by = {}; Object.keys(S.shifts).forEach(function (k) { var pk = periodKeyFor(dOf(k)); if (pk === S.monthKey) return; (by[pk] = by[pk] || { L: 0, R: 0, F: 0, M: 0, P: 0 })[S.shifts[k].t]++; });
+    var hist = $("reg-hist"); hist.innerHTML = "";
+    var keys = Object.keys(by).sort().reverse().slice(0, 6);
+    if (!keys.length) hist.innerHTML = '<p class="empty">Appena avrai segnato qualche mese, qui trovi il riepilogo.</p>';
+    keys.forEach(function (pk) { var c = by[pk], row = document.createElement("div"); row.className = "entry"; row.innerHTML = '<div class="t">' + mlabel(pk) + "<small>" + SHIFT_T.filter(function (t) { return c[t[0]]; }).map(function (t) { return c[t[0]] + " " + t[1].toLowerCase(); }).join(" · ") + "</small></div>"; hist.appendChild(row); });
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Lavoro"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -3697,7 +3795,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -3719,7 +3817,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
-  $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5] }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
   document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
   $("mk-range").value = String(MK.range); $("mk-range").onchange = function () { MK.range = +this.value; renderMarket(); };
   $("fab").onclick = qsOpen; $("qs-x").onclick = qsClose; $("qs-bg").onclick = qsClose; $("qs-go").onclick = qsAdd;
