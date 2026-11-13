@@ -468,6 +468,14 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .skins button { display: flex; align-items: center; gap: 10px; padding: 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
 .skins button[aria-pressed="true"] { border-color: var(--accent); }
 .skins i { width: 28px; height: 28px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
+.menu { display: flex; flex-direction: column; gap: 10px; }
+.menu a { display: flex; flex-direction: column; gap: 2px; padding: 16px 44px 16px 18px; border-radius: 20px; background: var(--surface); color: var(--ink); text-decoration: none; position: relative; box-shadow: 0 1px 2px rgba(16,36,62,0.05), 0 8px 22px -14px rgba(16,36,62,0.2); }
+.menu a b { font-family: var(--font-head); font-size: 16px; }
+.menu a small { color: var(--muted); font-size: 13px; }
+.menu a::after { content: "›"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 26px; color: var(--muted); }
+.menu a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Home essenziale: il cerchio e due tasti, il resto sta nelle schede sotto */
+.hero .chips2, .hero #hm-day, .hero #hm-due, .hero #hm-ev, .hero #hm-fix { display: none !important; }
 </style>
 </head>
 <body>
@@ -985,7 +993,16 @@ create policy "stipendio pilota documenti" on storage.objects
 
   <!-- PROFILO -->
   <main class="view" id="v-profilo" hidden>
-    <div><h1>Impostazioni</h1><p class="hint">Cambia quello che vuoi e premi <b>Salva</b> in basso. Il piano si aggiorna da solo.</p></div>
+    <div data-sub="menu"><h1>Impostazioni</h1><p class="hint">Scegli cosa vuoi cambiare.</p></div>
+    <nav data-sub="menu" class="menu" aria-label="Impostazioni">
+      <a href="#profilo/io"><b>Io e il mio lavoro</b><small>Nome, lavoro, stipendio, notifica, contatti</small></a>
+      <a href="#profilo/home"><b>La mia Home e i colori</b><small>Scegli cosa vedere in Home, stile chiaro o scuro</small></a>
+      <a href="#profilo/casa"><b>Casa e spese fisse</b><small>Affitto, bollette, assicurazioni, rate</small></a>
+      <a href="#profilo/auto"><b>Viaggi e auto</b><small>Tragitti, carburante, pedaggi</small></a>
+      <a href="#profilo/budget"><b>Budget</b><small>Quanto metti da parte e come dividi il mese</small></a>
+      <a href="#profilo/investi"><b>Investimenti</b><small>Risparmi, piano d'accumulo, broker</small></a>
+      <a href="#profilo/dati"><b>Dati, cloud e backup</b><small>Account cloud, esporta, importa, cancella</small></a>
+    </nav>
     <section data-sub="io" class="card" aria-labelledby="t-me">
       <h2 id="t-me">Chi sei</h2>
       <p class="hint">Servono solo a personalizzare l'app. Restano in questo telefono.</p>
@@ -1037,6 +1054,7 @@ create policy "stipendio pilota documenti" on storage.objects
       <p class="hint">Nel giorno della paga il telefono ti manda una notifica per ricordarti di scrivere quanto hai preso. Serve l'account cloud (Profilo → Dati). Su iPhone l'app deve essere aggiunta alla schermata Home.</p>
       <label class="chk"><input type="checkbox" id="nf-on"><span>Avvisami con una notifica</span></label>
       <label class="f" for="nf-hour">A che ora<select id="nf-hour"></select></label>
+      <button type="button" id="nf-test">Prova una notifica adesso</button>
       <p class="small muted" id="nf-msg"></p>
     </section>
     <section data-sub="io" class="card" aria-labelledby="t-mm">
@@ -1256,9 +1274,9 @@ create policy "solo i miei dati" on stipendio_pilota
     ["alerts", "Avvisi sul budget", "Ti avvisa quando una categoria sta finendo il budget.", true],
     ["complete", "Completa il profilo", "Ti dice cosa manca per avere un piano preciso.", true],
     ["home-dl", "Da pagare a breve", "Le scadenze dei prossimi giorni, da spuntare con un tocco.", true],
-    ["wk-remind", "Promemoria viaggi", "Ogni settimana ti ricorda di confermare i viaggi fatti.", true],
-    ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", true],
-    ["home-sal", "Stipendio e ripartizione", "Quanto prendi e come si divide.", true],
+    ["wk-remind", "Promemoria viaggi", "Ogni settimana ti ricorda di confermare i viaggi fatti.", false],
+    ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", false],
+    ["home-sal", "Stipendio e ripartizione", "Quanto prendi e come si divide.", false],
     ["home-now", "Spese del mese", "Quanto hai speso rispetto al budget.", true],
     ["home-inv", "Investimento del mese", "Quanto hai versato e un tasto per aprire il broker.", false],
     ["home-goals", "Obiettivi", "I tuoi obiettivi di risparmio e quanto manca.", false]
@@ -1671,7 +1689,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.25";
+  var APP_VERSION = "2026-11-13.26";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3220,8 +3238,8 @@ create policy "solo i miei dati" on stipendio_pilota
     var h = S.home && typeof S.home === "object" ? S.home : {}, ids = HOME_W.map(function (w) { return w[0]; });
     var order = (Array.isArray(h.order) ? h.order : []).filter(function (x) { return ids.indexOf(x) >= 0; });
     ids.forEach(function (x) { if (order.indexOf(x) < 0) order.push(x); });
-    var off = Array.isArray(h.off) ? h.off.filter(function (x) { return ids.indexOf(x) >= 0; }) : HOME_W.filter(function (w) { return !w[3]; }).map(function (w) { return w[0]; });
-    S.home = { order: order, off: off };
+    var off = h.custom && Array.isArray(h.off) ? h.off.filter(function (x) { return ids.indexOf(x) >= 0; }) : HOME_W.filter(function (w) { return !w[3]; }).map(function (w) { return w[0]; });
+    S.home = { order: order, off: off, custom: !!h.custom };
   }
   function applyHome() {
     homeNorm();
@@ -3250,11 +3268,11 @@ create policy "solo i miei dati" on stipendio_pilota
     S.home.order.forEach(function (id, i) {
       var w = HOME_W.filter(function (x) { return x[0] === id; })[0], on = S.home.off.indexOf(id) < 0, row = document.createElement("div"); row.className = "he";
       row.innerHTML = '<label class="chk"><input type="checkbox"' + (on ? " checked" : "") + '><span><b>' + w[1] + "</b><small>" + w[2] + '</small></span></label><span class="acts"><button type="button" class="mini" data-d="-1" aria-label="Sposta su: ' + w[1] + '"' + (i === 0 ? " disabled" : "") + '>↑</button><button type="button" class="mini" data-d="1" aria-label="Sposta giù: ' + w[1] + '"' + (i === S.home.order.length - 1 ? " disabled" : "") + ">↓</button></span>";
-      row.querySelector("input").onchange = function () { S.home.off = this.checked ? S.home.off.filter(function (x) { return x !== id; }) : S.home.off.concat([id]); persist(); applyHome(); renderAll(); };
+      row.querySelector("input").onchange = function () { S.home.custom = true; S.home.off = this.checked ? S.home.off.filter(function (x) { return x !== id; }) : S.home.off.concat([id]); persist(); applyHome(); renderAll(); };
       row.querySelectorAll("button").forEach(function (b) {
         b.onclick = function () {
           var d = +b.getAttribute("data-d"), j = i + d; if (j < 0 || j >= S.home.order.length) return;
-          var o = S.home.order; var t = o[i]; o[i] = o[j]; o[j] = t; persist(); applyHome(); renderHomeEditor();
+          S.home.custom = true; var o = S.home.order; var t = o[i]; o[i] = o[j]; o[j] = t; persist(); applyHome(); renderHomeEditor();
           var nb = box.querySelectorAll(".he")[j].querySelector('button[data-d="' + d + '"]'); if (nb && !nb.disabled) nb.focus(); else { var any = box.querySelectorAll(".he")[j].querySelector("button:not([disabled])"); if (any) any.focus(); }
         };
       });
@@ -3364,7 +3382,23 @@ create policy "solo i miei dati" on stipendio_pilota
     on.checked = !!pnf.on; hs.value = String(pnf.hour);
     if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00.");
   }
+  function nfTest() {
+    if (!nfSupported()) { nfMsg("Questo telefono o browser non supporta le notifiche dell'app. Su iPhone aggiungi prima l'app alla schermata Home."); return; }
+    nfMsg("Controllo…");
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") { nfMsg("Le notifiche sono bloccate: consentile dalle impostazioni del telefono per questa app."); return; }
+      return navigator.serviceWorker.ready.then(function (reg) {
+        return reg.showNotification("Stipendio Pilota", { body: "Prova riuscita: le notifiche arrivano su questo telefono.", icon: "./icons/icon-192.png", tag: "prova" });
+      }).then(function () {
+        if (!(syOn() && sy.uid)) { nfMsg("La notifica sul telefono funziona. Per riceverla il giorno della paga serve anche l'account cloud (Profilo → Dati)."); return; }
+        return syFetch("/rest/v1/sp_push?select=payday,hour&user_id=eq." + encodeURIComponent(sy.uid)).then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("http " + r.status)); }).then(function (rows) {
+          nfMsg(rows && rows.length ? "La notifica sul telefono funziona ✓ Sei registrato per il giorno " + rows[0].payday + " alle " + rows[0].hour + ":00." : "La notifica sul telefono funziona ✓ Ma non sei ancora registrato per quella del giorno di paga: attiva l'interruttore qui sopra.");
+        }, function () { nfMsg("La notifica sul telefono funziona ✓ Non riesco a controllare la registrazione: manca il passaggio su Supabase (file notifiche.sql)?"); });
+      });
+    }).catch(function () { nfMsg("Non sono riuscito a mostrare la notifica."); });
+  }
   function initNotif() {
+    $("nf-test").onclick = nfTest;
     $("nf-on").onchange = function () {
       var want = this.checked, box = this; pnf.on = want; nfSave();
       if (want) nfEnable().catch(function () { pnf.on = false; nfSave(); box.checked = false; }); else nfDisable();
@@ -3382,15 +3416,16 @@ create policy "solo i miei dati" on stipendio_pilota
     if (h === "obiettivi") { h = "piano"; sub = "obiettivi"; }
     if (VIEWS.indexOf(h) < 0) h = "home";
     var subs = SUBS[h] || [];
-    if (subs.length) {
+    if (h === "profilo") { if (!subs.some(function (x) { return x[0] === sub; })) sub = "menu"; }
+    else if (subs.length) {
       if (!subs.some(function (x) { return x[0] === sub; })) sub = lastSub[h] || subs[0][0];
       lastSub[h] = sub;
     } else sub = "";
     VIEWS.forEach(function (v) { $("v-" + v).hidden = v !== h; });
     document.querySelectorAll("#v-" + h + " [data-sub]").forEach(function (el) { el.classList.toggle("sub-off", !!sub && el.getAttribute("data-sub") !== sub && h !== "home"); });
-    var st = $("subtabs"); st.hidden = !subs.length;
-    st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
-    var showSave = h === "profilo" && sub !== "dati" && sub !== "home";
+    var st = $("subtabs"); st.hidden = !subs.length || (h === "profilo" && sub === "menu");
+    if (h === "profilo") st.innerHTML = '<a href="#profilo" class="on">‹ Tutte le impostazioni</a>'; else st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
+    var showSave = h === "profilo" && sub !== "dati" && sub !== "home" && sub !== "menu";
     $("savebar").hidden = !showSave;
     document.body.className = showSave ? "has-save" : "";
     document.querySelectorAll("#tabs a").forEach(function (a) {
