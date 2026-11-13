@@ -352,7 +352,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .bnav a { font-weight: 700; }
 .bnav a.on { color: var(--accent); }
 .hero { border-radius: 34px; padding: 26px 18px 20px; position: relative; overflow: hidden; isolation: isolate;
-  background: radial-gradient(120% 70% at 85% -10%, rgba(34,211,190,0.38), transparent 60%), radial-gradient(90% 60% at 0% 110%, rgba(90,150,255,0.35), transparent 60%), var(--hero); }
+  background: radial-gradient(120% 70% at 85% -10%, var(--glow1, rgba(34,211,190,0.38)), transparent 60%), radial-gradient(90% 60% at 0% 110%, var(--glow2, rgba(90,150,255,0.35)), transparent 60%), var(--hero); }
 .hero .hello { font-size: 15px; font-weight: 700; }
 .ringc b { font-size: clamp(34px, 11vw, 50px); letter-spacing: -0.01em; }
 .ringc small:first-child { font-weight: 700; font-size: 13.5px; }
@@ -454,6 +454,20 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .sd-cal button.over { background: var(--warn-bg); color: var(--warn); }
 .sd-cal button.sel { background: var(--accent); color: var(--accent-ink); }
 .sd-ok { color: #1f9d7a; } .sd-over { color: var(--warn); }
+/* stili (skin) */
+@media (prefers-color-scheme: light) { :root[data-skin="salvia"]:not([data-theme="dark"]) { --bg:#eef3ec;--surface:#fff;--ink:#16291f;--muted:#5a6f62;--line:#dde7dd;--soft:#e4ede4;--accent:#2b7a4b;--accent-ink:#fff;--hero:#1c3b2c;--hero-muted:#a9c9b6;--pos:#1f7a4d;--ok-bg:#d9f1df;--toast-bg:#16291f;--toast-ink:#fff;--glow1:rgba(160,220,120,.35);--glow2:rgba(80,170,120,.3); } }
+:root[data-skin="salvia"][data-theme="light"] { --bg:#eef3ec;--surface:#fff;--ink:#16291f;--muted:#5a6f62;--line:#dde7dd;--soft:#e4ede4;--accent:#2b7a4b;--accent-ink:#fff;--hero:#1c3b2c;--hero-muted:#a9c9b6;--pos:#1f7a4d;--ok-bg:#d9f1df;--toast-bg:#16291f;--toast-ink:#fff;--glow1:rgba(160,220,120,.35);--glow2:rgba(80,170,120,.3); }
+@media (prefers-color-scheme: dark) { :root[data-skin="salvia"]:not([data-theme="light"]) { --bg:#0c1712;--surface:#14241c;--ink:#e6f1ea;--muted:#9db5a6;--line:#223a2c;--soft:#1b2f24;--accent:#6fd09a;--accent-ink:#052013;--hero:#1c3b2c;--hero-muted:#a9c9b6;--pos:#6fd09a;--ok-bg:#163a28;--toast-bg:#e6f1ea;--toast-ink:#0c1712;--glow1:rgba(160,220,120,.3);--glow2:rgba(80,170,120,.3);color-scheme:dark; } }
+:root[data-skin="salvia"][data-theme="dark"] { --bg:#0c1712;--surface:#14241c;--ink:#e6f1ea;--muted:#9db5a6;--line:#223a2c;--soft:#1b2f24;--accent:#6fd09a;--accent-ink:#052013;--hero:#1c3b2c;--hero-muted:#a9c9b6;--pos:#6fd09a;--ok-bg:#163a28;--toast-bg:#e6f1ea;--toast-ink:#0c1712;--glow1:rgba(160,220,120,.3);--glow2:rgba(80,170,120,.3);color-scheme:dark; }
+@media (prefers-color-scheme: light) { :root[data-skin="grafite"]:not([data-theme="dark"]) { --bg:#f3f3f6;--surface:#fff;--ink:#1b1c24;--muted:#6a6c7a;--line:#e5e5ec;--soft:#ececf2;--accent:#e2503a;--accent-ink:#fff;--hero:#23242e;--hero-muted:#b4b6c6;--pos:#1a8a6a;--ok-bg:#d9f1ea;--toast-bg:#1b1c24;--toast-ink:#fff;--glow1:rgba(226,80,58,.35);--glow2:rgba(120,120,160,.3); } }
+:root[data-skin="grafite"][data-theme="light"] { --bg:#f3f3f6;--surface:#fff;--ink:#1b1c24;--muted:#6a6c7a;--line:#e5e5ec;--soft:#ececf2;--accent:#e2503a;--accent-ink:#fff;--hero:#23242e;--hero-muted:#b4b6c6;--pos:#1a8a6a;--ok-bg:#d9f1ea;--toast-bg:#1b1c24;--toast-ink:#fff;--glow1:rgba(226,80,58,.35);--glow2:rgba(120,120,160,.3); }
+@media (prefers-color-scheme: dark) { :root[data-skin="grafite"]:not([data-theme="light"]) { --bg:#101116;--surface:#1a1b23;--ink:#ececf2;--muted:#a3a5b5;--line:#2a2b36;--soft:#22232d;--accent:#ff7a63;--accent-ink:#2a0a04;--hero:#2b2c38;--hero-muted:#b4b6c6;--pos:#4fd8b0;--ok-bg:#133a31;--toast-bg:#ececf2;--toast-ink:#101116;--glow1:rgba(255,122,99,.3);--glow2:rgba(120,120,160,.3);color-scheme:dark; } }
+:root[data-skin="grafite"][data-theme="dark"] { --bg:#101116;--surface:#1a1b23;--ink:#ececf2;--muted:#a3a5b5;--line:#2a2b36;--soft:#22232d;--accent:#ff7a63;--accent-ink:#2a0a04;--hero:#2b2c38;--hero-muted:#b4b6c6;--pos:#4fd8b0;--ok-bg:#133a31;--toast-bg:#ececf2;--toast-ink:#101116;--glow1:rgba(255,122,99,.3);--glow2:rgba(120,120,160,.3);color-scheme:dark; }
+:root[data-skin="notte"] { --bg:#0b1020;--surface:#141b30;--ink:#e9eefb;--muted:#9aa8c8;--line:#232c47;--soft:#1b2440;--accent:#7cc4ff;--accent-ink:#06142a;--hero:#16224a;--hero-muted:#a9bae6;--pos:#4fd8c6;--ok-bg:#123a42;--toast-bg:#e9eefb;--toast-ink:#0b1020;--glow1:rgba(124,196,255,.3);--glow2:rgba(90,120,255,.3);color-scheme:dark; }
+.skins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.skins button { display: flex; align-items: center; gap: 10px; padding: 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+.skins button[aria-pressed="true"] { border-color: var(--accent); }
+.skins i { width: 28px; height: 28px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 2px rgba(255,255,255,.5); }
 </style>
 </head>
 <body>
@@ -1111,6 +1125,11 @@ create policy "stipendio pilota documenti" on storage.objects
         <label class="f" for="costPct">Costi e bollo ogni anno (%)<input id="costPct" type="text" inputmode="decimal" autocomplete="off"><span class="help">Costo del fondo, del broker e imposta di bollo (circa 0,2%)</span></label>
       </div>
     </section>
+    <section data-sub="home" class="card" aria-labelledby="t-sk">
+      <h2 id="t-sk">Colori e stile</h2>
+      <div class="skins" id="skins" role="group" aria-label="Stile"></div>
+      <label class="f" for="theme">Chiaro o scuro<select id="theme"><option value="auto">Come il telefono</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select><span class="help">Lo stile Notte è sempre scuro.</span></label>
+    </section>
     <section data-sub="home" class="card" aria-labelledby="t-he">
       <h2 id="t-he">Componi la tua Home</h2>
       <p class="hint">Accendi le schede che vuoi vedere e spostale con le frecce. La scheda in alto, "Oggi puoi spendere", resta sempre. Le modifiche valgono subito.</p>
@@ -1119,7 +1138,6 @@ create policy "stipendio pilota documenti" on storage.objects
     </section>
     <section data-sub="dati" class="card" aria-labelledby="t-th">
       <h2 id="t-th">Aspetto e installazione</h2>
-      <label class="f" for="theme">Tema<select id="theme"><option value="auto">Come il telefono</option><option value="light">Chiaro</option><option value="dark">Scuro</option></select></label>
       <p class="hint">Per averla come app: su iPhone apri il sito in Safari, tocca Condividi e poi "Aggiungi alla schermata Home". Su Android apri il menu ⋮ di Chrome e scegli "Installa app".</p>
       <button type="button" class="primary" id="install" hidden>Installa l'app</button>
       <p class="small muted" id="ver"></p>
@@ -1238,7 +1256,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["home-inv", "Investimento del mese", "Quanto hai versato e un tasto per aprire il broker.", false],
     ["home-goals", "Obiettivi", "I tuoi obiettivi di risparmio e quanto manca.", false]
   ];
-  var DEFAULTS = { home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1646,7 +1664,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.23";
+  var APP_VERSION = "2026-11-13.24";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2430,7 +2448,18 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- backup ---------- */
   var armed = false;
   function backupText() { return JSON.stringify(S); }
-  function applyTheme() { var t = S.theme; if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
+  var SKINS = [["grafite", "Grafite e corallo", "#e2503a"], ["oceano", "Oceano", "#1456b8"], ["salvia", "Salvia", "#2b7a4b"], ["notte", "Notte", "#7cc4ff"]], SKIN_BAR = { grafite: "#23242e", oceano: "#0d2d58", salvia: "#1c3b2c", notte: "#16224a" };
+  function renderSkins() {
+    var box = $("skins"); if (!box) return; box.innerHTML = "";
+    SKINS.forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.setAttribute("aria-pressed", S.skin === k[0] ? "true" : "false"); b.innerHTML = '<i style="background:' + k[2] + '"></i>' + k[1];
+      b.onclick = function () { S.skin = k[0]; persist(); applyTheme(); renderSkins(); }; box.appendChild(b);
+    });
+  }
+  function applyTheme() {
+    if (SKINS.every(function (k) { return k[0] !== S.skin; })) S.skin = "grafite";
+    if (S.skin === "oceano") document.documentElement.removeAttribute("data-skin"); else document.documentElement.setAttribute("data-skin", S.skin);
+    var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute("content", SKIN_BAR[S.skin] || "#0d2d58"); var t = S.theme; if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme"); }
   var deferred = null;
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferred = e; $("install").hidden = false; });
   function setupBackup() {
@@ -3296,7 +3325,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
-    profilo: [["io", "Io"], ["home", "Home"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
+    profilo: [["io", "Io"], ["home", "Aspetto"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
     var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
@@ -3377,7 +3406,7 @@ create policy "solo i miei dati" on stipendio_pilota
       if (m && m[1] !== APP_VERSION) toast("È disponibile una nuova versione", "Aggiorna", function () { location.reload(); });
     }).catch(function () {});
   });
-  applyTheme(); $("theme").value = S.theme || "auto";
+  applyTheme(); renderSkins(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
   $("sd-form").onsubmit = addDayExpense; $("ct-add").onclick = addContact;
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
