@@ -977,10 +977,36 @@ create policy "stipendio pilota documenti" on storage.objects
       <p class="hint">Servono solo a personalizzare l'app. Restano in questo telefono.</p>
       <div class="fields">
         <label class="f" for="me-name">Il tuo nome<input id="me-name" type="text" autocomplete="off" maxlength="30"></label>
+        <label class="f" for="me-surname">Cognome<input id="me-surname" type="text" autocomplete="off" maxlength="30"></label>
         <label class="f" for="me-live">Dove vivi<input id="me-live" type="text" autocomplete="off" maxlength="40" placeholder="Es. Giardini Naxos"></label>
         <label class="f" for="me-work">Dove lavori<input id="me-work" type="text" autocomplete="off" maxlength="40" placeholder="Es. Taormina"></label>
         <label class="f" for="me-home">Dove torni ogni tanto<input id="me-home" type="text" autocomplete="off" maxlength="40" placeholder="Es. Saponara"></label>
       </div>
+    </section>
+    <section data-sub="io" class="card" aria-labelledby="t-job">
+      <h2 id="t-job">Il tuo lavoro</h2>
+      <p class="hint">Facoltativo. Ti serve per tenere tutto in ordine: l'app non lo condivide con nessuno.</p>
+      <div class="fields">
+        <label class="f" for="me-employer">Dove lavori (nome dell'attività o società)<input id="me-employer" type="text" autocomplete="off" maxlength="60" placeholder="Es. Hotel Belvedere"></label>
+        <label class="f" for="me-job">Il tuo ruolo<input id="me-job" type="text" autocomplete="off" maxlength="40" placeholder="Es. Receptionist"></label>
+        <label class="f" for="me-orgType">Che tipo di società è
+          <select id="me-orgType"><option value="">Non lo dico</option><option value="srl">Società (S.r.l., S.p.A.)</option><option value="ditta">Ditta individuale o piccola attività</option><option value="coop">Cooperativa</option><option value="pa">Ente pubblico</option><option value="famiglia">Attività di famiglia</option><option value="altro">Altro</option></select></label>
+        <label class="f" for="me-contract">Contratto
+          <select id="me-contract"><option value="">Non lo dico</option><option value="indeterminato">Tempo indeterminato</option><option value="determinato">Tempo determinato</option><option value="stagionale">Stagionale</option><option value="apprendistato">Apprendistato</option><option value="partita-iva">Partita IVA</option><option value="altro">Altro</option></select></label>
+        <label class="f" for="me-contractEnd">Scadenza del contratto (se c'è)<input id="me-contractEnd" type="date"></label>
+      </div>
+    </section>
+    <section data-sub="io" class="card" aria-labelledby="t-ct">
+      <h2 id="t-ct">Contatti utili</h2>
+      <p class="hint">Banca, commercialista, medico, assicurazione, amministratore. Toccando il numero parte la chiamata. Si salvano subito.</p>
+      <div id="ct-list"></div>
+      <div class="fields">
+        <label class="f" for="ct-name">Nome<input id="ct-name" type="text" autocomplete="off" maxlength="50" placeholder="Es. Dott.ssa Rossi"></label>
+        <label class="f" for="ct-role">Chi è<input id="ct-role" type="text" autocomplete="off" maxlength="40" placeholder="Es. Commercialista"></label>
+        <label class="f" for="ct-phone">Telefono<input id="ct-phone" type="tel" autocomplete="off" maxlength="25"></label>
+        <label class="f" for="ct-note">Nota<input id="ct-note" type="text" autocomplete="off" maxlength="80"></label>
+      </div>
+      <button type="button" id="ct-add">Aggiungi contatto</button>
     </section>
     <section data-sub="io" class="card big-input" aria-labelledby="t-p1">
       <h2 id="t-p1">Quanto prendi</h2>
@@ -1213,7 +1239,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["home-goals", "Obiettivi", "I tuoi obiettivi di risparmio e quanto manca.", false]
   ];
   var DEFAULTS = { home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
-    conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
+    conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
   var PROFILES = {
@@ -1278,6 +1304,7 @@ create policy "solo i miei dati" on stipendio_pilota
     homeNorm();
     if (!S.catRules || typeof S.catRules !== "object" || Array.isArray(S.catRules)) S.catRules = {};
     if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
+    if (!Array.isArray(S.contacts)) S.contacts = [];
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
       return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "" });
@@ -1619,7 +1646,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.22";
+  var APP_VERSION = "2026-11-13.23";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1703,7 +1730,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if ($("payDay").oninput) $("payDay").oninput();
     $("couple-on").checked = !!src.couple; coupleUI(!!src.couple);
     var me = src.me || DEFAULTS.me;
-    $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || "";
+    $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || ""; ["surname", "employer", "job", "orgType", "contract", "contractEnd"].forEach(function (k) { $("me-" + k).value = me[k] || ""; });
     renderFixedEditor(src.fixedList, me.housing);
     renderRoutes(src.routes || []);
     $("years").value = String(src.years);
@@ -1734,7 +1761,7 @@ create policy "solo i miei dati" on stipendio_pilota
     next.years = parseInt($("years").value, 10);
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
     next.couple = $("couple-on").checked; next.profile = pr; next.saved = true; next.fixedList = readFixedEditor(); next.routes = readRoutes();
-    next.me = { name: $("me-name").value.trim().slice(0, 30), live: $("me-live").value.trim().slice(0, 40), work: $("me-work").value.trim().slice(0, 40), home: $("me-home").value.trim().slice(0, 40), housing: readHousing() || S.me.housing };
+    next.me = { name: $("me-name").value.trim().slice(0, 30), live: $("me-live").value.trim().slice(0, 40), work: $("me-work").value.trim().slice(0, 40), home: $("me-home").value.trim().slice(0, 40), housing: readHousing() || S.me.housing, surname: $("me-surname").value.trim().slice(0, 30), employer: $("me-employer").value.trim().slice(0, 60), job: $("me-job").value.trim().slice(0, 40), orgType: $("me-orgType").value, contract: $("me-contract").value, contractEnd: $("me-contractEnd").value };
     var oldCur = CUR;
     Object.assign(S, next); applyPay();
     if (CUR !== oldCur && S.monthKey === oldCur) {
@@ -3249,6 +3276,24 @@ create policy "solo i miei dati" on stipendio_pilota
     S.spent[S.monthKey] = list; persist(); $("sd-amount").value = ""; $("sd-note").value = ""; renderAll(); toast("Spesa aggiunta ✓");
   }
 
+  /* ---------- contatti utili ---------- */
+  function renderContacts() {
+    var box = $("ct-list"); if (!box) return; box.innerHTML = "";
+    S.contacts.forEach(function (c) {
+      var row = document.createElement("div"); row.className = "entry e4";
+      var tel = (c.phone || "").replace(/[^0-9+]/g, "");
+      row.innerHTML = '<div class="t">' + esc(c.name) + "<small>" + esc([c.role, c.note].filter(Boolean).join(" · ")) + "</small></div>" + (tel ? '<a class="num" href="tel:' + esc(tel) + '">' + esc(c.phone) + "</a>" : "<span></span>") + '<span></span><button type="button" class="x del" aria-label="Elimina contatto">×</button>';
+      row.querySelector(".del").onclick = function () { S.contacts = S.contacts.filter(function (x) { return x.id !== c.id; }); persist(); renderContacts(); toast("Contatto eliminato", "Annulla", function () { S.contacts.push(c); persist(); renderContacts(); }); };
+      box.appendChild(row);
+    });
+  }
+  function addContact() {
+    var n = $("ct-name").value.trim();
+    if (!n) { toast("Scrivi il nome del contatto"); $("ct-name").focus(); return; }
+    S.contacts.push({ id: S.nextId++, name: n.slice(0, 50), role: $("ct-role").value.trim().slice(0, 40), phone: $("ct-phone").value.trim().slice(0, 25), note: $("ct-note").value.trim().slice(0, 80) });
+    persist(); ["ct-name", "ct-role", "ct-phone", "ct-note"].forEach(function (i) { $(i).value = ""; }); renderContacts(); toast("Contatto aggiunto ✓");
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["home", "Home"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
@@ -3280,7 +3325,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderSpeseDays(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderSpeseDays(); renderContacts(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -3334,7 +3379,7 @@ create policy "solo i miei dati" on stipendio_pilota
   });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
-  $("sd-form").onsubmit = addDayExpense;
+  $("sd-form").onsubmit = addDayExpense; $("ct-add").onclick = addContact;
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
   $("home-custom").onclick = function () { location.hash = "#profilo/home"; };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };
