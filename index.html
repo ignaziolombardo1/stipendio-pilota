@@ -414,6 +414,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .rcb b { font-size: 24px; }
 .rcb small { color: var(--muted); font-size: 12.5px; }
 .tip { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; font-size: 14.5px; }
+:root[data-couple="0"] .fx-split-l { display: none; }
 </style>
 </head>
 <body>
@@ -938,12 +939,15 @@ create policy "stipendio pilota documenti" on storage.objects
     </section>
     <section data-sub="io" class="card" aria-labelledby="t-pc">
       <h2 id="t-pc">In coppia</h2>
-      <p class="hint">Facoltativo. Se dividi affitto e bollette, scrivi quanta parte paghi tu: il piano userà solo la tua quota.</p>
+      <p class="hint">Facoltativo: attivalo solo se dividi le spese con un'altra persona (coinquilino, partner). Quando è spento, l'app calcola tutto solo su di te.</p>
+      <label class="chk"><input type="checkbox" id="couple-on"><span>Divido le spese fisse con un'altra persona</span></label>
+      <div id="pc-body" hidden>
       <div class="fields">
         <label class="f" for="sal2">Stipendio di lei/lui (€)<input id="sal2" type="text" inputmode="decimal" autocomplete="off"><span class="help">Lascia 0 se non serve</span></label>
         <label class="f" for="share">Quota delle fisse che paghi tu (%)<input id="share" type="text" inputmode="decimal" autocomplete="off"><span class="help">Gli importi delle spese fisse sono i totali: qui metti la tua parte. La quota vale per le voci con la spunta "Diviso in coppia"</span></label>
       </div>
       <button type="button" id="split-prop">Dividi in proporzione agli stipendi</button>
+      </div>
     </section>
     <section data-sub="casa" class="card" aria-labelledby="t-hs">
       <h2 id="t-hs">La tua casa</h2>
@@ -1114,7 +1118,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var DEFAULTS = { catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", live: "", work: "", home: "", housing: "affitto" }, routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1176,6 +1180,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["deadlines", "docs"].forEach(function (k) { if (!Array.isArray(S[k])) S[k] = []; S[k] = S[k].filter(function (x) { return x && typeof x === "object" && x.id; }); });
     S.deadlines.forEach(function (d) { d.name = String(d.name || "Scadenza"); d.amount = +d.amount > 0 ? +d.amount : 0; d.repeat = ["none", "month", "year"].indexOf(d.repeat) >= 0 ? d.repeat : "none"; if (!d.done || typeof d.done !== "object") d.done = {}; });
     if (!S.broker || typeof S.broker !== "object") S.broker = { name: "", url: "" };
+    if (S.couple !== true && S.couple !== false) S.couple = (+S.sal2 > 0 || +S.share < 100);
     if (!S.catRules || typeof S.catRules !== "object" || Array.isArray(S.catRules)) S.catRules = {};
     if (!S.dayo || typeof S.dayo !== "object") S.dayo = {};
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
@@ -1223,7 +1228,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function plan() {
     var sal = S.salary;
-    var sh = Math.min(100, Math.max(1, S.share)) / 100;
+    var sh = S.couple ? Math.min(100, Math.max(1, S.share)) / 100 : 1;
     var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0) + (endOf(S.monthKey).getMonth() === 11 ? S.m13 || 0 : 0) + (endOf(S.monthKey).getMonth() === 6 ? S.m14 || 0 : 0);
     var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split, end: f.end || "", kind: f.kind }; });
     var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
@@ -1345,7 +1350,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("bk-warn").hidden = !(S.saved && (nsp >= 10 || Object.keys(S.history).length) && (!S.lastBackup || Date.now() - S.lastBackup > 30 * 864e5));
     function pc(x) { return p.sal > 0 ? Math.round(x / p.sal * 100) + "%" : "0%"; }
     var rows = {
-      must: p.fixed.map(function (f) { return [f.name, (f.end ? "Fino a " + mlabel(f.end) + ". " : "") + (f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Ogni mese"), f.amt]; }),
+      must: p.fixed.map(function (f) { return [f.name, (f.end ? "Fino a " + mlabel(f.end) + ". " : "") + (S.couple && f.split && S.share < 100 ? "La tua quota: " + nf.format(S.share) + "%" : "Ogni mese"), f.amt]; }),
       move: p.routes.filter(function (r) { return r.tollRaw > 0; }).map(function (r) { return [(r.car === "none" ? "Biglietto · " : "Pedaggio · ") + r.name, r.n + (r.n === 1 ? " viaggio" : " viaggi") + " × andata e ritorno × " + eur2.format(r.toll1), Math.round(r.tollRaw)]; }).concat([
              ["Carburante auto a benzina", nf.format(Math.round(p.kmB)) + " km ÷ " + nf.format(S.kmlB) + " km/l × " + eur2.format(S.priceB) + " ≈ " + Math.round(p.litB) + " litri", p.fuelB],
              ["Carburante auto diesel", nf.format(Math.round(p.kmD)) + " km ÷ " + nf.format(S.kmlD) + " km/l × " + eur2.format(S.priceD) + " ≈ " + Math.round(p.litD) + " litri", p.fuelD]]),
@@ -1413,8 +1418,8 @@ create policy "solo i miei dati" on stipendio_pilota
     nd.hidden = !(late.length || un.length);
     if (late.length) { nd.className = "small late-t"; nd.textContent = "Scadenze passate: " + late.map(function (f) { return f.name; }).join(", ") + "."; }
     else if (un.length) { nd.className = "small muted"; var d0 = dueInfo(un[0]).diff; nd.textContent = "Prossima scadenza: " + un[0].name + (d0 === 0 ? " oggi." : " tra " + d0 + (d0 === 1 ? " giorno." : " giorni.")); }
-    var cp = $("couple"); cp.hidden = !(S.sal2 > 0);
-    if (S.sal2 > 0) {
+    var cp = $("couple"); cp.hidden = !(S.couple && S.sal2 > 0);
+    if (S.couple && S.sal2 > 0) {
       var tot = S.salary + S.sal2, full = Math.round(p.fixed.reduce(function (a, f) { return a + f.full; }, 0)), mine = p.fixedTot;
       $("cp-tot").textContent = eur.format(tot); $("cp-full").textContent = eur.format(full); $("cp-mine").textContent = eur.format(mine);
       $("cp-text").textContent = "Dividi le spese fisse così: tu " + nf.format(S.share) + "% (" + eur.format(mine) + "), lei " + nf.format(100 - S.share) + "% (" + eur.format(full - mine) + "). In proporzione agli stipendi sarebbe tu " + Math.round(S.salary / tot * 100) + "% e lei " + Math.round(S.sal2 / tot * 100) + "%. Cambia nel Profilo.";
@@ -1519,7 +1524,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.17";
+  var APP_VERSION = "2026-11-13.18";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -1601,6 +1606,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
     if ($("payDay").oninput) $("payDay").oninput();
+    $("couple-on").checked = !!src.couple; coupleUI(!!src.couple);
     var me = src.me || DEFAULTS.me;
     $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || "";
     renderFixedEditor(src.fixedList, me.housing);
@@ -1621,6 +1627,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (label) { var bt = document.createElement("button"); bt.type = "button"; bt.textContent = label; bt.style.cssText = "margin-left:12px;padding:6px 12px"; bt.onclick = function () { t.hidden = true; fn(); }; t.appendChild(bt); }
     t.hidden = false; clearTimeout(tt); tt = setTimeout(function () { t.hidden = true; }, label ? 6000 : 2600);
   }
+  function coupleUI(on) { $("pc-body").hidden = !on; document.documentElement.setAttribute("data-couple", on ? "1" : "0"); }
   function saveForm() {
     var next = {}, bad = 0;
     FIELDS.forEach(function (f) {
@@ -1631,7 +1638,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!(next.salary > 0)) { toast("Scrivi quanto prendi al mese"); $("salary").focus(); return; }
     next.years = parseInt($("years").value, 10);
     var pr = "bilanciato"; document.querySelectorAll('input[name="profile"]').forEach(function (r) { if (r.checked) pr = r.value; });
-    next.profile = pr; next.saved = true; next.fixedList = readFixedEditor(); next.routes = readRoutes();
+    next.couple = $("couple-on").checked; next.profile = pr; next.saved = true; next.fixedList = readFixedEditor(); next.routes = readRoutes();
     next.me = { name: $("me-name").value.trim().slice(0, 30), live: $("me-live").value.trim().slice(0, 40), work: $("me-work").value.trim().slice(0, 40), home: $("me-home").value.trim().slice(0, 40), housing: readHousing() || S.me.housing };
     var oldCur = CUR;
     Object.assign(S, next); applyPay();
@@ -1891,7 +1898,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     h += '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>';
     if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
-    h += '<label class="chk"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
+    h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     d.innerHTML = h;
     var del = d.querySelector(".fx-del");
@@ -2346,6 +2353,7 @@ create policy "solo i miei dati" on stipendio_pilota
       adoptState(o, false);
       $("bk-text").value = ""; toast("Dati ripristinati ✓");
     };
+    $("couple-on").onchange = function () { coupleUI(this.checked); };
     $("split-prop").onclick = function () {
       var a = pnum($("salary").value), b = pnum($("sal2").value);
       if (!(a > 0) || !(b > 0)) { toast("Scrivi prima i due stipendi"); return; }
@@ -2966,7 +2974,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
