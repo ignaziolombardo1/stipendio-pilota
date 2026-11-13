@@ -531,6 +531,12 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .tdweek button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
 .tdweek button:disabled { opacity: 0.35; }
 .tdweek small { font-size: 10px; color: var(--muted); } .tdweek i { font-style: normal; font-weight: 800; font-size: 11px; color: var(--accent); }
+.protbl { overflow-x: auto; margin: 8px 0; max-height: 420px; overflow-y: auto; }
+.protbl table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.protbl th { text-align: left; font-size: 12px; color: var(--muted); padding: 6px 4px; position: sticky; top: 0; background: var(--surface); }
+.protbl td { padding: 7px 4px; border-top: 1px solid var(--line); vertical-align: top; white-space: nowrap; }
+.protbl td small { display: block; color: var(--muted); white-space: normal; }
+.protbl tr.no td { color: var(--muted); }
 .wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
 .wkshift span { font-weight: 700; font-size: 14px; }
 .wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
@@ -775,6 +781,13 @@ html, body { touch-action: pan-x pan-y; }
       <div id="reg-list"></div>
       <h3 style="margin:10px 0 0;font-size:15px">Mesi passati</h3>
       <div id="reg-hist"></div>
+    </section>
+    <section data-sub="calendario" class="card" aria-labelledby="t-pro">
+      <h2 id="t-pro">Prospetto del mese</h2>
+      <div class="navline"><button type="button" id="pro-prev" aria-label="Mese precedente">‹</button><b id="pro-title"></b><button type="button" id="pro-next" aria-label="Mese successivo">›</button></div>
+      <div class="regstats" id="pro-stats"></div>
+      <div class="protbl" id="pro-tbl"></div>
+      <div class="btnrow"><button type="button" id="pro-csv">Scarica per Excel</button><button type="button" id="pro-copy">Copia il riepilogo</button></div>
     </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-rp">
       <h2 id="t-rp">Stima e reale dei tragitti</h2>
@@ -1412,7 +1425,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { workMode: "fisso", shifts: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { workMode: "fisso", shifts: {}, shH: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1826,7 +1839,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.37";
+  var APP_VERSION = "2026-11-13.38";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3489,6 +3502,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function annNorm() {
     if (!S.shifts || typeof S.shifts !== "object" || Array.isArray(S.shifts)) S.shifts = {};
+    if (!S.shH || typeof S.shH !== "object" || Array.isArray(S.shH)) S.shH = {};
     if (S.workMode !== "turni") S.workMode = "fisso";
     if (Array.isArray(S.routes) && S.routes.length && !S.routes.some(function (r) { return r.work; })) S.routes[0].work = true;
     if (!Array.isArray(S.annual)) S.annual = [];
@@ -3733,26 +3747,66 @@ create policy "solo i miei dati" on stipendio_pilota
   var SHIFT_S = [["", "Giornata"], ["m", "Mattina"], ["p", "Pomeriggio"], ["s", "Sera"], ["n", "Notte"], ["x", "Spezzato"]];
   function shText(sh) { var t = SHIFT_T.filter(function (x) { return x[0] === sh.t; })[0], sb = SHIFT_S.filter(function (x) { return x[0] === sh.s; })[0]; return (t ? t[1] : "") + (sh.t === "L" && sh.s && sb ? " · " + sb[1] : ""); }
   function workRoutes() { return S.routes.filter(function (r) { return r.work; }); }
-  function setShift(k, t, sub, note) {
+  function setShift(k, t, sub, note, h1, h2) {
     if (!t) { delete S.shifts[k]; workRoutes().forEach(function (r) { var d = S.dayo[k]; if (d) { delete d[r.id]; if (!Object.keys(d).length) delete S.dayo[k]; } }); return; }
-    S.shifts[k] = { t: t, s: t === "L" ? sub || "" : "", n: (note || "").slice(0, 60) };
-    workRoutes().forEach(function (r) { setTrip(k, r, t === "L"); });
+    var old = S.shifts[k] || {}, hh = t === "L" ? { h1: h1 === undefined ? old.h1 || "" : h1, h2: h2 === undefined ? old.h2 || "" : h2 } : { h1: "", h2: "" };
+    S.shifts[k] = { t: t, s: t === "L" ? sub || "" : "", n: (note || "").slice(0, 60), h1: hh.h1, h2: hh.h2 };
+    workRoutes().forEach(function (r) { var on = tripKind(r, k) !== "n"; if (on !== (t === "L")) setTrip(k, r, t === "L"); });
   }
   function programWorks(k) { return workRoutes().some(function (r) { return r.wd.indexOf(dOf(k).getDay()) >= 0; }); }
   function renderDayShift(k) {
     var cd = $("cal-day"); if (!cd) return;
     var sh = S.shifts[k] || null, wrap = document.createElement("div"); wrap.className = "shd";
     wrap.innerHTML = '<p class="small muted">Com\'è andata questo giorno? ' + (workRoutes().length ? "Dal programma: " + (programWorks(k) ? "lavoro." : "riposo.") : "") + '</p><div class="shchips">' + SHIFT_T.map(function (t) { return '<button type="button" data-t="' + t[0] + '" aria-pressed="' + !!(sh && sh.t === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>"
-      + '<div class="fields" id="sh-x"' + (sh && sh.t === "L" ? "" : " hidden") + '><label class="f">Turno<select id="sh-s">' + SHIFT_S.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + "</option>"; }).join("") + '</select></label><label class="f">Nota<input id="sh-n" type="text" maxlength="60" autocomplete="off"></label></div>'
+      + '<div class="fields" id="sh-x"' + (sh && sh.t === "L" ? "" : " hidden") + '><label class="f">Turno<select id="sh-s">' + SHIFT_S.map(function (x) { return '<option value="' + x[0] + '">' + x[1] + "</option>"; }).join("") + '</select></label><label class="f">Dalle<input id="sh-h1" type="time"></label><label class="f">Alle<input id="sh-h2" type="time"></label><label class="f">Nota<input id="sh-n" type="text" maxlength="60" autocomplete="off"></label></div>'
       + (sh ? '<button type="button" class="link" id="sh-clr">Togli l\'indicazione</button>' : "");
     cd.insertBefore(wrap, cd.children[1] || null);
-    if (sh) { $("sh-s").value = sh.s || ""; $("sh-n").value = sh.n || ""; }
-    var save = function (t) { setShift(k, t, $("sh-s") ? $("sh-s").value : "", $("sh-n") ? $("sh-n").value : ""); persist(); renderAll(); };
-    wrap.querySelectorAll("button[data-t]").forEach(function (b) { b.onclick = function () { save(this.getAttribute("data-t")); }; });
-    if ($("sh-s")) { $("sh-s").onchange = function () { save("L"); }; $("sh-n").onchange = function () { save(S.shifts[k] ? S.shifts[k].t : "L"); }; }
+    if (sh) { $("sh-s").value = sh.s || ""; $("sh-n").value = sh.n || ""; $("sh-h1").value = sh.h1 || ""; $("sh-h2").value = sh.h2 || ""; }
+    var save = function (t, fill) {
+      var sub = $("sh-s") ? $("sh-s").value : "", h1 = $("sh-h1") ? $("sh-h1").value : undefined, h2 = $("sh-h2") ? $("sh-h2").value : undefined;
+      if (fill && S.shH[sub || "-"] && !(sh && sh.h1)) { h1 = S.shH[sub || "-"][0]; h2 = S.shH[sub || "-"][1]; }
+      if (t === "L" && h1 && h2) S.shH[sub || "-"] = [h1, h2];
+      setShift(k, t, sub, $("sh-n") ? $("sh-n").value : "", h1, h2); persist(); renderAll();
+    };
+    wrap.querySelectorAll("button[data-t]").forEach(function (b) { b.onclick = function () { save(this.getAttribute("data-t"), true); }; });
+    if ($("sh-s")) { $("sh-s").onchange = function () { $("sh-h1").value = ""; $("sh-h2").value = ""; save("L", true); }; ["sh-n", "sh-h1", "sh-h2"].forEach(function (id) { $(id).onchange = function () { save(S.shifts[k] ? S.shifts[k].t : "L"); }; }); }
     if ($("sh-clr")) $("sh-clr").onclick = function () { setShift(k, "", "", ""); persist(); renderAll(); };
   }
   function periodDays(key) { var out = [], e = endOf(key); for (var d = new Date(startOf(key)); d <= e; d.setDate(d.getDate() + 1)) out.push(ymd(d)); return out; }
+  var proKey = null;
+  function durMin(h1, h2) { if (!h1 || !h2) return 0; var a = h1.split(":"), b = h2.split(":"), m1 = +a[0] * 60 + +a[1], m2 = +b[0] * 60 + +b[1]; if (m2 <= m1) m2 += 1440; return m2 - m1; }
+  function fmtH(m) { return Math.floor(m / 60) + "h" + (m % 60 ? " " + (m % 60) + "m" : ""); }
+  function proData(key) {
+    var rows = [], cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, mins = 0, none = 0;
+    periodDays(key).forEach(function (k) {
+      var sh = S.shifts[k], d = dOf(k), sb = sh ? SHIFT_S.filter(function (x) { return x[0] === sh.s; })[0] : null, m = sh && sh.t === "L" ? durMin(sh.h1, sh.h2) : 0;
+      if (sh) cnt[sh.t]++; else none++; mins += m;
+      rows.push({ k: k, day: WDN[d.getDay()] + " " + d.getDate(), st: sh ? (SHIFT_T.filter(function (x) { return x[0] === sh.t; })[0] || [0, ""])[1] : "—", tr: sh && sh.t === "L" && sb && sh.s ? sb[1] : "", ori: sh && sh.h1 && sh.h2 ? sh.h1 + "–" + sh.h2 : "", ore: m ? fmtH(m) : "", n: sh ? sh.n || "" : "" });
+    });
+    return { rows: rows, cnt: cnt, mins: mins, none: none };
+  }
+  function renderProspetto() {
+    var box = $("pro-tbl"); if (!box) return;
+    if (!proKey) proKey = S.monthKey;
+    var D = proData(proKey);
+    $("pro-title").textContent = mlabel(proKey);
+    $("pro-next").disabled = proKey >= S.monthKey;
+    $("pro-stats").innerHTML = SHIFT_T.map(function (t) { return '<span class="regchip"><b class="num">' + D.cnt[t[0]] + "</b> " + t[1].toLowerCase() + "</span>"; }).join("") + '<span class="regchip"><b class="num">' + (D.mins ? fmtH(D.mins) : "0h") + "</b> ore</span>";
+    box.innerHTML = "<table><thead><tr><th>Giorno</th><th>Stato</th><th>Turno</th><th>Orario</th><th>Ore</th></tr></thead><tbody>" + D.rows.map(function (r) { return '<tr class="' + (r.st === "—" ? "no" : "") + '"><td>' + r.day + "</td><td>" + r.st + (r.n ? "<small>" + esc(r.n) + "</small>" : "") + "</td><td>" + r.tr + "</td><td>" + r.ori + "</td><td>" + r.ore + "</td></tr>"; }).join("") + "</tbody></table>";
+    $("pro-prev").onclick = function () { proKey = prevKey(proKey); renderProspetto(); };
+    $("pro-next").onclick = function () { if (proKey < S.monthKey) { proKey = nextKey(proKey); renderProspetto(); } };
+    $("pro-csv").onclick = function () {
+      var L = [["Data", "Giorno", "Stato", "Turno", "Dalle", "Alle", "Ore", "Nota"]];
+      D.rows.forEach(function (r) { var sh = S.shifts[r.k] || {}; L.push([r.k.split("-").reverse().join("/"), r.day.split(" ")[0], r.st === "—" ? "" : r.st, r.tr, sh.h1 || "", sh.h2 || "", r.ore, r.n]); });
+      L.push([]); SHIFT_T.forEach(function (t) { L.push([t[1], D.cnt[t[0]]]); }); L.push(["Ore totali", fmtH(D.mins)]);
+      var csv = "\ufeff" + L.map(function (r) { return r.map(function (c) { c = String(c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(";"); }).join("\r\n");
+      try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "lavoro-" + proKey + ".csv"; document.body.appendChild(a); a.click(); a.remove(); toast("File scaricato ✓"); } catch (e) { toast("Download non riuscito"); }
+    };
+    $("pro-copy").onclick = function () {
+      var t = "Lavoro " + mlabel(proKey) + "\n" + SHIFT_T.map(function (x) { return x[1] + ": " + D.cnt[x[0]]; }).join(" · ") + "\nOre totali: " + fmtH(D.mins) + "\n" + D.rows.filter(function (r) { return r.st !== "—"; }).map(function (r) { return r.day + " " + r.st + (r.tr ? " " + r.tr : "") + (r.ori ? " " + r.ori : ""); }).join("\n");
+      try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Copia non riuscita"); }); } catch (e) { toast("Copia non riuscita"); }
+    };
+  }
   function renderWork() {
     var seg = $("wm-seg"); if (!seg) return; seg.innerHTML = "";
     [["fisso", "Orario fisso"], ["turni", "Su turni"]].forEach(function (m) {
@@ -3770,7 +3824,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var box = $("reg-list"); box.innerHTML = "";
     list.sort(function (a, b) { return a[0] < b[0] ? 1 : -1; }).slice(0, 31).forEach(function (it) {
       var d = dOf(it[0]), row = document.createElement("div"); row.className = "entry e4";
-      row.innerHTML = '<div class="t">' + WDN[d.getDay()] + " " + d.getDate() + " " + mnameD(d) + "<small>" + esc(shText(it[1])) + (it[1].n ? " · " + esc(it[1].n) : "") + '</small></div><span></span><span></span><button type="button" class="x del" aria-label="Togli">×</button>';
+      row.innerHTML = '<div class="t">' + WDN[d.getDay()] + " " + d.getDate() + " " + mnameD(d) + "<small>" + esc(shText(it[1])) + (it[1].h1 && it[1].h2 ? " · " + it[1].h1 + "–" + it[1].h2 : "") + (it[1].n ? " · " + esc(it[1].n) : "") + '</small></div><span></span><span></span><button type="button" class="x del" aria-label="Togli">×</button>';
       row.querySelector(".del").onclick = function () { setShift(it[0], "", "", ""); persist(); renderAll(); };
       box.appendChild(row);
     });
@@ -3819,7 +3873,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
