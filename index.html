@@ -1032,6 +1032,13 @@ create policy "stipendio pilota documenti" on storage.objects
       <label class="f" for="payDay">Giorno della paga (1–31)<input id="payDay" type="text" inputmode="numeric" autocomplete="off"></label>
       <p class="small muted" id="pay-prev"></p>
     </section>
+    <section data-sub="io" class="card" aria-labelledby="t-nf">
+      <h2 id="t-nf">Notifica dello stipendio</h2>
+      <p class="hint">Nel giorno della paga il telefono ti manda una notifica per ricordarti di scrivere quanto hai preso. Serve l'account cloud (Profilo → Dati). Su iPhone l'app deve essere aggiunta alla schermata Home.</p>
+      <label class="chk"><input type="checkbox" id="nf-on"><span>Avvisami con una notifica</span></label>
+      <label class="f" for="nf-hour">A che ora<select id="nf-hour"></select></label>
+      <p class="small muted" id="nf-msg"></p>
+    </section>
     <section data-sub="io" class="card" aria-labelledby="t-mm">
       <h2 id="t-mm">Tredicesima e quattordicesima</h2>
       <p class="hint">Se le hai, scrivi quanto ti arriva in busta, al netto. Il piano le aggiunge alle entrate di dicembre e di luglio. Lascia 0 se non le hai.</p>
@@ -1331,7 +1338,7 @@ create policy "solo i miei dati" on stipendio_pilota
   migrate(typeof st !== "undefined" ? st : null);
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
   var warned = false;
-  function persist(keepTs) { if (keepTs !== true) S.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); if (keepTs !== true) queueSync(); } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
+  function persist(keepTs) { if (keepTs !== true) S.ts = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); if (keepTs !== true) queueSync(); try { nfResync(); } catch (x) {} } catch (e) { if (!warned) { warned = true; toast("Attenzione: in questo browser i dati non si possono salvare"); } } }
   function $(id) { return document.getElementById(id); }
   function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function txt(n) { return String(n).replace(".", ","); }
@@ -1664,7 +1671,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.24";
+  var APP_VERSION = "2026-11-13.25";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2616,7 +2623,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-sql-copy").onclick = function () { var t = $("sy-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
     renderSync();
   }
-  function syInit() { renderSync(); if (syOn() && sy.uid) syncNow(false); }
+  function syInit() { renderSync(); if (syOn() && sy.uid) { syncNow(false); nfResync(); } }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible" && syOn() && sy.uid && navigator.onLine) syncNow(false); });
 
   /* ---------- navigazione ---------- */
@@ -3323,6 +3330,49 @@ create policy "solo i miei dati" on stipendio_pilota
     persist(); ["ct-name", "ct-role", "ct-phone", "ct-note"].forEach(function (i) { $(i).value = ""; }); renderContacts(); toast("Contatto aggiunto ✓");
   }
 
+  /* ---------- notifica stipendio (Web Push) ---------- */
+  var VAPID_PUB = "BPrtbaC5Hn8Mh1IDbWsT7-MTaAUdD_fuY7Qa4xp_DWYvxWiamyCe0EQEyB-GcZRb-_Xjir5DjmQLwT_-PUrVwFc", NFK = "sp-notif-v1", pnf = { on: false, hour: 9, sent: "" };
+  try { pnf = Object.assign(pnf, JSON.parse(localStorage.getItem(NFK) || "{}")); } catch (e) {}
+  function nfSave() { try { localStorage.setItem(NFK, JSON.stringify(pnf)); } catch (e) {} }
+  function nfSupported() { return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window; }
+  function b64u(t) { var p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  function nfPost(sub) {
+    var tz = "Europe/Rome"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
+    return syFetch("/rest/v1/sp_push?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ user_id: sy.uid, sub: sub, payday: PAYDAY, hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }) }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); pnf.sent = PAYDAY + "-" + pnf.hour; nfSave(); });
+  }
+  function nfMsg(t) { var m = $("nf-msg"); if (m) m.textContent = t; }
+  function nfEnable() {
+    if (!nfSupported()) { nfMsg("Questo telefono o browser non supporta le notifiche dell'app. Su iPhone aggiungi prima l'app alla schermata Home."); return Promise.reject(new Error("unsupported")); }
+    if (!(syOn() && sy.uid)) { nfMsg("Per le notifiche serve l'account cloud: accedi in Profilo → Dati."); return Promise.reject(new Error("nologin")); }
+    return Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") { nfMsg("Le notifiche sono bloccate: consentile dalle impostazioni del telefono per questa app."); throw new Error("perm"); }
+      return navigator.serviceWorker.ready;
+    }).then(function (reg) {
+      return reg.pushManager.getSubscription().then(function (x) { return x || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) }); });
+    }).then(function (sub) { return nfPost(sub.toJSON ? sub.toJSON() : sub); }).then(function () { nfMsg("Attiva ✓ Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); }, function (e) { if (!$("nf-msg").textContent || /^Attiva/.test($("nf-msg").textContent)) nfMsg("Non sono riuscito ad attivarla. Controlla di aver eseguito il passaggio su Supabase e riprova."); throw e; });
+  }
+  function nfDisable() {
+    nfMsg("Notifica spenta.");
+    var done = function () {};
+    if (nfSupported()) navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (x) { if (x) x.unsubscribe(); }).catch(done);
+    if (syOn() && sy.uid) syFetch("/rest/v1/sp_push?user_id=eq." + encodeURIComponent(sy.uid), { method: "DELETE" }).catch(done);
+  }
+  function nfResync() { if (pnf.on && syOn() && sy.uid && pnf.sent !== PAYDAY + "-" + pnf.hour) nfEnable().catch(function () {}); }
+  function renderNotif() {
+    var on = $("nf-on"); if (!on) return;
+    var hs = $("nf-hour"); if (!hs.options.length) for (var h = 6; h <= 21; h++) { var o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; hs.appendChild(o); }
+    on.checked = !!pnf.on; hs.value = String(pnf.hour);
+    if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00.");
+  }
+  function initNotif() {
+    $("nf-on").onchange = function () {
+      var want = this.checked, box = this; pnf.on = want; nfSave();
+      if (want) nfEnable().catch(function () { pnf.on = false; nfSave(); box.checked = false; }); else nfDisable();
+    };
+    $("nf-hour").onchange = function () { pnf.hour = +this.value; nfSave(); if (pnf.on) { nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); nfResync(); } };
+    renderNotif();
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["home", "Aspetto"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
@@ -3408,7 +3458,7 @@ create policy "solo i miei dati" on stipendio_pilota
   });
   applyTheme(); renderSkins(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
-  $("sd-form").onsubmit = addDayExpense; $("ct-add").onclick = addContact;
+  initNotif(); $("sd-form").onsubmit = addDayExpense; $("ct-add").onclick = addContact;
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
   $("home-custom").onclick = function () { location.hash = "#profilo/home"; };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };

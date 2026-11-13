@@ -1,5 +1,5 @@
 // Fa funzionare l'app anche senza connessione. I file dell'app si aggiornano da soli quando c'è rete.
-var CACHE = "stipendio-pilota-v31";
+var CACHE = "stipendio-pilota-v32";
 var SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); }));
@@ -27,4 +27,16 @@ self.addEventListener("fetch", function (e) {
       });
     }));
   }
+});
+self.addEventListener("push", function (e) {
+  var d = {}; try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "Stipendio Pilota", { body: d.body || "Oggi è il giorno della paga.", icon: "./icons/icon-192.png", badge: "./icons/icon-192.png", tag: "stipendio", data: { url: d.url || "./#home" } }));
+});
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "./#home";
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) { if ("focus" in list[i]) { list[i].navigate && list[i].navigate(url); return list[i].focus(); } }
+    return self.clients.openWindow(url);
+  }));
 });
