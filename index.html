@@ -1139,6 +1139,7 @@ create policy "stipendio pilota documenti" on storage.objects
         <a href="#profilo/auto" data-mod="viaggi"><b>Viaggi e auto</b><small>Tragitti, carburante, pedaggi</small></a>
         <a href="#profilo/budget"><b>Budget</b><small>Quanto metti da parte e come dividi il mese</small></a>
         <a href="#profilo/investi" data-mod="invest"><b>Investimenti</b><small>Risparmi, piano d'accumulo, broker</small></a>
+        <a href="#profilo/condivisa"><b>Casa condivisa</b><small>Spese in comune con chi vuoi. Il resto resta privato</small></a>
         <a href="#profilo/dati"><b>Dati, cloud e backup</b><small>Account cloud, esporta, importa, cancella</small></a>
       </div>
     </nav>
@@ -1309,6 +1310,31 @@ create policy "stipendio pilota documenti" on storage.objects
       <p class="hint">Accendi le schede che vuoi vedere e spostale con le frecce. La scheda in alto, "Oggi puoi spendere", resta sempre. Le modifiche valgono subito.</p>
       <div id="he-list"></div>
       <button type="button" id="he-reset" style="margin-top:12px">Ripristina la Home di partenza</button>
+    </section>
+    <section data-sub="condivisa" class="card" aria-labelledby="t-cs">
+      <h2 id="t-cs">Casa condivisa</h2>
+      <p class="hint">Un posto per le spese in comune. Chi entra vede solo le spese che inserite qui: il resto dell'app resta privato.</p>
+      <div id="cs-off" hidden><p class="empty">Serve l'account cloud. Attivalo in Altro → Dati, poi torna qui.</p></div>
+      <div id="cs-none" hidden>
+        <h3 style="margin:8px 0 4px;font-size:15px">Crea una casa</h3>
+        <div class="fields"><label class="f" for="cs-name">Nome<input id="cs-name" type="text" maxlength="30" autocomplete="off" placeholder="Es. Casa nostra"></label><label class="f" for="cs-nick">Come ti chiamano<input id="cs-nick" type="text" maxlength="30" autocomplete="off"></label></div>
+        <button type="button" class="primary" id="cs-new">Crea e ottieni il codice</button>
+        <h3 style="margin:16px 0 4px;font-size:15px">Oppure entra con un codice</h3>
+        <label class="f" for="cs-code">Codice che ti hanno dato<input id="cs-code" type="text" maxlength="8" autocomplete="off" autocapitalize="characters"></label>
+        <button type="button" id="cs-join">Entra</button>
+      </div>
+      <div id="cs-in" hidden>
+        <div class="line"><b id="cs-title"></b><button type="button" class="link" id="cs-copy"></button></div>
+        <p class="small muted" id="cs-members"></p>
+        <div class="navline"><button type="button" id="cs-prev" aria-label="Mese precedente">‹</button><b id="cs-month"></b><button type="button" id="cs-next" aria-label="Mese successivo">›</button></div>
+        <p id="cs-bal" style="margin:8px 0"></p>
+        <h3 style="margin:10px 0 4px;font-size:15px">Aggiungi una spesa che hai pagato tu</h3>
+        <div class="fields"><label class="f" for="cs-amt">Importo (€)<input id="cs-amt" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="cs-cat">Cosa<select id="cs-cat"><option>Spesa</option><option>Bollette</option><option>Affitto</option><option>Ristorante</option><option>Svago</option><option>Altro</option></select></label><label class="f" for="cs-day">Giorno<input id="cs-day" type="date"></label><label class="f" for="cs-note">Nota<input id="cs-note" type="text" maxlength="60" autocomplete="off"></label></div>
+        <button type="button" class="primary" id="cs-add">Aggiungi</button>
+        <div id="cs-list"></div>
+        <button type="button" class="link" id="cs-leave">Esci da questa casa</button>
+      </div>
+      <p class="small" id="cs-msg" role="status"></p>
     </section>
     <section data-sub="dati" class="card" aria-labelledby="t-th">
       <h2 id="t-th">Aspetto e installazione</h2>
@@ -1870,7 +1896,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.41";
+  var APP_VERSION = "2026-11-13.42";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3781,7 +3807,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var out = $("rz-out").checked, jobs = [];
     if (syOn() && sy.uid) {
       S.docs.forEach(function (d) { jobs.push(cloudDel(d).catch(function () {})); });
-      ["stipendio_pilota", "sp_push"].forEach(function (t) { jobs.push(syFetch("/rest/v1/" + t + "?user_id=eq." + encodeURIComponent(sy.uid), { method: "DELETE" }).catch(function () {})); });
+      ["stipendio_pilota", "sp_push", "sp_casa_exp", "sp_casa_m"].forEach(function (t) { jobs.push(syFetch("/rest/v1/" + t + "?user_id=eq." + encodeURIComponent(sy.uid), { method: "DELETE" }).catch(function () {})); });
     }
     if (nfSupported()) jobs.push(navigator.serviceWorker.ready.then(function (r) { return r.pushManager.getSubscription(); }).then(function (x) { if (x) return x.unsubscribe(); }).catch(function () {}));
     jobs.push(new Promise(function (res) { try { var r = indexedDB.deleteDatabase("sp-files"); r.onsuccess = r.onerror = r.onblocked = function () { res(); }; } catch (e) { res(); } }));
@@ -3918,9 +3944,71 @@ create policy "solo i miei dati" on stipendio_pilota
     $("normH").onchange = function () { var v = parseFloat(this.value.replace(",", ".")); if (v > 0 && v <= 24) S.normH = v; this.value = String(S.normH).replace(".", ","); persist(); renderAll(); };
   }
 
+  /* ---------- casa condivisa ---------- */
+  var casa = { id: "", name: "", code: "", members: [], exps: [], cm: "", loaded: false, leaving: false };
+  function csMsg(t) { var e = $("cs-msg"); if (e) e.textContent = t || ""; }
+  function csJson(r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(String((j && (j.message || j.msg)) || "errore " + r.status)); return j; }); }
+  function csRpc(fn, body) { return syFetch("/rest/v1/rpc/" + fn, { method: "POST", body: JSON.stringify(body) }).then(csJson); }
+  function csLoad() {
+    if (!syOn() || !sy.uid) return Promise.resolve();
+    return syFetch("/rest/v1/sp_casa_m?select=casa_id,nick,sp_casa(id,name,code)&user_id=eq." + encodeURIComponent(sy.uid) + "&limit=1").then(csJson).then(function (rows) {
+      if (!rows.length || !rows[0].sp_casa) { casa.id = ""; casa.loaded = true; return; }
+      var c = rows[0].sp_casa; casa.id = c.id; casa.name = c.name; casa.code = c.code;
+      return Promise.all([
+        syFetch("/rest/v1/sp_casa_m?select=user_id,nick&casa_id=eq." + c.id).then(csJson),
+        syFetch("/rest/v1/sp_casa_exp?select=id,user_id,day,amount,cat,note&casa_id=eq." + c.id + "&order=day.desc,created_at.desc&limit=500").then(csJson)
+      ]).then(function (r) { casa.members = r[0]; casa.exps = r[1]; casa.loaded = true; });
+    });
+  }
+  function csName(uid) { var m = casa.members.filter(function (x) { return x.user_id === uid; })[0]; return m && m.nick ? m.nick : "Qualcuno"; }
+  function renderCasa() {
+    if (!$("cs-off")) return;
+    var on = syOn() && !!sy.uid;
+    $("cs-off").hidden = on; $("cs-none").hidden = true; $("cs-in").hidden = true;
+    if (!on) return;
+    if (!casa.cm) casa.cm = cmOf(TODAY_KEY);
+    if (!casa.loaded) { csMsg("Carico…"); csLoad().then(function () { csMsg(""); renderCasa(); }).catch(function (e) { csMsg("Non riesco a leggere la casa: " + e.message + ". Hai lanciato il testo SQL in Supabase?"); }); return; }
+    if (!casa.id) {
+      $("cs-none").hidden = false; if (!$("cs-nick").value) $("cs-nick").value = (S.me && S.me.name) || "";
+      $("cs-new").onclick = function () { var nick = $("cs-nick").value.trim(); if (!nick) { csMsg("Scrivi come ti chiamano."); return; } csMsg("Creo…"); csRpc("sp_casa_new", { p_name: $("cs-name").value, p_nick: nick }).then(function () { casa.loaded = false; renderCasa(); }).catch(function (e) { csMsg("Non riuscito: " + e.message); }); };
+      $("cs-join").onclick = function () { var nick = $("cs-nick").value.trim(), code = $("cs-code").value.trim(); if (!nick || !code) { csMsg("Scrivi il tuo nome e il codice."); return; } csMsg("Entro…"); csRpc("sp_casa_join", { p_code: code, p_nick: nick }).then(function () { casa.loaded = false; renderCasa(); }).catch(function (e) { csMsg("Non riuscito: " + e.message); }); };
+      return;
+    }
+    csMsg(""); $("cs-in").hidden = false;
+    $("cs-title").textContent = casa.name; $("cs-copy").textContent = "Codice " + casa.code + " · copia";
+    $("cs-copy").onclick = function () { try { navigator.clipboard.writeText(casa.code).then(function () { toast("Codice copiato ✓"); }, function () { toast("Codice: " + casa.code); }); } catch (e) { toast("Codice: " + casa.code); } };
+    $("cs-members").textContent = "Dentro: " + casa.members.map(function (m) { return m.nick || "Qualcuno"; }).join(", ") + ". Per invitare qualcuno dagli il codice.";
+    $("cs-month").textContent = cmLabel(casa.cm);
+    $("cs-next").disabled = casa.cm >= cmOf(TODAY_KEY);
+    $("cs-prev").onclick = function () { casa.cm = cmShift(casa.cm, -1); renderCasa(); };
+    $("cs-next").onclick = function () { if (casa.cm < cmOf(TODAY_KEY)) { casa.cm = cmShift(casa.cm, 1); renderCasa(); } };
+    var list = casa.exps.filter(function (e) { return e.day.slice(0, 7) === casa.cm; }), paid = {}, tot = 0;
+    casa.members.forEach(function (m) { paid[m.user_id] = 0; });
+    list.forEach(function (e) { paid[e.user_id] = (paid[e.user_id] || 0) + +e.amount; tot += +e.amount; });
+    var n = Math.max(1, casa.members.length), share = tot / n, bal = casa.members.map(function (m) { return { id: m.user_id, d: Math.round(((paid[m.user_id] || 0) - share) * 100) / 100 }; });
+    var debt = bal.filter(function (b) { return b.d < -0.005; }), cred = bal.filter(function (b) { return b.d > 0.005; }), line = "";
+    if (!tot) line = "Nessuna spesa in comune questo mese."; else if (!debt.length) line = "Totale " + eur.format(tot) + ". Siete in pari ✓"; else line = "Totale " + eur.format(tot) + " (" + eur.format(share) + " a testa). " + debt.map(function (b) { var c = cred[0]; return "<b>" + esc(csName(b.id)) + "</b> deve " + eur.format(-b.d) + (c ? " a <b>" + esc(csName(c.id)) + "</b>" : ""); }).join(". ") + ".";
+    $("cs-bal").innerHTML = line + (tot ? '<br><small class="muted">Divisione a parti uguali. L\'app non sposta soldi: serve solo a fare i conti.</small>' : "");
+    if (!$("cs-day").value) $("cs-day").value = TODAY_KEY;
+    $("cs-add").onclick = function () {
+      var a = pnum($("cs-amt").value), day = $("cs-day").value || TODAY_KEY; if (!(a > 0)) { csMsg("Scrivi l'importo."); return; }
+      csMsg("Salvo…"); syFetch("/rest/v1/sp_casa_exp", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ casa_id: casa.id, day: day, amount: a, cat: $("cs-cat").value, note: $("cs-note").value.trim().slice(0, 60) }) }).then(function (r) { if (!r.ok) throw new Error("errore " + r.status); $("cs-amt").value = ""; $("cs-note").value = ""; casa.loaded = false; renderCasa(); toast("Spesa aggiunta ✓"); }).catch(function (e) { csMsg("Non riuscito: " + e.message); });
+    };
+    var box = $("cs-list"); box.innerHTML = "";
+    list.forEach(function (e) {
+      var d = dOf(e.day), row = document.createElement("div"); row.className = "entry e4";
+      row.innerHTML = '<div class="t">' + esc(e.cat || "Spesa") + "<small>" + csName(e.user_id) + " · " + d.getDate() + " " + mnameD(d) + (e.note ? " · " + esc(e.note) : "") + '</small></div><span class="num">' + eur.format(+e.amount) + "</span><span></span>" + (e.user_id === sy.uid ? '<button type="button" class="x del" aria-label="Togli">×</button>' : "<span></span>");
+      var del = row.querySelector(".del"); if (del) del.onclick = function () { syFetch("/rest/v1/sp_casa_exp?id=eq." + e.id, { method: "DELETE" }).then(function (r) { if (!r.ok) throw new Error("errore " + r.status); casa.loaded = false; renderCasa(); }).catch(function (er) { csMsg("Non riuscito: " + er.message); }); };
+      box.appendChild(row);
+    });
+    if (!list.length) box.innerHTML = '<p class="empty">Ancora nessuna spesa in questo mese.</p>';
+    var lv = $("cs-leave"); lv.textContent = casa.leaving ? "Confermi? Tocca ancora per uscire" : "Esci da questa casa";
+    lv.onclick = function () { if (!casa.leaving) { casa.leaving = true; renderCasa(); return; } casa.leaving = false; csRpc("sp_casa_leave", { p_casa: casa.id }).then(function () { casa.id = ""; casa.loaded = false; renderCasa(); toast("Sei uscito dalla casa"); }).catch(function (e) { csMsg("Non riuscito: " + e.message); }); };
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Lavoro"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
-    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
+    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["condivisa", "Condivisa"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
     var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
@@ -3941,7 +4029,7 @@ create policy "solo i miei dati" on stipendio_pilota
     document.querySelectorAll("#tabs a").forEach(function (a) { var v = a.getAttribute("data-v"); a.hidden = S.tabs.indexOf(v) < 0 || (v === "archivio" && !anyMod(["scad", "doc"])); });
     document.querySelectorAll(".menu a[data-mod], .menu a[data-tab]").forEach(function (a) { var md = a.getAttribute("data-mod"), tb = a.getAttribute("data-tab"); a.hidden = (md && !anyMod(md.split(","))) || (tb && S.tabs.indexOf(tb) >= 0); });
     var sec = $("mg-sec"); if (sec) sec.hidden = !sec.querySelectorAll("a:not([hidden])").length;
-    var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu";
+    var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu" && sub !== "condivisa";
     $("savebar").hidden = !showSave;
     document.body.className = showSave ? "has-save" : "";
     document.querySelectorAll("#tabs a").forEach(function (a) {
@@ -3950,6 +4038,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     if (h === "profilo" && curView !== "profilo") fillForm(S);
     if (h === "profilo" && sub === "comp") { renderHomeEditor(); renderBarEditor(); }
+    if (h === "profilo" && sub === "condivisa") renderCasa();
     curView = h;
     $("fab").hidden = h === "profilo" || h === "archivio" || (h === "spese" && (sub === "spese" || sub === "importa")) || !S.saved;
     window.scrollTo(0, 0);
