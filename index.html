@@ -522,6 +522,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .regstats { display: flex; flex-wrap: wrap; gap: 8px; }
 .regchip { background: var(--soft); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; }
 .regchip b { font-size: 15px; }
+.wk-sh { width: 100%; padding: 8px; margin-bottom: 4px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; }
 .wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
 .wkshift span { font-weight: 700; font-size: 14px; }
 .wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
@@ -747,10 +748,10 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
     </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-wk">
       <h2 id="t-wk">Settimana per settimana</h2>
-      <p class="hint">Più veloce che giorno per giorno: scorri le settimane, correggi i giorni diversi dal programma e conferma.</p>
+      <p class="hint">Per ogni giorno scegli se hai lavorato e dove sei andato. In fondo vedi subito benzina, pedaggi e quante volte hai fatto ogni tragitto.</p>
       <div class="navline"><button type="button" id="wk-prev" aria-label="Settimana precedente">‹</button><b id="wk-title"></b><button type="button" id="wk-next" aria-label="Settimana successiva">›</button></div>
       <div id="wk-grid"></div>
-      <div id="wk-shifts"></div>
+      <div class="wksum" id="wk-sum"></div>
       <div id="wk-quick"></div>
       <button type="button" class="primary" id="wk-conf">Conferma questa settimana</button>
       <p class="small muted" id="wk-st"></p>
@@ -1810,7 +1811,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.34";
+  var APP_VERSION = "2026-11-13.35";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2331,8 +2332,10 @@ create policy "solo i miei dati" on stipendio_pilota
     $("wk-prev").disabled = !days.some(function (x) { return inMonth(addDays(mon, -7 + days.indexOf(x))); }) ; $("wk-next").disabled = !inMonth(addDays(mon, 7)) && !inMonth(addDays(mon, 13));
     $("wk-grid").innerHTML = days.map(function (k) {
       var inm = inMonth(k);
-      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + "</b><div>" + S.routes.map(function (r, ri) { return '<label class="chk"><input type="checkbox" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (didTrip(r, k) ? " checked" : "") + (inm ? "" : " disabled") + '><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span></label>"; }).join("") + "</div></div>";
+      var sh = S.shifts[k];
+      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select>" + S.routes.map(function (r, ri) { return '<label class="chk"><input type="checkbox" data-d="' + k + '" data-r="' + esc(r.id) + '"' + (didTrip(r, k) ? " checked" : "") + (inm ? "" : " disabled") + '><span><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + "</span></label>"; }).join("") + "</div></div>";
     }).join("");
+    $("wk-grid").querySelectorAll("select").forEach(function (se) { se.onchange = function () { var k = this.getAttribute("data-d"), o = S.shifts[k]; setShift(k, this.value, o ? o.s : "", o ? o.n : ""); persist(); renderAll(); }; });
     $("wk-grid").querySelectorAll("input").forEach(function (i) { i.onchange = function () { var r = S.routes.filter(function (x) { return x.id === this.getAttribute("data-r"); }.bind(this))[0]; if (!r) return; setTrip(this.getAttribute("data-d"), r, this.checked); persist(); renderAll(); }; });
     $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="qrow"><span>' + esc(r.name) + '</span><div class="btnrow"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div></div>'; }).join("");
     $("wk-quick").querySelectorAll("button").forEach(function (b) {
@@ -2342,6 +2345,15 @@ create policy "solo i miei dati" on stipendio_pilota
         persist(); renderAll(); toast(none ? "Segnato: nessun viaggio questa settimana" : "Ripristinato il programma");
       };
     });
+    var tw = 0, tk = 0, tt = 0, tf = 0, ws = "";
+    S.routes.forEach(function (r, ri) {
+      var n = days.filter(function (k) { return inMonth(k) && didTrip(r, k); }).length; if (!n) return;
+      var km = n * 2 * r.km, tl = n * 2 * r.toll, kl = r.car === "benzina" ? S.kmlB : S.kmlD, pr = r.car === "benzina" ? S.priceB : S.priceD, fu = r.car === "none" || !(kl > 0) ? 0 : km / kl * pr;
+      tw += n; tk += km; tt += tl; tf += fu;
+      ws += '<div class="rpt"><b><i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name) + '</b><span class="num">' + n + (n === 1 ? " volta" : " volte") + '</span><span class="num">' + eur.format(tl + fu) + "</span></div>";
+    });
+    var lav = days.filter(function (k) { return inMonth(k) && S.shifts[k] && S.shifts[k].t === "L"; }).length;
+    $("wk-sum").innerHTML = '<h3 style="margin:12px 0 4px;font-size:15px">Questa settimana</h3>' + (lav ? '<p class="small muted" style="margin:0 0 6px">Giorni di lavoro segnati: ' + lav + "</p>" : "") + (ws ? ws + '<p style="margin:8px 0 0"><b>' + tw + " viaggi · " + Math.round(tk) + " km · pedaggi " + eur.format(tt) + " · benzina/gasolio " + eur.format(tf) + " · totale " + eur.format(tt + tf) + "</b></p>" : '<p class="empty">Nessun viaggio questa settimana.</p>');
     var done = !!S.conf[mon]; $("wk-conf").textContent = done ? "Settimana confermata ✓ (tocca per togliere)" : "Conferma questa settimana";
     $("wk-conf").onclick = function () { if (S.conf[mon]) delete S.conf[mon]; else S.conf[mon] = 1; persist(); renderAll(); };
     $("wk-st").textContent = done ? "I viaggi di questa settimana contano come reali." : "Finché non confermi, i viaggi di questa settimana restano una stima del programma.";
@@ -3725,18 +3737,6 @@ create policy "solo i miei dati" on stipendio_pilota
       b.onclick = function () { S.workMode = m[0]; persist(); renderAll(); }; seg.appendChild(b);
     });
     $("wm-hint").textContent = S.workMode === "turni" ? "Il programma dei tragitti è solo una stima. Segna giorno per giorno (o settimana per settimana) quando lavori, riposi o sei in ferie: i viaggi e il carburante si aggiornano da soli." : "Vai al lavoro negli stessi giorni ogni settimana. Qui correggi solo le eccezioni (ferie, malattia, permessi) e tieni il tuo registro.";
-    // settimana
-    var wk = $("wk-shifts"); wk.innerHTML = "";
-    var mon = mondayOf(calSel || TODAY_KEY);
-    for (var j = 0; j < 7; j++) {
-      (function (k) {
-        var sh = S.shifts[k], inm = inMonth(k), lab = document.createElement("label"); lab.className = "wkshift";
-        lab.innerHTML = "<span>" + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</span><select aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">—</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '">' + t[1] + "</option>"; }).join("") + "</select>";
-        var se = lab.querySelector("select"); se.value = sh ? sh.t : "";
-        se.onchange = function () { setShift(k, this.value, sh ? sh.s : "", sh ? sh.n : ""); persist(); renderAll(); };
-        wk.appendChild(lab);
-      })(addDays(mon, j));
-    }
     // registro
     var days = periodDays(S.monthKey), cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, list = [], todo = 0;
     days.forEach(function (k) { var sh = S.shifts[k]; if (sh) { cnt[sh.t]++; list.push([k, sh]); } else if (k < TODAY_KEY && S.monthKey === CUR) todo++; });
