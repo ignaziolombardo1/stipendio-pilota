@@ -1173,8 +1173,8 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function applyPay() { PAYDAY = Math.min(31, Math.max(1, Math.round(+S.payDay) || 1)); setPeriod(); }
   setPeriod();
-  function mlabel(key) { return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(endOf(key)); }
-  function mname(key) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(endOf(key)); }
+  function mlabel(key) { return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(startOf(key)); }
+  function mname(key) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(startOf(key)); }
   function mnameCal(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(new Date(+p[0], +p[1] - 1, 1)); }
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
@@ -1597,7 +1597,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.20";
+  var APP_VERSION = "2026-11-13.21";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
