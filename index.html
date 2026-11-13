@@ -415,6 +415,33 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .rcb small { color: var(--muted); font-size: 12.5px; }
 .tip { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-radius: 16px; padding: 12px 14px; margin: 0 0 12px; font-size: 14.5px; }
 :root[data-couple="0"] .fx-split-l { display: none; }
+
+/* ===== Configurazione guidata ===== */
+:root[data-saved="0"] #v-home > :not(#example) { display: none; }
+.wiz { position: fixed; inset: 0; z-index: 70; background: var(--bg); overflow-y: auto; }
+.wiz[hidden] { display: none; }
+.wiz-in { max-width: 560px; margin: 0 auto; min-height: 100%; display: flex; flex-direction: column; gap: 16px; padding-block: max(24px, env(safe-area-inset-top, 0px)) max(24px, env(safe-area-inset-bottom, 0px)); padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+.wiz h1 { font-size: 30px; line-height: 1.15; margin: 8px 0 0; text-wrap: balance; }
+.wprog { display: flex; gap: 6px; }
+.wprog i { flex: 1; height: 6px; border-radius: 3px; background: var(--line); transition: background .3s; }
+.wprog i.on { background: var(--accent); }
+.wbody { display: flex; flex-direction: column; gap: 16px; }
+.wbody .f input, .wbody .f select { font-size: 18px; padding: 14px 16px; }
+.wbody .help { display: block; color: var(--muted); font-size: 13.5px; margin-top: 4px; font-weight: 500; }
+.wl { font-size: 17px; line-height: 1.5; margin: 0; }
+.werr { min-height: 1.3em; margin: 0; color: var(--bad); font-weight: 700; }
+.wnav { display: flex; gap: 10px; margin-top: auto; position: sticky; bottom: 0; padding: 12px 0; background: var(--bg); }
+.wnav button { flex: 1; }
+.wnav .primary { flex: 2; padding-block: 15px; font-size: 17px; }
+.dchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.dchip input { position: absolute; opacity: 0; pointer-events: none; }
+.dchip span { display: inline-block; padding: 10px 12px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 14px; border: 2px solid transparent; cursor: pointer; }
+.dchip input:checked + span { background: color-mix(in srgb, var(--accent) 14%, var(--surface)); border-color: var(--accent); color: var(--accent); }
+.dchip input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wsum { display: flex; flex-direction: column; background: var(--surface); border-radius: 22px; padding: 6px 18px; }
+.wsum > div { display: flex; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.wsum > div:last-child { border-bottom: 0; }
+.wsum b { font-family: var(--font-num); }
 </style>
 </head>
 <body>
@@ -453,14 +480,10 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
   <main class="view" id="v-home">
     <div class="notice info" id="bk-warn" hidden><span>Non fai un backup da un po'. Se perdi il telefono o cancelli i dati dal browser perdi lo storico.</span><button class="primary" type="button" id="bk-go">Fai un backup</button></div>
     <div class="card hl" id="example" data-sub="home" hidden>
-        <b>Benvenuto! Impostiamo il tuo piano in un minuto.</b>
-        <span>Ora vedi valori di esempio. Scrivi tre numeri e il piano si calcola da solo: il resto lo regoli dopo nelle Impostazioni.</span>
-        <label class="f" for="ob-sal" style="width:100%">Stipendio netto al mese (€)<input id="ob-sal" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="ob-rent" style="width:100%">Affitto al mese, la tua parte (€)<input id="ob-rent" type="text" inputmode="decimal" autocomplete="off"></label>
-        <label class="f" for="ob-ins" style="width:100%">Rata dell'assicurazione al mese (€)<input id="ob-ins" type="text" inputmode="decimal" autocomplete="off"></label>
-        <button class="primary" id="ob-go" type="button">Calcola il mio piano</button>
-        <button class="link" id="go-profile" type="button">Preferisco le impostazioni complete</button>
-      </div>
+      <b>Configura la tua app</b>
+      <span>Rispondi a poche domande e costruisco il tuo piano con i tuoi numeri, senza valori d'esempio.</span>
+      <button class="primary" id="wz-open" type="button">Inizia la configurazione</button>
+    </div>
     <section data-sub="home" class="hero" aria-labelledby="t-pk">
       <p class="hello" id="hero-hi" hidden></p>
       <h2 id="t-pk" class="sr-only">Quanto puoi spendere oggi</h2>
@@ -1085,6 +1108,20 @@ create policy "solo i miei dati" on stipendio_pilota
 <div class="toast" id="toast" role="status" hidden></div>
 <nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Profilo</a></nav>
 
+<div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-labelledby="wiz-t" hidden>
+  <div class="wiz-in">
+    <div class="wprog" id="wiz-prog" aria-hidden="true"></div>
+    <h1 id="wiz-t"></h1>
+    <div id="wiz-body" class="wbody"></div>
+    <p class="werr" id="wiz-err" role="alert"></p>
+    <div class="wnav">
+      <button type="button" id="wiz-back" hidden>Indietro</button>
+      <button type="button" class="primary" id="wiz-next">Avanti</button>
+    </div>
+    <button type="button" class="link" id="wiz-skip" hidden>Salta questa parte</button>
+    <button type="button" class="link" id="wiz-old" hidden>Ho già dei dati salvati nel cloud o in un backup</button>
+  </div>
+</div>
 <script>
 (function () {
   var KEY = "stipendio-pilota-v4";
@@ -1524,7 +1561,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.18";
+  var APP_VERSION = "2026-11-13.19";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2373,6 +2410,7 @@ create policy "solo i miei dati" on stipendio_pilota
     pending = S.monthKey < CUR ? CUR : null;
     S.adv = Object.assign({}, DEFAULTS.adv, S.adv || {}); if (!S.adv.q || typeof S.adv.q !== "object") S.adv.q = {}; fillAdvisorInputs(); markOpts();
     persist(keepTs); renderAll(); fillForm(S);
+    if (W && !$("wiz").hidden && wStep < 6) closeWizard();
   }
 
   /* ---------- cloud (Supabase) ---------- */
@@ -2944,6 +2982,118 @@ create policy "solo i miei dati" on stipendio_pilota
     return h;
   }
 
+  /* ---------- configurazione guidata (primo avvio) ---------- */
+  var W = null, wStep = 0, wDismissed = false, WD = [["1", "Lun"], ["2", "Mar"], ["3", "Mer"], ["4", "Gio"], ["5", "Ven"], ["6", "Sab"], ["0", "Dom"]];
+  function wNew() {
+    return { name: "", salary: "", payDay: "", hs: "affitto", rent: "", dueRent: "", bills: "", live: "", work: "", home: "", car: "diesel", km: "", toll: "", wd: [1, 2, 3, 4, 5], hkm: "", htoll: "", hwd: [6, 0], ins: "", dueIns: "", loanOn: false, loanName: "", loanAmt: "", loanDue: "", loanEnd: "", savedNow: "", pac: "", pacDay: "", brName: "", brUrl: "" };
+  }
+  function wv(id) { var e = $("w-" + id); return e ? e.value.trim() : ""; }
+  function wnum(id) { var n = pnum(wv(id)); return isNaN(n) ? 0 : Math.max(0, n); }
+  function wDays(id, sel) { return '<div class="dchips" id="' + id + '">' + WD.map(function (d) { return '<label class="dchip"><input type="checkbox" value="' + d[0] + '"' + (sel.indexOf(+d[0]) >= 0 ? " checked" : "") + "><span>" + d[1] + "</span></label>"; }).join("") + "</div>"; }
+  function wReadDays(id) { var o = []; document.querySelectorAll("#" + id + " input").forEach(function (i) { if (i.checked) o.push(+i.value); }); return o; }
+  function wf(id, label, type, val, help, ph) { return '<label class="f" for="w-' + id + '">' + label + '<input id="w-' + id + '" type="text" ' + (type === "num" ? 'inputmode="decimal"' : "") + ' autocomplete="off" value="' + esc(val == null ? "" : val) + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : "") + ">" + (help ? '<span class="help">' + help + "</span>" : "") + "</label>"; }
+  var W_TITLES = ["", "Chi sei e quanto prendi", "La tua casa", "Dove vivi e lavori", "Rate e assicurazioni", "Risparmio e investimenti", "Il tuo piano è pronto"];
+  function wBody() {
+    var h = "";
+    if (wStep === 0) {
+      return '<p class="wl">Ti faccio poche domande per costruire il tuo piano. Ci vogliono due minuti e usiamo solo i tuoi numeri, niente esempi. Puoi cambiare tutto più tardi dal Profilo.</p>';
+    }
+    if (wStep === 1) {
+      h += wf("name", "Come ti chiami?", "t", W.name) + wf("salary", "Stipendio netto al mese (€)", "num", W.salary, "Quello che ti arriva sul conto, già senza tasse.") + wf("payDay", "Che giorno del mese lo ricevi? (1–31)", "num", W.payDay, "Ogni mese, in quel giorno, l'app ti chiede quanto hai preso davvero e apre il nuovo periodo. Il tuo mese va da una paga alla successiva.");
+    } else if (wStep === 2) {
+      h += '<label class="f" for="w-hs">Come abiti<select id="w-hs">' + Object.keys(HOUSING).map(function (k) { return '<option value="' + k + '"' + (k === W.hs ? " selected" : "") + ">" + { affitto: "In affitto", mutuo: "Con un mutuo", proprieta: "Casa di proprietà, senza mutuo", famiglia: "Con la famiglia" }[k] + "</option>"; }).join("") + "</select></label>";
+      h += '<div id="w-rentbox">' + wf("rent", HOUSING[W.hs][1], "num", W.rent, "Se la dividi con qualcuno, scrivi solo la tua parte.") + wf("dueRent", "Giorno del mese in cui lo paghi", "num", W.dueRent) + "</div>";
+      h += wf("bills", "Bollette e abbonamenti al mese (€)", "num", W.bills, "Luce, gas, acqua, internet, telefono, abbonamenti. Una stima va bene.");
+    } else if (wStep === 3) {
+      h += wf("live", "Dove vivi?", "t", W.live) + wf("work", "Dove lavori?", "t", W.work);
+      h += '<label class="f" for="w-car">Come vai al lavoro?<select id="w-car"><option value="diesel"' + (W.car === "diesel" ? " selected" : "") + '>In auto a diesel</option><option value="benzina"' + (W.car === "benzina" ? " selected" : "") + '>In auto a benzina</option><option value="none"' + (W.car === "none" ? " selected" : "") + ">Mezzi pubblici, a piedi o in bici</option></select></label>";
+      h += '<div id="w-carbox">' + wf("km", "Km per ogni tragitto casa-lavoro (solo andata)", "num", W.km) + wf("toll", "Pedaggio per ogni tragitto (€)", "num", W.toll, "Metti 0 se non c'è autostrada.") + '<div class="f"><span>In quali giorni ci vai?</span>' + wDays("w-wd", W.wd) + "</div></div>";
+      h += wf("home", "Torni ogni tanto altrove? (famiglia, partner)", "t", W.home, "Lascia vuoto se non serve.");
+      h += '<div id="w-homebox">' + wf("hkm", "Km per ogni viaggio (solo andata)", "num", W.hkm) + wf("htoll", "Pedaggio per ogni viaggio (€)", "num", W.htoll) + '<div class="f"><span>In quali giorni di solito?</span>' + wDays("w-hwd", W.hwd) + '<span class="help">Poi puoi correggere giorno per giorno dal calendario dei viaggi.</span></div></div>';
+    } else if (wStep === 4) {
+      h += wf("ins", "Assicurazioni al mese (€)", "num", W.ins, "Auto, casa, vita: il totale al mese. Lascia vuoto se non ne hai.") + wf("dueIns", "Giorno del mese in cui le paghi", "num", W.dueIns);
+      h += '<label class="chk"><input type="checkbox" id="w-loanOn"' + (W.loanOn ? " checked" : "") + "><span>Ho un prestito o una rata da pagare</span></label>";
+      h += '<div id="w-loanbox">' + wf("loanName", "Cos'è? (per esempio auto, telefono)", "t", W.loanName) + wf("loanAmt", "Rata al mese (€)", "num", W.loanAmt) + wf("loanDue", "Giorno del mese", "num", W.loanDue) + '<label class="f" for="w-loanEnd">Mese dell\'ultima rata<input id="w-loanEnd" type="month" value="' + esc(W.loanEnd) + '"><span class="help">Dopo quella data la rata sparisce dal piano. Lascia vuoto se non lo sai.</span></label></div>';
+    } else if (wStep === 5) {
+      h += wf("savedNow", "Quanto hai già messo da parte (€)", "num", W.savedNow, "Conto, deposito, contanti: serve per capire a che punto è il tuo fondo di sicurezza.");
+      h += wf("pac", "Piano d'accumulo o investimento: quanto versi al mese? (€)", "num", W.pac, "Lascia vuoto se ancora non investi: il piano ti propone un importo.") + wf("pacDay", "Giorno del mese del versamento", "num", W.pacDay) + wf("brName", "Con quale broker o banca? (facoltativo)", "t", W.brName) + wf("brUrl", "Link al loro sito (facoltativo)", "t", W.brUrl);
+    } else if (wStep === 6) {
+      var p = plan(), sp = S.me.name ? S.me.name + ", ecco" : "Ecco";
+      var rows = [["Stipendio", p.sal], ["Spese fisse", p.fixedTot], ["Spesa e tempo libero", p.spesa + p.svago], ["Spostamenti", p.toll + p.fuelB + p.fuelD], ["Da mettere da parte", p.toSave], ["Da investire", p.inv]];
+      h += '<p class="wl">' + sp + " come l'app divide il tuo stipendio ogni mese.</p><div class=\"wsum\">" + rows.map(function (r) { return "<div><span>" + r[0] + '</span><b class="num">' + eur.format(r[1]) + "</b></div>"; }).join("") + "</div>";
+      h += '<p class="small muted">Il giorno ' + PAYDAY + " di ogni mese ti chiederò quanto hai preso e aprirò il periodo nuovo. Se vuoi cambiare qualcosa, vai in Profilo.</p>";
+    }
+    return h;
+  }
+  function wRender() {
+    var box = $("wiz-body"), dots = "";
+    for (var i = 0; i <= 6; i++) dots += '<i class="' + (i <= wStep ? "on" : "") + '"></i>';
+    $("wiz-prog").innerHTML = dots;
+    $("wiz-t").textContent = wStep === 0 ? "Benvenuto in Stipendio Pilota" : W_TITLES[wStep];
+    box.innerHTML = wBody(); $("wiz-err").textContent = "";
+    $("wiz-back").hidden = wStep === 0 || wStep === 6; $("wiz-skip").hidden = wStep < 3 || wStep > 5; $("wiz-old").hidden = wStep !== 0;
+    $("wiz-next").textContent = wStep === 0 ? "Cominciamo" : wStep === 5 ? "Calcola il mio piano" : wStep === 6 ? "Vai alla Home" : "Avanti";
+    if (wStep === 2) { var hs = $("w-hs"); hs.onchange = function () { W.hs = hs.value; var l = document.querySelector('label[for="w-rent"]'); if (l) l.firstChild.textContent = HOUSING[W.hs][1]; }; }
+    if (wStep === 3) { var car = $("w-car"), hm = $("w-home"), sync = function () { $("w-carbox").hidden = car.value === "none"; $("w-homebox").hidden = !hm.value.trim() || car.value === "none"; }; car.onchange = sync; hm.oninput = sync; sync(); }
+    if (wStep === 4) { var lo = $("w-loanOn"), sl = function () { $("w-loanbox").hidden = !lo.checked; }; lo.onchange = sl; sl(); }
+    var first = box.querySelector("input,select"); if (first && wStep > 0) try { first.focus({ preventScroll: true }); } catch (e) {}
+    $("wiz").scrollTop = 0;
+  }
+  function wCollect() {
+    if (wStep === 1) { W.name = wv("name").slice(0, 30); W.salary = wv("salary"); W.payDay = wv("payDay"); }
+    else if (wStep === 2) { W.hs = wv("hs") || "affitto"; W.rent = wv("rent"); W.dueRent = wv("dueRent"); W.bills = wv("bills"); }
+    else if (wStep === 3) { W.live = wv("live").slice(0, 40); W.work = wv("work").slice(0, 40); W.car = wv("car"); W.km = wv("km"); W.toll = wv("toll"); W.wd = wReadDays("w-wd"); W.home = wv("home").slice(0, 40); W.hkm = wv("hkm"); W.htoll = wv("htoll"); W.hwd = wReadDays("w-hwd"); }
+    else if (wStep === 4) { W.ins = wv("ins"); W.dueIns = wv("dueIns"); W.loanOn = $("w-loanOn").checked; W.loanName = wv("loanName"); W.loanAmt = wv("loanAmt"); W.loanDue = wv("loanDue"); W.loanEnd = wv("loanEnd"); }
+    else if (wStep === 5) { W.savedNow = wv("savedNow"); W.pac = wv("pac"); W.pacDay = wv("pacDay"); W.brName = wv("brName"); W.brUrl = wv("brUrl"); }
+  }
+  function wValidate() {
+    if (wStep === 1) {
+      var s = pnum(W.salary), d = pnum(W.payDay);
+      if (!(s > 0)) return "Scrivi quanto prendi al mese, per esempio 1450.";
+      if (!(d >= 1 && d <= 31)) return "Scrivi il giorno del mese in cui ricevi lo stipendio, da 1 a 31.";
+    }
+    if (wStep === 4 && W.loanOn && !(pnum(W.loanAmt) > 0)) return "Scrivi la rata mensile, oppure togli la spunta.";
+    if (wStep === 5 && W.brUrl && !cleanUrl(W.brUrl)) return "Il link non sembra valido. Lascialo vuoto se non ce l'hai.";
+    return "";
+  }
+  function wApply() {
+    var n = function (v) { var x = pnum(v); return isNaN(x) ? 0 : Math.max(0, x); }, dd = function (v, def) { var x = Math.round(pnum(v)); return x >= 1 && x <= 31 ? x : def; };
+    S.salary = n(W.salary); S.payDay = dd(W.payDay, 1); applyPay(); S.monthKey = CUR; pending = null;
+    S.me = { name: W.name, live: W.live, work: W.work, home: W.home, housing: W.hs };
+    var fl = [
+      { id: "rent", name: HOUSING[W.hs][0], amount: n(W.rent), due: dd(W.dueRent, 5), split: true, kind: "casa", end: "" },
+      { id: "bills", name: "Bollette e abbonamenti", amount: n(W.bills), due: dd("", 10), split: true, kind: "fix", end: "" },
+      { id: "ins", name: "Assicurazione", amount: n(W.ins), due: dd(W.dueIns, 20), split: true, kind: "fix", end: "" }
+    ];
+    if (W.loanOn && n(W.loanAmt) > 0) fl.push({ id: "f" + (S.nextId++), name: (W.loanName || "Prestito").slice(0, 40), amount: n(W.loanAmt), due: dd(W.loanDue, 1), split: false, kind: "loan", end: /^\d{4}-\d{2}$/.test(W.loanEnd) ? W.loanEnd : "" });
+    S.fixedList = fl;
+    var rt = [];
+    if (W.car !== "none") {
+      if (n(W.km) > 0 || W.work) rt.push({ id: "r1", name: (W.live && W.work ? W.live + " → " + W.work : "Casa → lavoro").slice(0, 40), km: n(W.km), toll: n(W.toll), car: W.car, wd: W.wd.slice() });
+      if (W.home && n(W.hkm) > 0) rt.push({ id: "r2", name: (W.live ? W.live + " → " + W.home : "Casa → " + W.home).slice(0, 40), km: n(W.hkm), toll: n(W.htoll), car: W.car, wd: W.hwd.slice() });
+    }
+    S.routes = rt; S.dayo = {};
+    S.savedNow = n(W.savedNow); S.adv = Object.assign({}, S.adv, { rata: n(W.pac), day: dd(W.pacDay, 0) === 0 ? 0 : dd(W.pacDay, 0) });
+    S.broker = { name: W.brName.slice(0, 40), url: cleanUrl(W.brUrl) };
+    S.saved = true; persist(); renderAll(); fillForm(S);
+  }
+  function openWizard() { W = wNew(); wStep = 0; $("wiz").hidden = false; document.body.style.overflow = "hidden"; wRender(); }
+  function closeWizard() { $("wiz").hidden = true; document.body.style.overflow = ""; }
+  function initWizard() {
+    $("wiz-next").onclick = function () {
+      if (wStep === 6) { closeWizard(); location.hash = "#home"; showView(); window.scrollTo(0, 0); return; }
+      wCollect(); var e = wValidate(); if (e) { $("wiz-err").textContent = e; return; }
+      if (wStep === 5) { wApply(); }
+      wStep++; wRender();
+    };
+    $("wiz-back").onclick = function () { wCollect(); wStep = Math.max(0, wStep - 1); wRender(); };
+    $("wiz-skip").onclick = function () { wCollect(); if (wStep === 5) { wApply(); } wStep++; wRender(); };
+    $("wiz-old").onclick = function () { wDismissed = true; closeWizard(); location.hash = "#profilo/dati"; };
+    $("wz-open").onclick = function () { openWizard(); };
+    var nowiz = false; try { nowiz = !!sessionStorage.getItem("sp-nowiz"); } catch (e) {}
+    if (!S.saved && !wDismissed && !nowiz) openWizard();
+  }
+
   var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Spese"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Viaggi"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["dati", "Dati"]] };
@@ -2974,20 +3124,12 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); renderInvested(); renderBroker(); renderArchivio(); renderAdvisor(); renderToday(); renderCalendar(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("hm-fix").onclick = function () { location.hash = "#spese/fisse"; };
   $("bk-go").onclick = function () { location.hash = "#profilo/dati"; };
-  $("ob-go").onclick = function () {
-    var a = pnum($("ob-sal").value), b = pnum($("ob-rent").value), c = pnum($("ob-ins").value);
-    if (!(a > 0)) { toast("Scrivi quanto prendi al mese"); $("ob-sal").focus(); return; }
-    S.salary = a;
-    S.fixedList = S.fixedList.map(function (f) { return f.id === "rent" && b >= 0 ? Object.assign({}, f, { amount: b }) : f.id === "ins" && c >= 0 ? Object.assign({}, f, { amount: c }) : f; });
-    S.saved = true; persist(); renderAll(); toast("Piano calcolato ✓");
-  };
-  $("go-profile").onclick = function () { location.hash = "#profilo/io"; };
   $("go-spese").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("save").onclick = saveForm;
   $("nm-start").onclick = startMonth;
@@ -3036,7 +3178,7 @@ create policy "solo i miei dati" on stipendio_pilota
   });
   applyTheme(); $("theme").value = S.theme || "auto";
   $("month").textContent = mlabel(CUR);
-  renderAll(); showView(); loadMarket(); syInit();
+  initWizard(); renderAll(); showView(); loadMarket(); syInit();
 })();
 </script>
 <script>if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) { window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); }); }</script>
