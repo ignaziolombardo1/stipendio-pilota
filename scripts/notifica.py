@@ -20,23 +20,43 @@ def rpc(name, body):
 
 rows = rpc("sp_push_due", {"p_token": TOKEN}) or []
 sent = 0
+
+def send(r, title, body):
+    payload = json.dumps({"title": title, "body": body, "url": "./#home"})
+    try:
+        webpush(subscription_info=r["sub"], data=payload, vapid_private_key=VAPID, vapid_claims={"sub": "https://stipendio-pilota.vercel.app"})
+        return True
+    except WebPushException as e:
+        code = getattr(e.response, "status_code", 0) if getattr(e, "response", None) is not None else 0
+        print("errore invio:", code, file=sys.stderr)
+        if code in (404, 410):
+            rpc("sp_push_mark", {"p_token": TOKEN, "p_user": r["user_id"], "p_day": datetime.date.today().isoformat(), "p_drop": True})
+        return False
+
 for r in rows:
     try:
         now = datetime.datetime.now(ZoneInfo(r.get("tz") or "Europe/Rome"))
     except Exception:
         now = datetime.datetime.now(ZoneInfo("Europe/Rome"))
-    day = min(int(r["payday"]), calendar.monthrange(now.year, now.month)[1])
     today = now.date().isoformat()
-    if now.day != day or now.hour < int(r["hour"]) or r.get("last_sent") == today:
+    if now.hour < int(r["hour"]):
         continue
-    payload = json.dumps({"title": "Stipendio Pilota", "body": "Oggi è il giorno della paga. Quanto hai preso questo mese? Aprila e scrivilo: ti preparo il nuovo mese.", "url": "./#home"})
-    try:
-        webpush(subscription_info=r["sub"], data=payload, vapid_private_key=VAPID, vapid_claims={"sub": "https://stipendio-pilota.vercel.app"})
-        rpc("sp_push_mark", {"p_token": TOKEN, "p_user": r["user_id"], "p_day": today, "p_drop": False})
-        sent += 1
-    except WebPushException as e:
-        code = getattr(e.response, "status_code", 0) if getattr(e, "response", None) is not None else 0
-        print("errore invio:", code, file=sys.stderr)
-        if code in (404, 410):
-            rpc("sp_push_mark", {"p_token": TOKEN, "p_user": r["user_id"], "p_day": today, "p_drop": True})
+    day = min(int(r["payday"]), calendar.monthrange(now.year, now.month)[1])
+    if now.day == day and r.get("last_sent") != today:
+        if send(r, "Stipendio Pilota", "Oggi è il giorno della paga. Quanto hai preso questo mese? Aprila e scrivilo: ti preparo il nuovo mese."):
+            rpc("sp_push_mark", {"p_token": TOKEN, "p_user": r["user_id"], "p_day": today, "p_drop": False})
+            sent += 1
+    done = set(r.get("sent") or [])
+    for it in (r.get("rem") or []):
+        k, d = it.get("k"), it.get("date")
+        if not k or not d or k in done or today < d:
+            continue
+        if (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(d)).days > 14:
+            continue
+        if send(r, "Stipendio Pilota", it.get("text") or "Ricordati di mettere da parte i soldi del mese."):
+            try:
+                rpc("sp_push_sent", {"p_token": TOKEN, "p_user": r["user_id"], "p_key": k})
+            except Exception as e:
+                print("segno-inviato non riuscito:", e, file=sys.stderr)
+            sent += 1
 print("sottoscrizioni:", len(rows), "inviate:", sent)

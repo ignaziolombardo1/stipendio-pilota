@@ -453,6 +453,12 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .sd-cal button.ok { background: var(--ok-bg); }
 .sd-cal button.over { background: var(--warn-bg); color: var(--warn); }
 .sd-cal button.sel { background: var(--accent); color: var(--accent-ink); }
+.ann { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
+.ann:first-child { border-top: 0; }
+.ann .line { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.ann p { margin: 0; }
+.annact { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.annact2 { display: flex; gap: 8px; justify-content: space-between; }
 .sd-ok { color: #1f9d7a; } .sd-over { color: var(--warn); }
 /* stili (skin) */
 @media (prefers-color-scheme: light) { :root[data-skin="salvia"]:not([data-theme="dark"]) { --bg:#eef3ec;--surface:#fff;--ink:#16291f;--muted:#5a6f62;--line:#dde7dd;--soft:#e4ede4;--accent:#2b7a4b;--accent-ink:#fff;--hero:#1c3b2c;--hero-muted:#a9c9b6;--pos:#1f7a4d;--ok-bg:#d9f1df;--toast-bg:#16291f;--toast-ink:#fff;--glow1:rgba(160,220,120,.35);--glow2:rgba(80,170,120,.3); } }
@@ -581,6 +587,12 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       <h2 id="t-hg">I tuoi obiettivi</h2>
       <div id="hg-list"></div>
       <div class="btnrow" style="margin-top:12px"><button type="button" id="hg-go">Vai agli obiettivi</button></div>
+    </section>
+    <section data-sub="home" class="card" id="home-acc" aria-labelledby="t-hac" hidden>
+      <h2 id="t-hac">Da parte per le spese di ogni anno</h2>
+      <p class="small muted" id="hac-text"></p>
+      <div class="meter blue" id="hac-meter" role="progressbar" aria-labelledby="t-hac" aria-valuemin="0" aria-valuemax="100"><div id="hac-fill" style="width:0%"></div></div>
+      <div class="btnrow" style="margin-top:12px"><button type="button" id="hac-go">Metti da parte</button></div>
     </section>
     <button type="button" class="link" id="home-custom" style="order:99">Personalizza questa pagina</button>
   </main>
@@ -868,17 +880,25 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
       </form>
     </section>
     <section data-sub="obiettivi" class="card" aria-labelledby="t-a">
-      <h2 id="t-a">Spese una volta all'anno</h2>
-      <p class="hint">Bollo, tagliando, revisione, vacanze. Ne metto da parte un dodicesimo ogni mese, così non ti sorprendono. La quota è già nel piano.</p>
-      <div id="annual-list"></div>
+      <h2 id="t-a">Da parte per le spese di ogni anno</h2>
+      <p class="hint">Assicurazione, bollo, tagliando, revisione. Ogni mese ne metti da parte un dodicesimo (la linea base, già nel piano). Segna qui quanto metti davvero da parte: certi mesi di più, altri di meno.</p>
       <p class="small muted" id="annual-sum"></p>
+      <div id="annual-list"></div>
       <form id="annual-form" style="display:flex;flex-direction:column;gap:12px">
         <div class="fields">
-          <label class="f" for="a-name">Voce<input id="a-name" type="text" autocomplete="off" placeholder="Per esempio bollo auto"></label>
+          <label class="f" for="a-name">Voce<input id="a-name" type="text" autocomplete="off" placeholder="Per esempio assicurazione auto"></label>
           <label class="f" for="a-amt">Importo annuo (€)<input id="a-amt" type="text" inputmode="decimal" autocomplete="off"></label>
+          <label class="f" for="a-due">Prossima scadenza<input id="a-due" type="date"></label>
+          <label class="f" for="a-saved">Hai già messo da parte (€)<input id="a-saved" type="text" inputmode="decimal" autocomplete="off" placeholder="0"></label>
         </div>
         <button class="primary" type="submit">Aggiungi voce</button>
       </form>
+    </section>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-ar">
+      <h2 id="t-ar">Promemoria</h2>
+      <label class="chk"><input type="checkbox" id="ar-on"><span>Avvisami se non ho messo da parte la quota del mese</span></label>
+      <label class="f" for="ar-day">Entro il giorno<select id="ar-day"></select></label>
+      <p class="small muted">La notifica arriva se hai attivato quella del telefono in Impostazioni → Io e il mio lavoro.</p>
     </section>
   </main>
 
@@ -1278,6 +1298,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["today", "I tuoi viaggi", "Spunta i tragitti fatti nel giorno scelto.", false],
     ["home-sal", "Stipendio e ripartizione", "Quanto prendi e come si divide.", false],
     ["home-now", "Spese del mese", "Quanto hai speso rispetto al budget.", true],
+    ["home-acc", "Da parte per le spese di ogni anno", "Quanto hai messo da parte questo mese per assicurazione, bollo e simili.", true],
     ["home-inv", "Investimento del mese", "Quanto hai versato e un tasto per aprire il broker.", false],
     ["home-goals", "Obiettivi", "I tuoi obiettivi di risparmio e quanto manca.", false]
   ];
@@ -1689,7 +1710,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.26";
+  var APP_VERSION = "2026-11-13.27";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2417,14 +2438,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     $("goals-sum").textContent = !S.goals.length ? "Ancora nessun obiettivo. Aggiungine uno qui sotto."
       : "Per tutti gli obiettivi servono circa " + eur.format(Math.ceil(need)) + " al mese. Dal tuo piano ne metti da parte " + eur.format(p.toSave) + (need <= p.toSave ? ": ci stai dentro." : ": non bastano, aumenta la quota da parte nel Profilo o allunga le scadenze.");
-    var ab = $("annual-list"); ab.innerHTML = "";
-    S.annual.forEach(function (a) {
-      var row = document.createElement("div"); row.className = "entry";
-      row.innerHTML = '<div class="t">' + esc(a.name) + "<small>" + eur2.format(a.amount / 12) + ' al mese</small></div><b class="num">' + eur.format(a.amount) + '</b><button type="button" class="x" aria-label="Elimina voce">×</button>';
-      row.querySelector("button").onclick = function () { S.annual = S.annual.filter(function (x) { return x.id !== a.id; }); persist(); renderAll(); toast("Voce eliminata"); };
-      ab.appendChild(row);
-    });
-    $("annual-sum").textContent = S.annual.length ? "Quota mensile da accantonare: " + eur.format(p.annualM) + "." : "Ancora nessuna voce.";
+    renderAnnual();
   }
   function addGoal(ev) {
     ev.preventDefault();
@@ -2433,12 +2447,77 @@ create policy "solo i miei dati" on stipendio_pilota
     S.goals.push({ id: S.nextId++, name: name, target: t, saved: 0, when: $("g-when").value, start: CUR });
     persist(); $("g-name").value = ""; $("g-target").value = ""; renderAll(); toast("Obiettivo aggiunto ✓");
   }
+  function inPer(k, key) { return k >= psStr(key) && k <= peStr(key); }
+  function annDep(a, key) { return a.log.reduce(function (t, x) { return inPer(x.date, key) ? t + x.amount : t; }, 0); }
+  function annMonthsLeft(a) {
+    if (!a.due) return 0;
+    var d = dOf(a.due), n = (d.getFullYear() - NOW.getFullYear()) * 12 + d.getMonth() - NOW.getMonth() + (d.getDate() >= NOW.getDate() ? 0 : -1);
+    return Math.max(1, n);
+  }
+  function annTotals() {
+    var base = 0, dep = 0, rest = 0, names = [];
+    S.annual.forEach(function (a) {
+      if (!(a.amount > 0) || a.saved >= a.amount) return;
+      var b = a.amount / 12, d = annDep(a, CUR); base += b; dep += Math.min(d, b); if (b - d >= 1) { rest += b - d; names.push(a.name + " " + eur.format(Math.ceil(b - d))); }
+    });
+    return { base: base, dep: dep, rest: rest, names: names };
+  }
+  function annRemList() {
+    if (!S.annRem.on) return [];
+    var t = annTotals(); if (t.rest < 1) return [];
+    var sD = startOf(CUR), day = S.annRem.day, c = new Date(sD.getFullYear(), sD.getMonth(), Math.min(day, dimOf(sD.getFullYear(), sD.getMonth())));
+    if (c < sD) c = new Date(sD.getFullYear(), sD.getMonth() + 1, Math.min(day, dimOf(sD.getFullYear(), sD.getMonth() + 1)));
+    if (c > endOf(CUR)) return [];
+    return [{ k: "acc-" + CUR, date: ymd(c), text: "Ricordati di mettere da parte " + eur.format(Math.ceil(t.rest)) + " questo mese: " + t.names.join(", ") + "." }];
+  }
+  function renderAnnual() {
+    var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
+    var t = annTotals();
+    $("annual-sum").textContent = S.annual.length ? "Linea base: " + eur.format(Math.round(S.annual.reduce(function (x, a) { return x + a.amount; }, 0) / 12)) + " al mese. Questo mese hai messo da parte " + eur.format(S.annual.reduce(function (x, a) { return x + annDep(a, CUR); }, 0)) + (t.rest >= 1 ? ", ne mancano " + eur.format(Math.ceil(t.rest)) + " per la linea base." : ": linea base raggiunta ✓") : "Ancora nessuna voce.";
+    S.annual.forEach(function (a) {
+      var pct = a.amount > 0 ? Math.min(100, a.saved / a.amount * 100) : 0, base = a.amount / 12, ml = annMonthsLeft(a), left = Math.max(0, a.amount - a.saved), dep = annDep(a, CUR);
+      var line2 = "Linea base " + eur.format(Math.round(base)) + " al mese" + (a.due && left > 0 ? " · per arrivare in tempo " + eur.format(Math.ceil(left / ml)) + " al mese" : "");
+      var row = document.createElement("div"); row.className = "ann";
+      row.innerHTML = '<div class="line"><b>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
+        '<p class="small muted">' + (a.due ? "Scade il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(dOf(a.due)) + " · " + (ml <= 1 ? "entro un mese" : "tra " + ml + " mesi") : "Nessuna scadenza indicata") + "</p>" +
+        '<div class="meter blue" role="progressbar" aria-label="' + esc(a.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>' +
+        '<p class="small">Messi da parte ' + eur.format(a.saved) + " su " + eur.format(a.amount) + (left > 0 ? " · mancano " + eur.format(left) : " · pronti ✓") + "</p>" +
+        '<p class="small muted">' + line2 + " · questo mese " + eur.format(dep) + "</p>" +
+        '<div class="annact"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Quanto metti da parte per ' + esc(a.name) + '" placeholder="' + Math.max(1, Math.ceil(base - dep)) + '"><button type="button" class="dep primary">Metti da parte</button></div>' +
+        '<div class="annact2"><button type="button" class="paid">Pagata</button><button type="button" class="x del" aria-label="Elimina voce">×</button></div>';
+      var inp = row.querySelector("input");
+      row.querySelector(".dep").onclick = function () {
+        var n = pnum(inp.value) || Math.max(1, Math.ceil(base - dep));
+        if (!(n > 0)) { toast("Scrivi quanto metti da parte"); return; }
+        a.saved += n; a.log.push({ date: ymd(NOW), amount: n }); persist(); renderAll(); toast(eur.format(n) + " messi da parte per " + a.name + " ✓");
+      };
+      row.querySelector(".paid").onclick = function () {
+        var old = { saved: a.saved, due: a.due };
+        a.saved = Math.max(0, a.saved - a.amount); if (a.due) { var d = dOf(a.due); d.setFullYear(d.getFullYear() + 1); a.due = ymd(d); }
+        persist(); renderAll(); toast(a.name + " pagata: riparto da capo per l'anno prossimo", "Annulla", function () { a.saved = old.saved; a.due = old.due; persist(); renderAll(); });
+      };
+      row.querySelector(".del").onclick = function () { S.annual = S.annual.filter(function (x) { return x.id !== a.id; }); persist(); renderAll(); toast("Voce eliminata", "Annulla", function () { S.annual.push(a); persist(); renderAll(); }); };
+      ab.appendChild(row);
+    });
+    var on = $("ar-on"), dsel = $("ar-day"); if (!dsel.options.length) for (var i = 1; i <= 28; i++) { var o = document.createElement("option"); o.value = i; o.textContent = i + " del mese"; dsel.appendChild(o); }
+    on.checked = !!S.annRem.on; dsel.value = String(S.annRem.day);
+    // Home
+    var hc = $("home-acc"); if (hc) {
+      hc.hidden = !S.annual.length;
+      if (S.annual.length) {
+        var pc = t.base > 0 ? Math.min(100, t.dep / t.base * 100) : 100;
+        $("hac-text").textContent = t.base <= 0 ? "Tutte le voci sono già pronte ✓" : "Questo mese: " + eur.format(Math.round(t.dep)) + " messi da parte su " + eur.format(Math.round(t.base)) + " di linea base" + (t.rest >= 1 ? ". Mancano " + eur.format(Math.ceil(t.rest)) + "." : " ✓");
+        $("hac-fill").style.width = pc + "%"; $("hac-meter").setAttribute("aria-valuenow", String(Math.round(pc)));
+      }
+    }
+  }
   function addAnnual(ev) {
     ev.preventDefault();
     var name = $("a-name").value.trim().slice(0, 40), n = pnum($("a-amt").value);
     if (!name || !(n > 0)) { toast("Scrivi la voce e l'importo"); return; }
-    S.annual.push({ id: S.nextId++, name: name, amount: n });
-    persist(); $("a-name").value = ""; $("a-amt").value = ""; renderAll(); toast("Voce aggiunta ✓");
+    var sv = pnum($("a-saved").value) || 0, dueV = $("a-due").value;
+    S.annual.push({ id: S.nextId++, name: name, amount: n, due: dueV || "", saved: sv, log: [] });
+    persist(); $("a-name").value = ""; $("a-amt").value = ""; $("a-due").value = ""; $("a-saved").value = ""; renderAll(); toast("Voce aggiunta ✓");
   }
 
   /* ---------- grafici ---------- */
@@ -3234,7 +3313,13 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   /* ---------- home componibile ---------- */
+  function annNorm() {
+    if (!Array.isArray(S.annual)) S.annual = [];
+    S.annual.forEach(function (a) { a.due = typeof a.due === "string" ? a.due : ""; a.saved = Math.max(0, +a.saved || 0); if (!Array.isArray(a.log)) a.log = []; });
+    var r = S.annRem && typeof S.annRem === "object" ? S.annRem : {}; S.annRem = { on: r.on !== false, day: Math.min(28, Math.max(1, Math.round(+r.day) || 5)) };
+  }
   function homeNorm() {
+    annNorm();
     var h = S.home && typeof S.home === "object" ? S.home : {}, ids = HOME_W.map(function (w) { return w[0]; });
     var order = (Array.isArray(h.order) ? h.order : []).filter(function (x) { return ids.indexOf(x) >= 0; });
     ids.forEach(function (x) { if (order.indexOf(x) < 0) order.push(x); });
@@ -3354,9 +3439,12 @@ create policy "solo i miei dati" on stipendio_pilota
   function nfSave() { try { localStorage.setItem(NFK, JSON.stringify(pnf)); } catch (e) {} }
   function nfSupported() { return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window; }
   function b64u(t) { var p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+  function nfSig() { return PAYDAY + "-" + pnf.hour + "-" + JSON.stringify(annRemList()); }
   function nfPost(sub) {
     var tz = "Europe/Rome"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
-    return syFetch("/rest/v1/sp_push?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify({ user_id: sy.uid, sub: sub, payday: PAYDAY, hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }) }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); pnf.sent = PAYDAY + "-" + pnf.hour; nfSave(); });
+    var base = { user_id: sy.uid, sub: sub, payday: PAYDAY, hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }, sig = nfSig();
+    function post(body) { return syFetch("/rest/v1/sp_push?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(body) }); }
+    return post(Object.assign({ rem: annRemList() }, base)).then(function (r) { if (r.ok) return r; return post(base).then(function (r2) { if (!r2.ok) throw new Error("http " + r2.status); return r2; }); }).then(function () { pnf.sent = sig; pnf.fail = 0; nfSave(); }, function (e) { pnf.fail = Date.now(); nfSave(); throw e; });
   }
   function nfMsg(t) { var m = $("nf-msg"); if (m) m.textContent = t; }
   function nfEnable() {
@@ -3375,7 +3463,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (nfSupported()) navigator.serviceWorker.ready.then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (x) { if (x) x.unsubscribe(); }).catch(done);
     if (syOn() && sy.uid) syFetch("/rest/v1/sp_push?user_id=eq." + encodeURIComponent(sy.uid), { method: "DELETE" }).catch(done);
   }
-  function nfResync() { if (pnf.on && syOn() && sy.uid && pnf.sent !== PAYDAY + "-" + pnf.hour) nfEnable().catch(function () {}); }
+  function nfResync() { if (pnf.on && syOn() && sy.uid && pnf.sent !== nfSig() && Date.now() - (pnf.fail || 0) > 300000) nfEnable().catch(function () {}); }
   function renderNotif() {
     var on = $("nf-on"); if (!on) return;
     var hs = $("nf-hour"); if (!hs.options.length) for (var h = 6; h <= 21; h++) { var o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; hs.appendChild(o); }
@@ -3452,6 +3540,9 @@ create policy "solo i miei dati" on stipendio_pilota
   $("fu-form").onsubmit = addFuel;
   $("goal-form").onsubmit = addGoal;
   $("annual-form").onsubmit = addAnnual;
+  $("ar-on").onchange = function () { S.annRem.on = this.checked; persist(); };
+  $("ar-day").onchange = function () { S.annRem.day = +this.value; persist(); renderAll(); };
+  $("hac-go").onclick = function () { location.hash = "#piano/obiettivi"; };
   $("extra-form").onsubmit = addExtra;
   $("iv-form").onsubmit = addInvested;
   $("exp-note").onchange = function () { var c = NOTE_CAT[this.value.trim()]; if (c && !editId) { S.cat = c; renderChips(); } };
