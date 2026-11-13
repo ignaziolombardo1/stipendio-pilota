@@ -539,7 +539,8 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
     <h2 id="nm-title"></h2>
     <p class="hint" id="nm-text"></p>
     <div id="nm-recap"></div>
-    <label class="f" for="nm-salary">Quanto hai preso questo mese? (€)<input id="nm-salary" type="text" inputmode="decimal" autocomplete="off"></label>
+    <label class="f" for="nm-salary">Quanto hai preso questo mese? (€)<input id="nm-salary" type="text" inputmode="decimal" autocomplete="off" placeholder="Scrivi l'importo di questo mese"></label>
+    <button type="button" id="nm-same" class="link"></button>
     <label class="chk" id="nm-fund-l"><input type="checkbox" id="nm-fund" checked><span id="nm-fund-t"></span></label>
     <button class="primary" id="nm-start" type="button"></button>
   </section>
@@ -1559,7 +1560,8 @@ create policy "solo i miei dati" on stipendio_pilota
     $("nm-text").textContent = "Chiudo " + mlabel(S.monthKey) + " (" + v.text.toLowerCase() + ") e preparo il mese nuovo." + (monthGap(S.monthKey, pending) > 1 ? " Sono passati " + monthGap(S.monthKey, pending) + " mesi dall'ultimo aggiornamento: quelli in mezzo non entrano nello storico." : "") + " Controlla lo stipendio e avvia.";
     $("nm-recap").innerHTML = recapHtml(m);
     var fa = fundAdd(m); $("nm-fund-l").hidden = !(fa > 0); $("nm-fund-t").textContent = "Aggiungi " + eur.format(fa) + " al fondo di sicurezza";
-    if (!$("nm-salary").value) $("nm-salary").value = txt(S.salary);
+    var same = $("nm-same"); same.textContent = "Uguale a " + mname(S.monthKey) + " (" + eur.format(S.salary) + ")";
+    same.onclick = function () { $("nm-salary").value = txt(S.salary); $("nm-salary").focus(); };
     $("nm-start").textContent = "Avvia " + mname(pending);
   }
   function startMonth() {
@@ -1765,7 +1767,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-13.29";
+  var APP_VERSION = "2026-11-13.30";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3415,7 +3417,7 @@ create policy "solo i miei dati" on stipendio_pilota
     else if (t.base <= 0) setTile("tile-acc", "✓", "tutte le voci sono pronte", 100);
     else setTile("tile-acc", eur.format(Math.round(t.dep)), "su " + eur.format(Math.round(t.base)) + " del mese", t.dep / t.base * 100);
     var nd = startOf(nextKey(CUR)), dd = Math.max(0, Math.round((nd - todayStart()) / 864e5));
-    setTile("tile-pay", dd + (dd === 1 ? " giorno" : " giorni"), "arriva il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(nd) + " · " + eur.format(S.salary), null);
+    setTile("tile-pay", dd + (dd === 1 ? " giorno" : " giorni"), "arriva il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long" }).format(nd) + ": ti chiedo quanto hai preso", null);
     var today = (S.spent[S.monthKey] || []).reduce(function (a, e) { return ymd(new Date(e.date)) === TODAY_KEY ? a + e.amount : a; }, 0);
     var quota = m.V > 0 ? m.V / Math.max(1, Math.round((endOf(S.monthKey) - startOf(S.monthKey)) / 864e5) + 1) : 0;
     setTile("tile-day", eur.format(Math.round(today)), "speso oggi · quota " + eur.format(Math.round(quota)), quota > 0 ? today / quota * 100 : null);
