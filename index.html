@@ -781,6 +781,9 @@ html, body { touch-action: pan-x pan-y; }
         <button type="button" id="shp-add">Aggiungi un turno</button>
         <label class="f" for="normH">Ore normali in un giorno di lavoro<input id="normH" type="text" inputmode="decimal" autocomplete="off"></label>
         <p class="small muted">Quello che supera queste ore viene contato come straordinario nel prospetto.</p>
+        <h3 style="margin:10px 0 4px;font-size:15px">Ferie e permessi dell'anno</h3>
+        <div class="fields"><label class="f" for="lv-f">Giorni di ferie spettanti<input id="lv-f" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-p">Giorni di permesso spettanti<input id="lv-p" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-f0">Ferie già usate (non segnate qui)<input id="lv-f0" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-p0">Permessi già usati (non segnati qui)<input id="lv-p0" type="text" inputmode="decimal" autocomplete="off"></label></div>
+        <p class="small muted">Ogni giorno che segni come ferie o permesso viene scalato da solo. Se i tuoi permessi sono a ore, convertili in giorni.</p>
       </details>
     </section>
     <section data-sub="calendario" class="card" aria-labelledby="t-cal">
@@ -807,6 +810,7 @@ html, body { touch-action: pan-x pan-y; }
       <div class="navline"><button type="button" id="pro-prev" aria-label="Mese precedente">‹</button><b id="pro-title"></b><button type="button" id="pro-next" aria-label="Mese successivo">›</button></div>
       <div class="regstats" id="pro-stats"></div>
       <p class="small muted" id="pro-todo"></p>
+      <p class="small" id="pro-leave"></p>
       <button type="button" id="pro-fill">Riempi i giorni vuoti dal programma</button>
       <div class="protbl" id="pro-tbl"></div>
       <h3 style="margin:12px 0 4px;font-size:15px">Viaggi del mese</h3>
@@ -1354,6 +1358,13 @@ create policy "stipendio pilota documenti" on storage.objects
       <button type="button" class="primary" id="xm-add">Aggiungi persona</button>
       <p id="xm-sum"></p>
     </section>
+    <section data-sub="natale" class="card" aria-labelledby="t-xt">
+      <h2 id="t-xt">Tragitto di Natale</h2>
+      <p class="hint">Per le feste, con andata e ritorno nei giorni che scegli. Benzina e pedaggi entrano nel conto senza toccare il programma di ogni settimana.</p>
+      <div class="fields"><label class="f" for="xt-name">Dove vai<input id="xt-name" type="text" maxlength="40" autocomplete="off" placeholder="Es. Saponara"></label><label class="f" for="xt-km">Km di sola andata<input id="xt-km" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="xt-toll">Pedaggio di sola andata (€)<input id="xt-toll" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="xt-go">Parti il giorno<input id="xt-go" type="date"></label><label class="f" for="xt-back">Torni il giorno<input id="xt-back" type="date"></label></div>
+      <button type="button" class="primary" id="xt-add">Aggiungi il tragitto</button>
+      <p class="small" id="xt-msg" role="status"></p>
+    </section>
     <section data-sub="condivisa" class="card" aria-labelledby="t-cs">
       <h2 id="t-cs">Casa condivisa</h2>
       <p class="hint">Un posto per le spese in comune. Chi entra vede solo le spese che inserite qui: il resto dell'app resta privato.</p>
@@ -1515,7 +1526,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1940,7 +1951,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-14.43";
+  var APP_VERSION = "2026-11-14.44";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2735,6 +2746,12 @@ create policy "solo i miei dati" on stipendio_pilota
     if (c > endOf(CUR)) return [];
     return [{ k: "acc-" + CUR, date: ymd(c), text: "Ricordati di mettere da parte " + eur.format(Math.ceil(t.rest)) + " questo mese: " + t.names.join(", ") + "." }];
   }
+  function tredRem() {
+    var t = S.tred; if (!t || !t.on || t.got) return [];
+    var due = trDue(); if (!due) return [];
+    return [{ k: "tred-" + xmSeason(), date: due, text: "Oggi dovrebbe arrivare la tredicesima. Aprila e scrivi quanto è arrivata: ti dico come dividerla." }];
+  }
+  function remList() { return annRemList().concat(tredRem()); }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -3617,7 +3634,14 @@ create policy "solo i miei dati" on stipendio_pilota
     box.insertAdjacentHTML("beforeend", '<p class="small muted">Ora hai ' + n + " icone su 5.</p>");
   }
   function xmSeason() { var t = new Date(), m = t.getMonth(); return m === 0 ? t.getFullYear() - 1 : t.getFullYear(); }
+  function newRouteId(extra) { var all = S.routes.concat(extra || []), i; do { i = S.nextId++; } while (all.some(function (r) { return r.id === "r" + i; })); return "r" + i; }
+  function leaveNorm() { var l = S.leave && typeof S.leave === "object" ? S.leave : {}, n = function (v) { v = +v; return v >= 0 && v <= 400 ? v : 0; }; S.leave = { f: n(l.f), p: n(l.p), f0: n(l.f0), p0: n(l.p0) }; }
+  function leaveCalc(y) {
+    var uf = 0, up = 0; Object.keys(S.shifts).forEach(function (k) { if (k.slice(0, 4) === String(y)) { var t = S.shifts[k].t; if (t === "F") uf++; else if (t === "P") up++; } });
+    var L = S.leave; return { uf: uf + L.f0, up: up + L.p0, rf: L.f - uf - L.f0, rp: L.p - up - L.p0 };
+  }
   function xmNorm() {
+    leaveNorm();
     var y = xmSeason(), t = S.tred && typeof S.tred === "object" ? S.tred : {}, x = S.xmas && typeof S.xmas === "object" ? S.xmas : {};
     var pc = function (v, d) { v = Math.round(+v); return v >= 0 && v <= 100 ? v : d; };
     S.tred = { on: !!t.on, mode: t.mode === "tog" ? "tog" : "sep", date: /^\d{4}-\d{2}-\d{2}$/.test(t.date || "") ? t.date : "", plan: +t.plan > 0 ? +t.plan : 0, got: t.got && +t.got.amount > 0 ? { amount: +t.got.amount, date: String(t.got.date || "") } : null, year: +t.year || y, s1: pc(t.s1, 30), s2: pc(t.s2, 40) };
@@ -3791,12 +3815,12 @@ create policy "solo i miei dati" on stipendio_pilota
   function nfSave() { try { localStorage.setItem(NFK, JSON.stringify(pnf)); } catch (e) {} }
   function nfSupported() { return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window; }
   function b64u(t) { var p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
-  function nfSig() { return PAYDAY + "-" + pnf.hour + "-" + JSON.stringify(annRemList()); }
+  function nfSig() { return PAYDAY + "-" + pnf.hour + "-" + JSON.stringify(remList()); }
   function nfPost(sub) {
     var tz = "Europe/Rome"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
     var base = { user_id: sy.uid, sub: sub, payday: PAYDAY, hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }, sig = nfSig();
     function post(body) { return syFetch("/rest/v1/sp_push?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(body) }); }
-    return post(Object.assign({ rem: annRemList() }, base)).then(function (r) { if (r.ok) return r; return post(base).then(function (r2) { if (!r2.ok) throw new Error("http " + r2.status); return r2; }); }).then(function () { pnf.sent = sig; pnf.fail = 0; nfSave(); }, function (e) { pnf.fail = Date.now(); nfSave(); throw e; });
+    return post(Object.assign({ rem: remList() }, base)).then(function (r) { if (r.ok) return r; return post(base).then(function (r2) { if (!r2.ok) throw new Error("http " + r2.status); return r2; }); }).then(function () { pnf.sent = sig; pnf.fail = 0; nfSave(); }, function (e) { pnf.fail = Date.now(); nfSave(); throw e; });
   }
   function nfMsg(t) { var m = $("nf-msg"); if (m) m.textContent = t; }
   function nfEnable() {
@@ -3947,6 +3971,10 @@ create policy "solo i miei dati" on stipendio_pilota
     $("pro-next").disabled = proKey >= curCM;
     $("pro-stats").innerHTML = SHIFT_T.map(function (t) { return '<span class="regchip"><b class="num">' + D.cnt[t[0]] + "</b> " + t[1].toLowerCase() + "</span>"; }).join("") + '<span class="regchip"><b class="num">' + (D.mins ? fmtH(D.mins) : "0h") + "</b> ore</span>" + (D.ot ? '<span class="regchip"><b class="num">' + fmtH(D.ot) + "</b> straordinari</span>" : "") + (D.hol ? '<span class="regchip"><b class="num">' + D.hol + "</b> " + (D.hol === 1 ? "festivo lavorato" : "festivi lavorati") + "</span>" : "");
     $("pro-todo").textContent = D.todo > 0 ? "Hai " + D.todo + (D.todo === 1 ? " giorno" : " giorni") + " passati senza indicazione." : "Tutti i giorni passati sono segnati ✓";
+    var LV = leaveCalc(+proKey.slice(0, 4)), lt = [];
+    if (S.leave.f > 0) lt.push("Ferie " + proKey.slice(0, 4) + ": usate " + txt(LV.uf) + " su " + txt(S.leave.f) + ", ti restano " + txt(LV.rf));
+    if (S.leave.p > 0) lt.push("permessi: usati " + txt(LV.up) + " su " + txt(S.leave.p) + ", restano " + txt(LV.rp));
+    $("pro-leave").textContent = lt.length ? lt.join(" · ") + "." : "Scrivi le tue ferie e i permessi spettanti in Il tuo lavoro per vedere quanti ne restano.";
     $("pro-fill").onclick = function () { var n = 0; cmDays(proKey).forEach(function (k) { if (!S.shifts[k]) { setShift(k, programWorks(k) ? "L" : "R", "", ""); n++; } }); persist(); renderAll(); toast(n ? n + " giorni riempiti dal programma ✓" : "Non c'era nulla da riempire"); };
     box.innerHTML = "<table><thead><tr><th>Giorno</th><th>Stato</th><th>Turno</th><th>Orario</th><th>Ore</th></tr></thead><tbody>" + D.rows.map(function (r) { return '<tr class="' + (r.st === "—" ? "no" : "") + '"><td>' + r.day + (r.hol ? " ★" : "") + "</td><td>" + r.st + (r.n ? "<small>" + esc(r.n) + "</small>" : "") + "</td><td>" + r.tr + "</td><td>" + r.ori + "</td><td>" + r.ore + (r.ot ? "<small>+" + r.ot + " str.</small>" : "") + "</td></tr>"; }).join("") + '</tbody></table><p class="small muted">★ giorno festivo</p>';
     var T = tripCosts(cmDays(proKey));
@@ -3983,6 +4011,10 @@ create policy "solo i miei dati" on stipendio_pilota
       b.onclick = function () { S.workMode = m[0]; persist(); renderAll(); }; seg.appendChild(b);
     });
     $("wm-hint").textContent = S.workMode === "turni" ? "Il programma dei tragitti è solo una stima. Segna giorno per giorno (o settimana per settimana) quando lavori, riposi o sei in ferie: i viaggi e il carburante si aggiornano da soli." : "Vai al lavoro negli stessi giorni ogni settimana. Qui correggi solo le eccezioni (ferie, malattia, permessi) e tieni il tuo registro.";
+    [["lv-f", "f"], ["lv-p", "p"], ["lv-f0", "f0"], ["lv-p0", "p0"]].forEach(function (x) {
+      var el = $(x[0]); if (document.activeElement !== el) el.value = S.leave[x[1]] ? txt(S.leave[x[1]]) : "";
+      el.onchange = function () { var v = pnum(this.value); S.leave[x[1]] = v >= 0 && v <= 400 ? v : 0; persist(); renderAll(); };
+    });
     var pl = $("shp-list"); pl.innerHTML = "";
     S.shP.forEach(function (x, i) {
       var row = document.createElement("div"); row.className = "shprow";
@@ -4069,7 +4101,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function xmBudget() { var t = S.tred; return S.xmas.budget > 0 ? S.xmas.budget : (t.got ? trSplit(t.got.amount).reg : 0); }
   function renderXmasHome() {
     var box = $("xmas"); if (!box) return;
-    var t = new Date(), inSeason = t.getMonth() >= 10 || t.getMonth() === 0 && t.getDate() <= 6, use = S.tred.on || S.xmas.gifts.length || S.xmas.budget > 0;
+    var t = new Date(), inSeason = t.getMonth() >= 10 || t.getMonth() === 0 && t.getDate() <= 6, use = S.tred.on || S.xmas.gifts.length || S.xmas.budget > 0 || S.leave.f > 0 || S.leave.p > 0;
     if (!inSeason || !use) { box.hidden = true; return; }
     box.hidden = false;
     var parts = [], due = S.tred.on ? trDue() : "", ask = S.tred.on && !S.tred.got && due && due <= TODAY_KEY;
@@ -4081,6 +4113,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     var T = xmTotals(), B = xmBudget();
     if (B > 0 || T.plan > 0) parts.push("Regali: previsti " + eur.format(T.plan) + (B > 0 ? " su " + eur.format(B) : "") + ", spesi " + eur.format(T.spent) + (B > 0 && T.spent > B ? " (oltre il budget)" : "") + ".");
+    if (S.leave.f > 0 || S.leave.p > 0) { var LV = leaveCalc(new Date().getFullYear()); parts.push("Ti restano " + (S.leave.f > 0 ? txt(LV.rf) + " giorni di ferie" : "") + (S.leave.f > 0 && S.leave.p > 0 ? " e " : "") + (S.leave.p > 0 ? txt(LV.rp) + " di permesso" : "") + "."); }
     $("xh-text").textContent = parts.join(" ");
     $("xh-ask").hidden = !ask;
     $("xh-got").onclick = function () { gotTred(pnum($("xh-amt").value)); };
@@ -4106,6 +4139,15 @@ create policy "solo i miei dati" on stipendio_pilota
     $("tr-gotbox").hidden = !!t.got; $("tr-undo").hidden = !t.got;
     $("tr-got").onclick = function () { gotTred(pnum($("tr-amt").value)); };
     $("tr-undo").onclick = function () { t.got = null; persist(); renderAll(); };
+    $("xt-add").onclick = function () {
+      var name = $("xt-name").value.trim(), km = pnum($("xt-km").value), go = $("xt-go").value, back = $("xt-back").value;
+      if (!name || !(km > 0)) { $("xt-msg").textContent = "Scrivi dove vai e i km di sola andata."; return; }
+      var nm = ("Natale → " + name).slice(0, 40), r = S.routes.filter(function (z) { return z.name === nm; })[0];
+      if (!r) { r = { id: newRouteId(), name: nm, km: km, toll: Math.max(0, pnum($("xt-toll").value)) || 0, car: S.routes.length ? S.routes[0].car : "benzina", wd: [], work: false }; S.routes.push(r); }
+      if (go) setTripKind(go, r, back && back === go ? "ar" : "a");
+      if (back && back !== go) setTripKind(back, r, "r");
+      persist(); renderAll(); $("xt-msg").textContent = "Aggiunto ✓ Lo trovi nel calendario di Spese → Lavoro."; toast("Tragitto aggiunto ✓");
+    };
     // regali
     var x = S.xmas, T = xmTotals();
     if (document.activeElement !== $("xm-budget")) $("xm-budget").value = x.budget ? txt(x.budget) : "";
@@ -4189,7 +4231,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
-  $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: "r" + (S.nextId++), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: newRouteId(cur), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
   document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
   $("mk-range").value = String(MK.range); $("mk-range").onchange = function () { MK.range = +this.value; renderMarket(); };
   $("fab").onclick = qsOpen; $("qs-x").onclick = qsClose; $("qs-bg").onclick = qsClose; $("qs-go").onclick = qsAdd;
