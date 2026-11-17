@@ -805,7 +805,7 @@ html, body { touch-action: pan-x pan-y; }
       <button type="button" class="link" id="hg-sal">Inserisci o cambia lo stipendio di questo mese</button>
     </section>
     <a class="tile t-mese" id="tile-mese" href="#spese"><small class="tl">Mese</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
-    <a class="tile t-acc" id="tile-acc" href="#piano/mese"><small class="tl">Da parte</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-acc" id="tile-acc" href="#piano/daparte"><small class="tl">Da parte</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
     <a class="tile t-pay" id="tile-pay" href="#profilo/io"><small class="tl">Stipendio</small><b class="tv num"></b><span class="ts"></span></a>
     <a class="tile t-day" id="tile-day" href="#spese/giorni"><small class="tl">Oggi</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
     <a class="tile t-inv" id="tile-inv" href="#piano/investire"><small class="tl">Investimento</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
@@ -1185,7 +1185,7 @@ html, body { touch-action: pan-x pan-y; }
         <button class="primary" type="submit">Aggiungi obiettivo</button>
       </form>
     </section>
-    <section data-sub="mese" data-mod="annuali" class="card" aria-labelledby="t-a">
+    <section data-sub="daparte" data-mod="annuali" class="card" aria-labelledby="t-a">
       <h2 id="t-a">Da parte per le spese di ogni anno</h2>
       <p class="hint">Assicurazione, bollo, tagliando, revisione. Ogni mese ne metti da parte un dodicesimo (la linea base, già nel piano). Segna qui quanto metti davvero da parte: certi mesi di più, altri di meno.</p>
       <p class="small muted" id="annual-sum"></p>
@@ -1200,7 +1200,7 @@ html, body { touch-action: pan-x pan-y; }
         <button class="primary" type="submit">Aggiungi voce</button>
       </form>
     </section>
-    <section data-sub="mese" data-mod="annuali" class="card" aria-labelledby="t-ar">
+    <section data-sub="daparte" data-mod="annuali" class="card" aria-labelledby="t-ar">
       <h2 id="t-ar">Promemoria</h2>
       <label class="chk"><input type="checkbox" id="ar-on"><span>Avvisami se non ho messo da parte la quota del mese</span></label>
       <label class="f" for="ar-day">Entro il giorno<select id="ar-day"></select></label>
@@ -2306,7 +2306,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.72";
+  var APP_VERSION = "2026-11-17.73";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4020,7 +4020,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["mercato", "Notizie e mercato", "Andamento dei mercati e notizie."]
   ];
   var WMOD = { "home-dl": ["scad"], "wk-remind": ["viaggi"], "today": ["viaggi"], "tile-acc": ["annuali"], "tile-inv": ["invest"], "tile-goals": ["obiett"] };
-  var SUBMOD = { turni: ["viaggi"], settimana: ["viaggi"], prospetto: ["viaggi"], tragitti: ["viaggi"], auto: ["viaggi"], panoramica: ["scad", "doc"], scadenze: ["scad"], documenti: ["doc"], investire: ["invest"], consulente: ["invest"], mercato: ["mercato"], obiettivi: ["obiett"] };
+  var SUBMOD = { turni: ["viaggi"], settimana: ["viaggi"], prospetto: ["viaggi"], tragitti: ["viaggi"], auto: ["viaggi"], panoramica: ["scad", "doc"], scadenze: ["scad"], documenti: ["doc"], daparte: ["annuali"], investire: ["invest"], consulente: ["invest"], mercato: ["mercato"], obiettivi: ["obiett"] };
   function modRaw(k) { return !S.mods || S.mods[k] !== false; }
   function modOn(k) { return modRaw(k) && !(S.simple !== false && ["invest", "obiett", "annuali", "mercato"].indexOf(k) >= 0); }
   function anyMod(list) { return !list || list.some(modOn); }
@@ -4597,7 +4597,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   var VIEWS = ["home", "spese", "lavoro", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["daparte", "Da parte"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["veicoli", "Veicoli"], ["auto", "Auto e viaggi"], ["budget", "Budget e investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -4667,7 +4667,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }); });
     add("Spese", sp);
     add("Spese fisse", (S.fixedList || []).filter(function (f) { return (f.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (f) { return [f.name, "Scade il " + f.due, eur2.format(f.amount), "#spese/fisse"]; }));
-    add("Voci annuali", (S.annual || []).filter(function (a) { return (a.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (a) { return [a.name, a.due || "", eur2.format(a.amount), "#spese/fisse"]; }));
+    add("Voci annuali", (S.annual || []).filter(function (a) { return (a.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (a) { return [a.name, a.due || "", eur2.format(a.amount), "#piano/daparte"]; }));
     add("Veicoli", (S.veh || []).filter(function (v) { return ((v.brand || "") + " " + (v.model || "") + " " + (v.reg || "")).toLowerCase().indexOf(q) >= 0; }).map(function (v) { return [(v.brand || "") + " " + (v.model || ""), v.reg || "", "", "#profilo/veicoli"]; }));
     add("Obiettivi", (S.goals || []).filter(function (g) { return (g.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (g) { return [g.name, "", eur2.format(g.saved || 0), "#piano/obiettivi"]; }));
     if (!groups.length) { box.innerHTML = '<p class="small muted">Nessun risultato per “' + esc(q) + '”.</p>'; return; }
@@ -4714,7 +4714,6 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     bx.innerHTML = h; $("recap").hidden = false;
   }
-  $("tile-acc").addEventListener("click", function () { setTimeout(function () { var t = $("t-a"); if (t && t.offsetParent) t.scrollIntoView({ block: "start" }); }, 150); });
   $("recap-btn").onclick = openRecap; $("recap-ok").onclick = function () { $("recap").hidden = true; }; $("recap").onclick = function (e) { if (e.target === this) this.hidden = true; };
 
   /* ---------- lettura scontrino ---------- */
@@ -4753,7 +4752,10 @@ create policy "solo i miei dati" on stipendio_pilota
   $("scan-btn").onclick = function () { $("scan-file").click(); }; $("scan-file").onchange = function () { var f = this.files[0]; this.value = ""; scanReceipt(f); };
   window.__receiptTotal = receiptTotal;
   var CHANGELOG = [
-    { id: "2026-11-17g", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17h", date: "17 novembre · nuovo", items: [
+      ["Pagina Da parte", "Le spese di ogni anno (assicurazione, bollo, tagliando) hanno una pagina tutta loro: Piano → Da parte. Ci arrivi anche dal riquadro in Home."]
+    ] },
+    { id: "2026-11-17g", date: "17 novembre", items: [
       ["Campanella delle notifiche", "In alto c'è una campanella: colorata = notifiche attive, grigia = spente. Un tocco per accenderle o spegnerle."]
     ] },
     { id: "2026-11-17f", date: "17 novembre", items: [
