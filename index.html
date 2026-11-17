@@ -375,6 +375,18 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .simple-row small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
 .top .name, .top .month { white-space: nowrap; }
 .top .month { font-size: 13px; }
+html[data-fs="1"] body { zoom: 1.1; } html[data-fs="2"] body { zoom: 1.2; } html[data-fs="3"] body { zoom: 1.3; } html[data-fs="1"] .top { zoom: .91; } html[data-fs="2"] .top { zoom: .83; } html[data-fs="3"] .top { zoom: .77; }
+html[data-lh="1"] .fab { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); }
+.eyebtn.off { opacity: .55; }
+.lock { position: fixed; inset: 0; z-index: 9999; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; }
+.lock[hidden], .tour[hidden] { display: none; }
+.lock .dots { display: flex; gap: 14px; } .lock .dots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--accent); } .lock .dots i.on { background: var(--accent); }
+.lock .pad { display: grid; grid-template-columns: repeat(3, 76px); gap: 12px; } .lock .pad button { height: 64px; border-radius: 18px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font-size: 24px; font-weight: 700; }
+.lock .lerr { min-height: 20px; color: var(--bad); font-weight: 600; }
+.tour { position: fixed; inset: 0; z-index: 9000; background: var(--bg); color: var(--text); display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 28px max(24px, env(safe-area-inset-right, 0px)); }
+.tour .tbig { font-size: 64px; } .tour h1 { margin: 0; } .tour .tdots { display: flex; gap: 8px; } .tour .tdots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); } .tour .tdots i.on { background: var(--accent); }
+.icopt { display: flex; gap: 14px; } .icopt button { width: 72px; height: 72px; border-radius: 18px; border: 3px solid transparent; padding: 0; overflow: hidden; } .icopt button.on { border-color: var(--accent); } .icopt img { width: 100%; height: 100%; display: block; }
+.snaprow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .top .newsbtn { position: relative; margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); display: grid; place-items: center; cursor: pointer; flex: none; }
 .newsbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ndot { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b30; border: 2px solid var(--surface); box-shadow: 0 0 0 0 rgba(255, 59, 48, .7); }
@@ -384,7 +396,7 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .newsov[hidden] { display: none; }
 .newsbox { width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
 .newsbox h2 { margin: 0 0 12px; }
-@media (max-width: 440px) { .page .top { gap: 6px; } .page .top .mark { width: 30px; height: 30px; } .page .top .name { font-size: 15px; } .page .top .month { font-size: 11px; } .page .top .newsbtn { margin-left: 0; width: 34px; height: 34px; } .page .top .newsbtn svg { width: 20px; height: 20px; } }
+@media (max-width: 440px) { .top .newsbtn { width: 34px; height: 34px; margin-left: 4px; } .page .top { gap: 6px; } .page .top .mark { width: 30px; height: 30px; } .page .top .name { font-size: 15px; } .page .top .month { font-size: 11px; } .page .top .newsbtn { margin-left: 0; width: 34px; height: 34px; } .page .top .newsbtn svg { width: 20px; height: 20px; } }
 @media (max-width: 430px) { .page .top .month { display: none; } .page .top .name { margin-right: auto; } }
 html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
 .page { overflow-x: clip; max-width: 100vw; }
@@ -717,12 +729,24 @@ html, body { touch-action: pan-x pan-y; }
     <span class="name">Stipendio Pilota</span>
     <span class="month" id="month"></span>
     <button type="button" class="newsbtn bellbtn" id="bell-btn" aria-label="Notifiche spente: tocca per attivarle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 004 0"/><path class="bx" d="M3 3l18 18"/></svg></button>
+    <button type="button" class="newsbtn eyebtn" id="eye-btn" aria-label="Nascondi gli importi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
     <button type="button" class="newsbtn" id="srch-btn" aria-label="Cerca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button type="button" class="newsbtn" id="news-btn" aria-label="Novità dell'app"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.6L18.5 10.5 12.9 12.4 11 18l-1.9-5.6L3.5 10.5 9.1 8.6z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="ndot" id="news-dot" hidden></i></button>
   </div>
 
     <div class="newsov" id="srch" hidden role="dialog" aria-modal="true" aria-label="Cerca"><div class="newsbox"><div class="line"><input id="srch-q" type="search" placeholder="Cerca una spesa, una voce, un veicolo…" autocomplete="off" style="flex:1"><button type="button" class="primary" id="srch-ok">Chiudi</button></div><div id="srch-res" class="srchres"></div></div></div>
     <div class="newsov" id="recap" hidden role="dialog" aria-modal="true" aria-label="Riepilogo del mese"><div class="newsbox"><div class="line"><h2 style="margin:0">Riepilogo del mese</h2><button type="button" class="primary" id="recap-ok">Chiudi</button></div><div id="recap-body"></div></div></div>
+  <div class="lock" id="lock" role="dialog" aria-modal="true" aria-label="App bloccata" hidden>
+    <h1 style="margin:0">Stipendio Pilota</h1><p class="muted" style="margin:0">Scrivi il tuo codice per aprire l'app</p>
+    <div class="dots" id="lock-dots" aria-hidden="true"></div><p class="lerr" id="lock-err" role="alert"></p>
+    <div class="pad" id="lock-pad"></div>
+    <button type="button" class="link" id="lock-forgot">Codice dimenticato?</button>
+  </div>
+  <div class="tour" id="tour" role="dialog" aria-modal="true" aria-label="Guida" hidden>
+    <p class="tbig" id="tour-i" aria-hidden="true"></p><h1 id="tour-t"></h1><p id="tour-p" style="font-size:18px;line-height:1.5"></p>
+    <div class="tdots" id="tour-d" aria-hidden="true"></div>
+    <div class="btnrow"><button type="button" class="primary" id="tour-n">Avanti</button><button type="button" class="link" id="tour-s">Salta la guida</button></div>
+  </div>
   <div class="subtabs" id="subtabs" hidden></div>
   <button type="button" class="fab" id="fab" aria-label="Segna una spesa" hidden>+</button>
   <div class="qs" id="qs" hidden>
@@ -802,6 +826,7 @@ html, body { touch-action: pan-x pan-y; }
       <div id="xh-ask" hidden><label class="f" for="xh-amt">Importo arrivato (€)<input id="xh-amt" type="text" inputmode="decimal" autocomplete="off"></label><button type="button" class="primary" id="xh-got">È arrivata</button></div>
       <a class="link" href="#profilo/natale">Apri Natale e tredicesima</a>
     </section>
+    <section class="card" id="home-ctx" data-sub="home" hidden aria-labelledby="t-hx"><h2 id="t-hx"></h2><div id="hx-body"></div></section>
     <section class="card" id="howgo" data-sub="home" aria-labelledby="t-hg">
       <h2 id="t-hg">Come stai andando</h2>
       <p id="hg-text"></p>
@@ -1681,6 +1706,29 @@ create policy "stipendio pilota documenti" on storage.objects
       <button type="button" class="primary" id="install" hidden>Installa l'app</button>
       <p class="small muted" id="ver"></p>
     </section>
+    <section data-sub="dati" class="card" aria-labelledby="t-cf">
+      <h2 id="t-cf">Comodità</h2>
+      <p class="hint">Queste scelte valgono solo su questo telefono.</p>
+      <label class="f" for="cf-fs">Grandezza del testo<select id="cf-fs"><option value="0">Normale</option><option value="1">Un po' più grande</option><option value="2">Grande</option><option value="3">Molto grande</option></select></label>
+      <label class="chk"><input type="checkbox" id="cf-lh"><span>Modalità mano sinistra (il tasto + va a sinistra)</span></label>
+      <label class="chk"><input type="checkbox" id="cf-ctx"><span>Home diversa secondo l'ora (mattina scadenze e turno, sera le spese di oggi)</span></label>
+      <h3 style="margin:10px 0 6px;font-size:16px">Icona dell'app</h3>
+      <div class="icopt" id="cf-ic"></div>
+      <p class="small muted">L'icona cambia quando aggiungi l'app alla schermata Home: se è già aggiunta, toglila e aggiungila di nuovo.</p>
+      <button type="button" id="cf-tour">Rivedi la guida</button>
+    </section>
+    <section data-sub="dati" class="card" aria-labelledby="t-sc">
+      <h2 id="t-sc">Sicurezza e copie</h2>
+      <p class="hint">Il codice blocca l'app quando la apri o quando torni dopo un minuto. Non sostituisce Face ID.</p>
+      <div class="btnrow"><button type="button" id="sc-pin">Imposta un codice</button></div>
+      <div id="sc-pinbox" hidden><label class="f" for="sc-pin1">Nuovo codice (4 numeri)<input id="sc-pin1" type="password" inputmode="numeric" maxlength="4" autocomplete="off"></label><button type="button" class="primary" id="sc-pinok">Salva il codice</button></div>
+      <label class="chk"><input type="checkbox" id="sc-priv"><span>Nascondi gli importi (••• al posto delle cifre; anche con l'occhio in alto)</span></label>
+      <h3 style="margin:12px 0 4px;font-size:16px">Copie automatiche</h3>
+      <p class="small muted">Ogni giorno che apri l'app ne salvo una copia su questo telefono (le ultime 10). Se sbagli, torni a una versione precedente.</p>
+      <div id="sc-snaps"></div>
+      <h3 style="margin:12px 0 4px;font-size:16px">Esporta</h3>
+      <div class="btnrow"><button type="button" id="ex-xls">Tutto in Excel</button><button type="button" id="ex-pdf">Stampa o PDF</button></div>
+    </section>
     <section data-sub="dati" class="card" aria-labelledby="t-bk">
       <h2 id="t-bk">Backup e condivisione</h2>
       <p class="hint">I dati stanno solo in questo telefono. Scarica un backup ogni tanto. Per darla alla tua fidanzata con le tue regole, copia il codice e incollalo nella sua app. Per usare i tuoi dati su più telefoni usa il cloud qui sopra.</p>
@@ -2374,7 +2422,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.76";
+  var APP_VERSION = "2026-11-17.77";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4088,7 +4136,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function wGo(d) { wStep = Math.max(0, wStep + d); if (wStep === 3 && !W.mods.viaggi) wStep += d; wRender(); }
   function openWizard() { W = wNew(); wStep = 0; $("wiz").hidden = false; document.body.style.overflow = "hidden"; wRender(); }
-  function closeWizard() { $("wiz").hidden = true; document.body.style.overflow = ""; }
+  function closeWizard() { $("wiz").hidden = true; document.body.style.overflow = ""; if (S.saved && !DV.tour && typeof tourShow === "function") tourShow(0); }
   function initWizard() {
     $("wiz-next").onclick = function () {
       if (wStep === 6) { closeWizard(); location.hash = "#home"; showView(); window.scrollTo(0, 0); return; }
@@ -4741,7 +4789,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -5138,8 +5186,146 @@ create policy "solo i miei dati" on stipendio_pilota
       ["sv-n", "sv-e", "sv-k", "sv-d"].forEach(function (id) { $(id).value = ""; }); persist(); renderAll(); toast("Intervento salvato ✓");
     };
   }
+
+  /* ---------- tappa 3: comodità e sicurezza (impostazioni del telefono) ---------- */
+  var DV = (function () { try { return JSON.parse(localStorage.getItem("sp-dev-v1") || "{}") || {}; } catch (e) { return {}; } })();
+  function dvSave() { try { localStorage.setItem("sp-dev-v1", JSON.stringify(DV)); } catch (e) {} }
+  var _eur = eur, _eur2 = eur2;
+  function priv() { return !!DV.priv; }
+  eur = { format: function (v) { return priv() ? "••• €" : _eur.format(v); } };
+  eur2 = { format: function (v) { return priv() ? "••• €" : _eur2.format(v); } };
+  function iconUrl(k) {
+    var c = document.createElement("canvas"); c.width = c.height = 180; var g = c.getContext("2d"), P = { dark: ["#1a0f0c", "#2b1a14", "#ff7f66"], coral: ["#ff7f66", "#e2503a", "#1a0f0c"], ocean: ["#1b6ca8", "#46c0ad", "#ffffff"] }[k] || ["#1a0f0c", "#2b1a14", "#ff7f66"];
+    var gr = g.createLinearGradient(0, 0, 180, 180); gr.addColorStop(0, P[0]); gr.addColorStop(1, P[1]); g.fillStyle = gr; g.fillRect(0, 0, 180, 180);
+    g.fillStyle = P[2]; g.beginPath(); g.arc(90, 90, 54, 0, 7); g.fill(); g.fillStyle = P[0]; g.font = "700 74px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("€", 90, 94);
+    return c.toDataURL("image/png");
+  }
+  function applyComfort() {
+    var h = document.documentElement; h.setAttribute("data-fs", String(DV.fs || 0)); h.setAttribute("data-lh", DV.lh ? "1" : "0");
+    var e = document.getElementById("eye-btn"); if (e) { e.classList.toggle("off", !priv()); e.setAttribute("aria-label", priv() ? "Mostra gli importi" : "Nascondi gli importi"); }
+    if (DV.icon) { var u = iconUrl(DV.icon); [].forEach.call(document.querySelectorAll('link[rel="apple-touch-icon"],link[rel="icon"]'), function (l) { l.href = u; }); }
+  }
+  /* blocco con codice */
+  function pinHash(x) { var h = 5381; x = "sp|" + x + "|9"; for (var i = 0; i < x.length; i++) h = ((h << 5) + h + x.charCodeAt(i)) >>> 0; return String(h); }
+  var lockBuf = "", lockAt = 0;
+  function lockShow() {
+    if (!DV.pin) return; lockBuf = ""; $("lock").hidden = false; document.body.style.overflow = "hidden"; lockDraw(""); 
+  }
+  function lockDraw(err) { $("lock-dots").innerHTML = [0, 1, 2, 3].map(function (i) { return '<i class="' + (i < lockBuf.length ? "on" : "") + '"></i>'; }).join(""); $("lock-err").textContent = err || ""; }
+  function lockInit() {
+    var pad = $("lock-pad"); pad.innerHTML = "";
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"].forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = k; if (!k) { b.style.visibility = "hidden"; } b.setAttribute("aria-label", k === "⌫" ? "Cancella" : k);
+      b.onclick = function () {
+        if (k === "⌫") lockBuf = lockBuf.slice(0, -1); else if (k) lockBuf += k;
+        lockDraw("");
+        if (lockBuf.length === 4) { if (pinHash(lockBuf) === DV.pin) { $("lock").hidden = true; document.body.style.overflow = ""; lockBuf = ""; } else { lockBuf = ""; lockDraw("Codice sbagliato"); } }
+      }; pad.appendChild(b);
+    });
+    var fg = 0; $("lock-forgot").onclick = function () {
+      if (!fg) { fg = 1; this.textContent = "Tocca ancora: cancella i dati di questo telefono (restano quelli nel cloud, se l'hai attivato)"; return; }
+      try { localStorage.removeItem(KEY); delete DV.pin; dvSave(); } catch (e) {} location.reload();
+    };
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) lockAt = Date.now(); else if (DV.pin && lockAt && Date.now() - lockAt > 60000) lockShow();
+    });
+    lockShow();
+  }
+  /* copie automatiche */
+  function snapsGet() { try { return JSON.parse(localStorage.getItem("sp-snaps-v1") || "[]") || []; } catch (e) { return []; } }
+  function snapsPut(a) { try { localStorage.setItem("sp-snaps-v1", JSON.stringify(a)); return true; } catch (e) { return false; } }
+  function snapNow(force) {
+    if (!S.saved) return; var a = snapsGet(), last = a.length ? a[a.length - 1] : null;
+    if (!force && last && Date.now() - last.t < 20 * 36e5) return;
+    var d = JSON.stringify(S); if (d.length > 400000) return;
+    a.push({ t: Date.now(), d: d }); a = a.slice(-10); while (!snapsPut(a) && a.length > 1) a.shift();
+  }
+  function renderSnaps() {
+    var bx = $("sc-snaps"); if (!bx) return; var a = snapsGet().slice().reverse();
+    bx.innerHTML = a.length ? a.map(function (x, i) { var o = null; try { o = JSON.parse(x.d); } catch (e) {} var sp = o ? Object.keys(o.spent || {}).reduce(function (n, k) { return n + o.spent[k].length; }, 0) : 0;
+      return '<div class="snaprow"><span>' + new Date(x.t).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) + '<small class="muted" style="display:block">' + sp + ' spese salvate</small></span><button type="button" data-t="' + x.t + '">Ripristina</button></div>'; }).join("") : '<p class="small muted">La prima copia arriva alla prossima apertura dell\'app.</p>';
+    [].forEach.call(bx.querySelectorAll("button"), function (b) { var armed2 = false; b.onclick = function () {
+      if (!armed2) { armed2 = true; b.textContent = "Conferma"; return; }
+      var x = snapsGet().filter(function (y) { return String(y.t) === b.getAttribute("data-t"); })[0]; if (!x) return;
+      snapNow(true); try { adoptState(JSON.parse(x.d), false); toast("Versione ripristinata ✓"); } catch (e) { toast("Non riesco a ripristinare"); } renderSnaps();
+    }; });
+  }
+  /* esporta */
+  function exportRows() {
+    var rows = [["Mese", "Data", "Categoria", "Nota", "Importo"]];
+    Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).forEach(function (e) { var c = CATS.filter(function (x) { return x.id === e.cat; })[0] || CATS[3]; rows.push([k, ymd(new Date(e.date)), c.name, String(e.note || ""), Number(e.amount)]); }); });
+    return rows;
+  }
+  function exportXls() {
+    var R = exportRows(), tot = {}; R.slice(1).forEach(function (r) { tot[r[0]] = (tot[r[0]] || 0) + r[4]; });
+    var csv = R.map(function (r) { return r.map(function (v, i) { return i === 4 && typeof v === "number" ? String(v).replace(".", ",") : '"' + String(v).replace(/"/g, '""') + '"'; }).join(";"); });
+    csv.push(""); csv.push('"Totali per mese"'); Object.keys(tot).sort().forEach(function (k) { csv.push('"' + k + '";;;;' + String(Math.round(tot[k] * 100) / 100).replace(".", ",")); });
+    try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + csv.join("\n")], { type: "text/csv" })); a.download = "stipendio-pilota-tutto.csv"; document.body.appendChild(a); a.click(); a.remove(); toast("File scaricato: si apre con Excel ✓"); } catch (e) { toast("Download non riuscito"); }
+  }
+  function exportPdf() {
+    var R = exportRows(), by = {}; R.slice(1).forEach(function (r) { (by[r[0]] = by[r[0]] || []).push(r); });
+    var h = "<h1>Stipendio Pilota</h1>" + Object.keys(by).sort().reverse().map(function (k) { var t = by[k].reduce(function (n, r) { return n + r[4]; }, 0); return "<h2>" + esc(mlabel(k)) + " · " + _eur2.format(t) + "</h2><table>" + by[k].map(function (r) { return "<tr><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td><td>" + esc(r[3]) + "</td><td style='text-align:right'>" + _eur2.format(r[4]) + "</td></tr>"; }).join("") + "</table>"; }).join("");
+    var w = window.open("", "_blank"); if (!w) { toast("Il telefono ha bloccato la finestra: consenti i popup"); return; }
+    w.document.write("<!doctype html><meta charset=utf-8><title>Stipendio Pilota</title><style>body{font-family:sans-serif;padding:16px}table{width:100%;border-collapse:collapse}td{border-bottom:1px solid #ccc;padding:4px 6px;font-size:13px}h2{margin:18px 0 6px}</style>" + h); w.document.close(); setTimeout(function () { try { w.print(); } catch (e) {} }, 400);
+  }
+  /* guida */
+  var TOUR = [["🏠", "Home", "Qui vedi quanto puoi spendere oggi. Il tasto + in basso serve per segnare una spesa in pochi secondi."], ["🧾", "Spese", "Segna quello che spendi, anche a voce. L'app tiene i budget per categoria e ti avvisa prima di sforare."], ["🗓️", "Piano", "Stipendio, spese fisse, obiettivi e turni: qui è tutto il tuo mese. Puoi rivedere questa guida in Profilo → Dati."]];
+  var tourI = 0;
+  function tourShow(i) {
+    tourI = i; $("tour").hidden = false; var t = TOUR[i]; $("tour-i").textContent = t[0]; $("tour-t").textContent = t[1]; $("tour-p").textContent = t[2];
+    $("tour-d").innerHTML = TOUR.map(function (_, j) { return '<i class="' + (j === i ? "on" : "") + '"></i>'; }).join(""); $("tour-n").textContent = i === TOUR.length - 1 ? "Ho capito" : "Avanti";
+  }
+  function tourEnd() { $("tour").hidden = true; DV.tour = 1; dvSave(); }
+  /* home secondo l'ora */
+  function renderCtx() {
+    var bx = $("home-ctx"); if (!bx) return; if (!DV.ctx || !S.saved) { bx.hidden = true; return; }
+    var h = new Date().getHours(), out = "", ti = "";
+    var spToday = (S.spent[S.monthKey] || []).filter(function (e) { return ymd(new Date(e.date)) === TODAY_KEY; });
+    if (h < 14) {
+      ti = h < 12 ? "Per oggi" : "Oggi"; var sh = (S.shifts || {})[TODAY_KEY], L = [];
+      if (sh && sh.t) { var nm = { L: "lavoro", R: "riposo", F: "ferie", M: "malattia", P: "permesso" }[sh.t] || sh.t; var pr = sh.t === "L" && typeof presetOf === "function" ? presetOf(sh.s) : null; L.push("Turno: <b>" + esc(pr ? pr.name : nm) + "</b>" + (sh.h1 && sh.h2 ? " (" + sh.h1 + "–" + sh.h2 + ")" : "")); }
+      var dl = []; (S.annual || []).forEach(function (a) { if (/^\d{4}-\d{2}-\d{2}$/.test(a.due || "")) { var n = daysBetween(TODAY_KEY, a.due); if (n >= 0 && n <= 14) dl.push([n, a.name + " · " + eur.format(a.amount)]); } });
+      vehDue().forEach(function (x) { var n = daysBetween(TODAY_KEY, x[1]); if (n >= 0 && n <= 14) dl.push([n, x[0]]); });
+      dl.sort(function (a, b) { return a[0] - b[0]; }).slice(0, 3).forEach(function (x) { L.push((x[0] === 0 ? "Oggi" : x[0] === 1 ? "Domani" : "Tra " + x[0] + " giorni") + ": " + esc(x[1])); });
+      out = L.length ? L.map(function (x) { return "<p style='margin:4px 0'>" + x + "</p>"; }).join("") : "<p class='muted' style='margin:4px 0'>Niente di urgente per oggi.</p>";
+    } else {
+      ti = "Le spese di oggi"; var tot = spToday.reduce(function (n, e) { return n + e.amount; }, 0);
+      out = spToday.length ? "<p style='margin:4px 0'>Hai segnato <b>" + spToday.length + (spToday.length === 1 ? " spesa" : " spese") + "</b>, in tutto <b>" + eur2.format(tot) + "</b>.</p>" : "<p class='muted' style='margin:4px 0'>Non hai ancora segnato spese oggi.</p>";
+    }
+    bx.hidden = false; $("t-hx").textContent = ti; $("hx-body").innerHTML = out;
+  }
+  function setupT3() {
+    $("cf-fs").value = String(DV.fs || 0); $("cf-fs").onchange = function () { DV.fs = +this.value; dvSave(); applyComfort(); };
+    $("cf-lh").checked = !!DV.lh; $("cf-lh").onchange = function () { DV.lh = this.checked; dvSave(); applyComfort(); };
+    $("cf-ctx").checked = !!DV.ctx; $("cf-ctx").onchange = function () { DV.ctx = this.checked; dvSave(); renderCtx(); };
+    var ic = $("cf-ic"); [["dark", "Scura"], ["coral", "Corallo"], ["ocean", "Oceano"]].forEach(function (k) {
+      var b = document.createElement("button"); b.type = "button"; b.title = k[1]; b.setAttribute("aria-label", "Icona " + k[1]); b.className = DV.icon === k[0] ? "on" : ""; b.innerHTML = '<img alt="" src="' + iconUrl(k[0]) + '">';
+      b.onclick = function () { DV.icon = k[0]; dvSave(); applyComfort(); [].forEach.call(ic.children, function (x) { x.classList.remove("on"); }); b.classList.add("on"); toast("Icona " + k[1].toLowerCase() + " scelta ✓"); }; ic.appendChild(b);
+    });
+    $("cf-tour").onclick = function () { tourShow(0); };
+    $("tour-n").onclick = function () { if (tourI < TOUR.length - 1) tourShow(tourI + 1); else tourEnd(); };
+    $("tour-s").onclick = tourEnd;
+    $("sc-priv").checked = priv(); $("sc-priv").onchange = function () { DV.priv = this.checked; dvSave(); applyComfort(); renderAll(); };
+    $("eye-btn").onclick = function () { DV.priv = !DV.priv; dvSave(); $("sc-priv").checked = priv(); applyComfort(); renderAll(); toast(priv() ? "Importi nascosti" : "Importi visibili"); };
+    var pb = function () { $("sc-pin").textContent = DV.pin ? "Togli il codice" : "Imposta un codice"; }; pb();
+    $("sc-pin").onclick = function () { if (DV.pin) { delete DV.pin; dvSave(); pb(); toast("Codice tolto"); } else { $("sc-pinbox").hidden = false; $("sc-pin1").focus(); } };
+    $("sc-pinok").onclick = function () { var v = $("sc-pin1").value; if (!/^\d{4}$/.test(v)) { toast("Servono 4 numeri"); return; } DV.pin = pinHash(v); dvSave(); $("sc-pin1").value = ""; $("sc-pinbox").hidden = true; pb(); toast("Codice impostato ✓ Ricordalo: se lo dimentichi devi cancellare i dati"); };
+    $("ex-xls").onclick = exportXls; $("ex-pdf").onclick = exportPdf;
+    applyComfort(); lockInit(); snapNow(false); renderSnaps(); renderCtx();
+    var w = false; try { w = !!sessionStorage.getItem("sp-nowiz"); } catch (e) {}
+    if (!DV.tour) { if (S.saved) { DV.tour = 1; dvSave(); } }
+  }
   var CHANGELOG = [
-    { id: "2026-11-17k", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17l", date: "17 novembre · nuovo", items: [
+      ["Codice di blocco", "In Profilo → Dati puoi impostare un codice a 4 numeri: l'app si apre solo con quello."],
+      ["Nascondi gli importi", "L'occhio in alto trasforma le cifre in •••, utile davanti ad altri."],
+      ["Copie automatiche", "Ogni giorno salvo una copia dei tuoi dati: se sbagli, torni a una versione precedente."],
+      ["Esporta tutto", "Tutte le spese in un file per Excel, oppure stampa o salva in PDF."],
+      ["Testo più grande e mano sinistra", "Scegli la grandezza del testo e sposta il tasto + a sinistra."],
+      ["Icona dell'app e guida", "Tre icone tra cui scegliere e una guida di tre schermate."],
+      ["Home secondo l'ora", "Al mattino turno e scadenze, dal pomeriggio le spese di oggi (attivala in Profilo → Dati)."]
+    ] },
+    { id: "2026-11-17k", date: "17 novembre", items: [
       ["Scadenze delle auto", "In Altro → I miei veicoli vedi le prossime scadenze con i giorni che mancano. Con le notifiche attive ti avviso 30 e 7 giorni prima."],
       ["Costo al chilometro", "Scrivi quanti km fai in un anno e vedi quanto ti costa ogni chilometro."],
       ["Rifornimenti e consumo", "Segna il pieno (litri, euro, km): l'app calcola quanto consuma davvero l'auto."],
@@ -5421,7 +5607,7 @@ create policy "solo i miei dati" on stipendio_pilota
   initArchivio(); $("br-save").onclick = saveBroker;
   $("td-date").onchange = function () { if (this.value) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
-  setupBackup();
+  setupBackup(); setupT3();
   setupSync();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
