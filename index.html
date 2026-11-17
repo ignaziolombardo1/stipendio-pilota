@@ -664,6 +664,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .otrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 8px 0; padding: 10px 12px; border-radius: 14px; background: var(--soft); }
 .otrow small { display: block; }
 .ots { display: flex; align-items: center; gap: 10px; } .ots button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-size: 22px; font-weight: 800; cursor: pointer; } .ots b { min-width: 46px; text-align: center; font-size: 18px; }
+@keyframes cfall { to { transform: translateY(105vh) rotate(720deg); opacity: .9; } }
 .shchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
 .shchips button { padding: 10px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .shchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -875,8 +876,11 @@ html, body { touch-action: pan-x pan-y; }
       <h2 id="t-add">Segna una spesa</h2>
       <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
         <label class="f bigamt" for="exp-amount">Quanto hai speso?<span class="amtbox"><input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"><b>€</b></span></label>
-        <div class="pch"><button type="button" id="scan-btn">📷 Leggi lo scontrino</button><input type="file" id="scan-file" accept="image/*" capture="environment" hidden></div>
+        <p class="small muted" id="exp-calc" hidden></p>
+        <div class="pch"><button type="button" id="voice-btn" hidden>🎤 Parla</button><button type="button" id="scan-btn">📷 Leggi lo scontrino</button><input type="file" id="scan-file" accept="image/*" capture="environment" hidden></div>
         <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
+        <p class="small" id="cat-sug" hidden></p>
+        <div class="pch" id="again-box" hidden></div>
         <div class="pch" id="recent" hidden></div>
         <details id="exp-more"><summary>Aggiungi nota o data</summary>
           <label class="f" for="exp-note">Nota<input id="exp-note" type="text" autocomplete="off" list="notes-dl" placeholder="Per esempio supermercato"><datalist id="notes-dl"></datalist></label>
@@ -884,6 +888,7 @@ html, body { touch-action: pan-x pan-y; }
         </details>
         <button class="primary" type="submit" id="exp-add">Aggiungi</button>
         <button type="button" id="exp-cancel" hidden>Annulla modifica</button>
+        <details class="shp" id="fast-box"><summary>Tasto veloce sul telefono</summary><p class="small muted">Android: tieni premuta l'icona dell'app e scegli “Segna una spesa”.<br>iPhone: nell'app Comandi crea un comando “Apri URL” con questo indirizzo e aggiungilo alla schermata Home.</p><div class="line"><input id="fast-url" type="text" readonly style="flex:1"><button type="button" id="fast-copy">Copia</button></div></details>
       </form>
     </section>
     <section data-sub="spese" class="card" aria-labelledby="t-list">
@@ -893,6 +898,8 @@ html, body { touch-action: pan-x pan-y; }
     <section data-sub="spese" class="card" aria-labelledby="t-cats">
       <h2 id="t-cats">Per categoria</h2>
       <div id="cats" style="display:flex;flex-direction:column;gap:16px"></div>
+      <button type="button" class="link" id="catb-btn">Cambia i budget delle categorie</button>
+      <div id="catb-ed" hidden></div>
       <p class="small muted">Affitto, bollette e assicurazione si spuntano nella Home; il pedaggio è già nel piano.</p>
     </section>
     <section data-sub="giorni" class="card" aria-labelledby="t-sd">
@@ -1203,6 +1210,26 @@ html, body { touch-action: pan-x pan-y; }
         <label class="f" for="g-when">Entro quando<select id="g-when"></select></label>
         <button class="primary" type="submit">Aggiungi obiettivo</button>
       </form>
+    </section>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-ch">
+      <h2 id="t-ch">Sfide del mese</h2>
+      <p class="hint">Una piccola sfida per tenerti motivato. Scegline una e l'app tiene il conto da sola.</p>
+      <div id="chal-list"></div>
+      <div class="fields"><label class="f" for="ch-k">Sfida<select id="ch-k"><option value="nospend">Una settimana senza spese in…</option><option value="limit">Una settimana sotto un tetto in…</option><option value="streak">7 giorni di fila segnando le spese</option></select></label><label class="f" for="ch-c" id="ch-cl">Categoria<select id="ch-c"></select></label><label class="f" for="ch-a" id="ch-al" hidden>Tetto in euro<input id="ch-a" type="text" inputmode="decimal" autocomplete="off" placeholder="Es. 30"></label></div>
+      <button type="button" class="primary" id="ch-add">Inizia la sfida</button>
+    </section>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-pg">
+      <h2 id="t-pg">Salvadanaio degli arrotondamenti</h2>
+      <p class="hint">Ogni spesa viene arrotondata all'euro successivo e la differenza finisce qui: spendi 3,40 € e 0,60 € vanno da parte.</p>
+      <label class="chk"><input type="checkbox" id="pg-on"><span>Arrotonda le mie spese</span></label>
+      <p class="num" style="font-size:28px;font-weight:800;margin:6px 0" id="pg-tot"></p>
+      <div id="pg-move"></div>
+    </section>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-ef">
+      <h2 id="t-ef">Fondo per le emergenze</h2>
+      <p class="hint" id="ef-hint"></p>
+      <label class="f" for="ef-v">Quanto hai già messo da parte (€)<input id="ef-v" type="text" inputmode="decimal" autocomplete="off"></label>
+      <div id="ef-lv"></div>
     </section>
     <section data-sub="daparte" data-mod="annuali" class="card" aria-labelledby="t-a">
       <h2 id="t-a">Da parte per le spese di ogni anno</h2>
@@ -1970,7 +1997,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var p = plan(), list = S.spent[S.monthKey] || [];
     var by = { spesa: 0, carb: 0, svago: 0, altro: 0 };
     list.forEach(function (e) { by[e.cat] = (by[e.cat] || 0) + e.amount; });
-    var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 };
+    var bud = { spesa: p.spesa, carb: p.fuelB + p.fuelD, svago: p.svago, altro: 0 }; var cb = S.catB || {}; ["spesa", "carb", "svago"].forEach(function (c) { if (cb[c] > 0) bud[c] = cb[c]; });
     var V = bud.spesa + bud.carb + bud.svago, A = by.spesa + by.carb + by.svago + by.altro;
     var pd = S.paid[S.monthKey] || {};
     var fixed = p.fixed, invM = S.invested.filter(function (x) { return x.monthKey === S.monthKey; }).reduce(function (a, x) { return a + x.amount; }, 0);
@@ -2269,7 +2296,7 @@ create policy "solo i miei dati" on stipendio_pilota
     row.parentNode.insertBefore(gr, row.nextSibling);
   }
   function renderChips() {
-    renderRecent(); renderQuick();
+    renderRecent(); renderQuick(); renderAgain(); renderCatSug(); renderCatB();
     $("chips").innerHTML = CATS.map(function (c) {
       return '<label class="' + (S.cat === c.id ? "on" : "") + '"><input type="radio" name="cat" value="' + c.id + '"' + (S.cat === c.id ? " checked" : "") + '><span class="ico sm" style="--c:' + c.color + '">' + iconSvg(c.id === "spesa" ? "cart" : c.id === "carb" ? "fuel" : c.id === "svago" ? "smile" : "tag") + "</span>" + c.name + "</label>";
     }).join("");
@@ -2325,7 +2352,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.74";
+  var APP_VERSION = "2026-11-17.75";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2362,14 +2389,14 @@ create policy "solo i miei dati" on stipendio_pilota
   function addExpense(ev) {
     ev.preventDefault();
     if (pending) { toast("Prima avvia il nuovo mese qui sopra"); return; }
-    var n = pnum($("exp-amount").value);
+    var n = amountVal($("exp-amount").value);
     if (!(n > 0)) { toast("Scrivi quanto hai speso"); $("exp-amount").focus(); return; }
     var dv = $("exp-date").value;
     if (dv && !inMonth(dv)) { toast("La data deve essere tra il " + dfDay.format(startOf(S.monthKey)) + " e il " + dfDay.format(endOf(S.monthKey))); return; }
     var when = dv ? new Date(dv + "T12:00:00") : new Date(), note = $("exp-note").value.trim().slice(0, 60);
     var list = (S.spent[S.monthKey] || []).slice();
     if (editId) list = list.map(function (x) { return x.id === editId ? Object.assign({}, x, { amount: n, cat: S.cat, note: note, date: when.toISOString() }) : x; });
-    else list.push({ id: S.nextId++, amount: n, cat: S.cat, note: note, date: when.toISOString() });
+    else { var ne = { id: S.nextId++, amount: n, cat: S.cat, note: note, date: when.toISOString() }; if (S.round && n % 1 !== 0) ne.rd = Math.round((Math.ceil(n) - n) * 100) / 100; list.push(ne); }
     var was = !!editId;
     S.spent[S.monthKey] = list; persist(); resetExpForm();
     renderAll(); toast(was ? "Spesa modificata ✓" : "Spesa aggiunta ✓");
@@ -3117,19 +3144,20 @@ create policy "solo i miei dati" on stipendio_pilota
         + '<div class="addrow"><input type="text" inputmode="decimal" autocomplete="off" placeholder="Quanto versi (€)" aria-label="Versamento per ' + esc(g.name) + '"><button type="button">Versa</button></div>';
       var tot = g.start ? Math.max(1, (+g.when.slice(0, 4) - +g.start.slice(0, 4)) * 12 + (+g.when.slice(5) - +g.start.slice(5))) : 0, el = g.start ? Math.min(tot, (+CUR.slice(0, 4) - +g.start.slice(0, 4)) * 12 + (+CUR.slice(5) - +g.start.slice(5))) : 0, exp = tot ? g.target * el / tot : 0;
       if (left > 0 && tot && el > 0) { var st2 = document.createElement("p"); st2.className = "small"; st2.innerHTML = g.saved + 1 >= exp ? "<b>In pari</b> con il programma." : "<b>Sei indietro di " + eur.format(Math.ceil(exp - g.saved)) + "</b> rispetto a dove dovresti essere oggi."; d.insertBefore(st2, d.querySelector(".addrow")); }
-      if (left > 0) { var qb = document.createElement("button"); qb.type = "button"; qb.textContent = "Versa la quota del mese (" + eur.format(Math.ceil(per)) + ")"; qb.style.marginTop = "8px"; qb.onclick = function () { g.saved += Math.ceil(per); persist(); renderAll(); toast("Quota versata ✓"); }; d.appendChild(qb); }
+      if (left > 0 && g.hist && g.hist.length) { var since = ymd(new Date(Date.now() - 90 * 864e5)), rec = g.hist.filter(function (x) { return x.d >= since; }).reduce(function (a, x) { return a + x.a; }, 0), avg = rec / 3; if (avg > 0) { var mm = Math.ceil(left / avg), pd = new Date(+CUR.slice(0, 4), +CUR.slice(5) - 1 + mm, 1), pk = pd.getFullYear() + "-" + (pd.getMonth() + 1 < 10 ? "0" : "") + (pd.getMonth() + 1), df = (+g.when.slice(0, 4) - pd.getFullYear()) * 12 + (+g.when.slice(5) - (pd.getMonth() + 1)); var pr = document.createElement("p"); pr.className = "small"; pr.innerHTML = "<b>Di questo passo lo raggiungi a " + mlabel(pk) + "</b>" + (df >= 0 ? df === 0 ? ": proprio in tempo." : ": " + df + (df === 1 ? " mese" : " mesi") + " in anticipo." : ": " + (-df) + (df === -1 ? " mese" : " mesi") + " dopo la data scelta."); d.insertBefore(pr, d.querySelector(".addrow")); } }
+      if (left > 0) { var qb = document.createElement("button"); qb.type = "button"; qb.textContent = "Versa la quota del mese (" + eur.format(Math.ceil(per)) + ")"; qb.style.marginTop = "8px"; qb.onclick = function () { var bf = g.saved; g.saved += Math.ceil(per); g.hist = (g.hist || []).concat([{ d: TODAY_KEY, a: Math.ceil(per) }]); persist(); renderAll(); if (bf < g.target && g.saved >= g.target) { confetti(); toast("Obiettivo raggiunto 🎉"); } else toast("Quota versata ✓"); }; d.appendChild(qb); }
       d.querySelector(".g-ic").onclick = function () { pickIcon(d, g.ic, g.name, function (v) { g.ic = v || ""; if (v) g.logo = "none"; persist(); renderAll(); }, function (lv) { g.logo = lv; if (lv && lv !== "none") g.ic = ""; persist(); renderAll(); }); };
       d.querySelector(".x").onclick = function () { var old = S.goals.slice(); S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); persist(); renderAll(); toast("Obiettivo eliminato", "Annulla", function () { S.goals = old; persist(); renderAll(); }); };
       var inp = d.querySelector("input");
       d.querySelector(".addrow button").onclick = function () {
         var n = pnum(inp.value); if (!(n > 0)) { toast("Scrivi quanto versi"); inp.focus(); return; }
-        g.saved += n; persist(); renderAll(); toast("Versamento aggiunto ✓");
+        var bf = g.saved; g.saved += n; g.hist = (g.hist || []).concat([{ d: TODAY_KEY, a: n }]); persist(); renderAll(); if (bf < g.target && g.saved >= g.target) { confetti(); toast("Obiettivo raggiunto 🎉"); } else toast("Versamento aggiunto ✓");
       };
       box.appendChild(d);
     });
     $("goals-sum").textContent = !S.goals.length ? "Ancora nessun obiettivo. Aggiungine uno qui sotto."
       : "Per tutti gli obiettivi servono circa " + eur.format(Math.ceil(need)) + " al mese. Dal tuo piano ne metti da parte " + eur.format(p.toSave) + (need <= p.toSave ? ": ci stai dentro." : ": non bastano, aumenta la quota da parte nel Profilo o allunga le scadenze.");
-    renderAnnual();
+    renderAnnual(); renderTr1();
   }
   function addGoal(ev) {
     ev.preventDefault();
@@ -4841,8 +4869,164 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     $("ins-shadd").onclick = function () { var id = "c" + Date.now().toString(36); S.shP.push({ id: id, name: "Nuovo turno", h1: "", h2: "" }); persist(); renderAll(); setTimeout(function () { $("ins-shp").open = true; }, 0); };
   }
+
+  /* ---------- tappa 1: spese veloci ---------- */
+  function evalExpr(str) {
+    var t = String(str).replace(/[x×]/gi, "*").replace(/÷/g, "/").replace(/€|\s/g, ""), i = 0;
+    if (!/^[\d.,+\-*/()]+$/.test(t)) return NaN;
+    function num() { var m = /^\d+(?:[.,]\d+)?/.exec(t.slice(i)); if (!m) return NaN; i += m[0].length; return parseFloat(m[0].replace(",", ".")); }
+    function atom() { if (t[i] === "(") { i++; var v = sum(); if (t[i] !== ")") return NaN; i++; return v; } if (t[i] === "-") { i++; return -atom(); } return num(); }
+    function prod() { var v = atom(); while (t[i] === "*" || t[i] === "/") { var o = t[i++], w = atom(); v = o === "*" ? v * w : v / w; } return v; }
+    function sum() { var v = prod(); while (t[i] === "+" || t[i] === "-") { var o = t[i++], w = prod(); v = o === "+" ? v + w : v - w; } return v; }
+    var r = sum(); return i === t.length && isFinite(r) ? Math.round(r * 100) / 100 : NaN;
+  }
+  function amountVal(v) { var t = String(v).trim(); if (/[+*/x×÷]|.-/i.test(t)) { var r = evalExpr(t); return r > 0 ? r : NaN; } return pnum(t); }
+  var IT_N = { zero: 0, uno: 1, una: 1, un: 1, due: 2, tre: 3, quattro: 4, cinque: 5, sei: 6, sette: 7, otto: 8, nove: 9, dieci: 10, undici: 11, dodici: 12, tredici: 13, quattordici: 14, quindici: 15, sedici: 16, diciassette: 17, diciotto: 18, diciannove: 19, venti: 20, trenta: 30, quaranta: 40, cinquanta: 50, sessanta: 60, settanta: 70, ottanta: 80, novanta: 90 };
+  function itWord(w) {
+    if (IT_N[w] !== undefined) return IT_N[w];
+    if (/cento$/.test(w) && w.length > 5 && IT_N[w.slice(0, -5)] > 1 && IT_N[w.slice(0, -5)] < 10) return IT_N[w.slice(0, -5)] * 100;
+    var tens = ["venti", "trenta", "quaranta", "cinquanta", "sessanta", "settanta", "ottanta", "novanta"];
+    for (var i = 0; i < tens.length; i++) { var T = tens[i], st = T.slice(0, -1); if (w.indexOf(T) === 0 && IT_N[w.slice(T.length)] > 0 && IT_N[w.slice(T.length)] < 10) return IT_N[T] + IT_N[w.slice(T.length)]; if (w.indexOf(st) === 0 && ["uno", "otto"].indexOf(w.slice(st.length)) >= 0) return IT_N[T] + IT_N[w.slice(st.length)]; }
+    return null;
+  }
+  function parseVoice(text) {
+    var tk = String(text || "").toLowerCase().replace(/€/g, " euro ").replace(/[,.](?=\D|$)/g, " ").split(/\s+/).filter(Boolean), used = {}, amt = NaN, i, n;
+    for (i = 0; i < tk.length && isNaN(amt); i++) {
+      if (/^\d+([.,]\d+)?$/.test(tk[i])) { amt = parseFloat(tk[i].replace(",", ".")); used[i] = 1; i++; break; }
+      var v = itWord(tk[i]), j = i; if (v === null && tk[i] !== "cento" && tk[i] !== "mille") continue;
+      var total = 0, cur = 0;
+      while (j < tk.length) { var w = tk[j], x = itWord(w); if (x !== null) cur += x; else if (w === "cento") cur = (cur || 1) * 100; else if (w === "mille" || w === "mila") { total += (cur || 1) * 1000; cur = 0; } else if (w === "e" && j + 1 < tk.length && (itWord(tk[j + 1]) !== null || tk[j + 1] === "cento")) { j++; continue; } else break; used[j] = 1; j++; }
+      amt = total + cur; i = j; break;
+    }
+    if (isNaN(amt)) return null;
+    // centesimi: "dodici euro e cinquanta" / "tre e cinquanta"
+    var k = i; if (tk[k] === "euro" || tk[k] === "euri") { used[k] = 1; k++; }
+    if (tk[k] === "e" && tk[k + 1] !== undefined) { var c = /^\d+$/.test(tk[k + 1]) ? +tk[k + 1] : itWord(tk[k + 1]); if (c !== null && c > 0 && c < 100) { amt += c / 100; used[k] = 1; used[k + 1] = 1; k += 2; if (tk[k] === "centesimi" || tk[k] === "cent") { used[k] = 1; } } }
+    var rest = tk.filter(function (w, ix) { return !used[ix] && ["euro", "euri", "e", "di", "per", "a", "il", "la", "ho", "speso", "pagato"].indexOf(w) < 0; }).join(" ");
+    var cat = /benzin|gasolio|diesel|carburant|riforniment|pieno|distribut/.test(rest) ? "carb" : /spesa|supermerc|conad|lidl|eurospin|coop|pane|latte|frutta|verdur|carne|pesce/.test(rest) ? "spesa" : /bar|caff|cornett|cinema|pizz|ristorant|aperitiv|birra|gelat|uscit|cena|pranzo|panin|svago|film|giochi/.test(rest) ? "svago" : null;
+    return { amt: Math.round(amt * 100) / 100, cat: cat, note: rest.slice(0, 60) };
+  }
+  window.__pv = parseVoice; window.__calc = amountVal;
+  function initVoice() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition, vb = $("voice-btn"); if (!SR) return; vb.hidden = false;
+    var rec = null, on = false;
+    vb.onclick = function () {
+      if (on && rec) { rec.stop(); return; }
+      try { rec = new SR(); } catch (e) { toast("Il microfono non è disponibile"); return; }
+      rec.lang = "it-IT"; rec.interimResults = false; rec.maxAlternatives = 1;
+      rec.onstart = function () { on = true; vb.textContent = "🎤 Ti ascolto… tocca per fermare"; };
+      rec.onend = function () { on = false; vb.textContent = "🎤 Parla"; };
+      rec.onerror = function (e) { toast(e && e.error === "not-allowed" ? "Dai il permesso al microfono per usare la voce" : "Non ho sentito bene, riprova"); };
+      rec.onresult = function (e) {
+        var txt = e.results[0][0].transcript, r = parseVoice(txt);
+        if (!r) { toast("Ho sentito “" + txt + "”: non trovo l'importo"); return; }
+        $("exp-amount").value = String(r.amt).replace(".", ","); $("exp-amount").dispatchEvent(new Event("input", { bubbles: true }));
+        if (r.note) $("exp-note").value = r.note;
+        if (r.cat) { S.cat = r.cat; persist(); renderChips(); }
+        toast("Ho capito " + eur2.format(r.amt) + (r.note ? " · " + r.note : "") + ": controlla e premi Aggiungi");
+      };
+      try { rec.start(); } catch (e) {}
+    };
+  }
+  function lastExpense() { var best = null; Object.keys(S.spent || {}).forEach(function (k) { (S.spent[k] || []).forEach(function (e) { if (!best || e.date > best.date) best = e; }); }); return best; }
+  function renderAgain() {
+    var box = $("again-box"); if (!box) return; var l = lastExpense();
+    if (!l || pending || editId) { box.hidden = true; return; }
+    var cat = CATS.filter(function (c) { return c.id === l.cat; })[0] || CATS[3];
+    box.hidden = false; box.innerHTML = '<button type="button" id="again-b">↻ Come l\'ultima volta: ' + esc(l.note || cat.name) + " " + eur2.format(l.amount) + "</button>";
+    $("again-b").onclick = function () {
+      var id = S.nextId++, list = (S.spent[S.monthKey] || []).slice(), ne = { id: id, amount: l.amount, cat: l.cat, note: l.note || "", date: new Date().toISOString() }; if (S.round && l.amount % 1 !== 0) ne.rd = Math.round((Math.ceil(l.amount) - l.amount) * 100) / 100;
+      list.push(ne); S.spent[S.monthKey] = list; persist(); renderAll();
+      toast("Aggiunta " + eur2.format(l.amount), "Annulla", function () { S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== id; }); persist(); renderAll(); });
+    };
+  }
+  function renderCatSug() {
+    var el = $("cat-sug"); if (!el) return; if (editId || ($("exp-amount") && $("exp-amount").value)) { el.hidden = true; return; }
+    var now = new Date(), h = now.getHours(), cnt = {}, tot = 0, since = Date.now() - 90 * 864e5;
+    Object.keys(S.spent || {}).forEach(function (k) { (S.spent[k] || []).forEach(function (e) { var d = new Date(e.date); if (d.getTime() < since) return; var dh = Math.abs(d.getHours() - h); if (Math.min(dh, 24 - dh) <= 1) { cnt[e.cat] = (cnt[e.cat] || 0) + 1; tot++; } }); });
+    var top = null; Object.keys(cnt).forEach(function (c) { if (!top || cnt[c] > cnt[top]) top = c; });
+    if (tot < 3 || !top || cnt[top] / tot < 0.5 || top === S.cat) { el.hidden = true; return; }
+    var cn = (CATS.filter(function (c) { return c.id === top; })[0] || {}).name || top;
+    el.hidden = false; el.innerHTML = 'A quest\'ora di solito segni: <button type="button" class="link" id="cat-sug-b">' + esc(cn) + "</button>";
+    $("cat-sug-b").onclick = function () { S.cat = top; persist(); renderChips(); };
+  }
+  function renderCatB() {
+    var bt = $("catb-btn"), ed = $("catb-ed"); if (!bt) return;
+    bt.onclick = function () { ed.hidden = !ed.hidden; if (!ed.hidden) fill(); };
+    function fill() {
+      var base = plan(), def = { spesa: base.spesa, carb: base.fuelB + base.fuelD, svago: base.svago }, cb = S.catB = S.catB || {};
+      ed.innerHTML = '<p class="small muted">Scrivi quanto vuoi spendere al mese per ogni categoria. Se lasci vuoto resta il valore consigliato. Il totale del mese cambia di conseguenza.</p>' + ["spesa", "carb", "svago"].map(function (c) { var nm = CATS.filter(function (x) { return x.id === c; })[0].name; return '<label class="f">' + nm + '<input type="text" inputmode="decimal" data-c="' + c + '" autocomplete="off" placeholder="Consigliato ' + Math.round(def[c]) + '" value="' + (cb[c] > 0 ? String(cb[c]).replace(".", ",") : "") + '"></label>'; }).join("") + '<button type="button" class="link" id="catb-reset">Torna ai consigliati</button>';
+      ed.querySelectorAll("input").forEach(function (i) { i.onchange = function () { var v = pnum(this.value); if (v > 0) cb[this.getAttribute("data-c")] = v; else delete cb[this.getAttribute("data-c")]; persist(); renderAll(); ed.hidden = false; fill(); }; });
+      $("catb-reset").onclick = function () { S.catB = {}; persist(); renderAll(); ed.hidden = false; fill(); };
+    }
+  }
+  // sfide
+  function chalCalc(c) {
+    var days = 7, st = dOf(c.start), out = { run: true }, list = [];
+    for (var i = 0; i < days; i++) { list.push(ymd(new Date(st.getFullYear(), st.getMonth(), st.getDate() + i))); }
+    var all = []; Object.keys(S.spent || {}).forEach(function (k) { (S.spent[k] || []).forEach(function (e) { var d = ymd(new Date(e.date)); if (list.indexOf(d) >= 0) all.push({ d: d, e: e }); }); });
+    var passed = Math.min(days, Math.max(0, Math.round((dOf(TODAY_KEY) - st) / 864e5) + 1)), done = passed >= days && TODAY_KEY > list[days - 1];
+    if (c.kind === "nospend") { var bad = all.filter(function (x) { return x.e.cat === c.cat; }); if (bad.length) return { state: "lost", pct: 100, text: "Hai speso " + eur2.format(bad.reduce(function (a, x) { return a + x.e.amount; }, 0)) + ": sfida persa, puoi riprovare." }; return done ? { state: "won", pct: 100, text: "Sfida vinta! Una settimana senza spese." } : { state: "run", pct: passed / days * 100, text: "Giorno " + passed + " di " + days + ": finora nessuna spesa." }; }
+    if (c.kind === "limit") { var sp = all.filter(function (x) { return x.e.cat === c.cat; }).reduce(function (a, x) { return a + x.e.amount; }, 0); if (sp > c.amt) return { state: "lost", pct: 100, text: "Hai speso " + eur2.format(sp) + " su " + eur.format(c.amt) + ": sfida persa." }; return done ? { state: "won", pct: 100, text: "Sfida vinta! Speso " + eur2.format(sp) + " su " + eur.format(c.amt) + "." } : { state: "run", pct: sp / c.amt * 100, text: "Speso " + eur2.format(sp) + " su " + eur.format(c.amt) + ", giorno " + passed + " di " + days + "." }; }
+    var have = list.filter(function (d) { return all.some(function (x) { return x.d === d; }); }).length, miss = list.slice(0, passed).filter(function (d) { return d < TODAY_KEY && !all.some(function (x) { return x.d === d; }); });
+    if (miss.length) return { state: "lost", pct: 100, text: "Un giorno senza spese segnate: sfida persa, puoi riprovare." };
+    return have >= days ? { state: "won", pct: 100, text: "Sfida vinta! 7 giorni di fila." } : { state: "run", pct: have / days * 100, text: have + " di " + days + " giorni segnati." };
+  }
+  function confetti() {
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var box = document.createElement("div"); box.setAttribute("aria-hidden", "true"); box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99;overflow:hidden";
+    var cols = ["#ff7f66", "#46c0ad", "#f2b84b", "#a89bff", "#4da3ff"];
+    for (var i = 0; i < 46; i++) { var p = document.createElement("i"), x = Math.random() * 100, dl = Math.random() * 0.5, du = 1.6 + Math.random() * 1.4; p.style.cssText = "position:absolute;top:-12px;left:" + x + "%;width:9px;height:14px;border-radius:2px;background:" + cols[i % 5] + ";transform:rotate(" + Math.random() * 360 + "deg);animation:cfall " + du + "s ease-in " + dl + "s forwards"; box.appendChild(p); }
+    document.body.appendChild(box); setTimeout(function () { box.remove(); }, 3600);
+  }
+  function renderTr1() {
+    if (!$("chal-list")) return;
+    // sfide
+    var cs = $("ch-c"); if (!cs.options.length) CATS.slice(0, 3).forEach(function (c) { var o = document.createElement("option"); o.value = c.id; o.textContent = c.name; cs.appendChild(o); });
+    var kk = $("ch-k"); kk.onchange = function () { $("ch-cl").hidden = this.value === "streak"; $("ch-al").hidden = this.value !== "limit"; }; kk.onchange();
+    var ch = S.chal = S.chal || [], bx = $("chal-list"); bx.innerHTML = "";
+    if (!ch.length) bx.innerHTML = '<p class="small muted">Nessuna sfida attiva. Inizia la prima qui sotto.</p>';
+    ch.forEach(function (c) {
+      var r = chalCalc(c), nm = c.kind === "nospend" ? "Una settimana senza " + (CATS.filter(function (x) { return x.id === c.cat; })[0] || {}).name.toLowerCase() : c.kind === "limit" ? "Sotto " + eur.format(c.amt) + " in " + (CATS.filter(function (x) { return x.id === c.cat; })[0] || {}).name.toLowerCase() : "7 giorni segnando le spese";
+      if (r.state === "won" && !c.done) { c.done = 1; persist(); confetti(); }
+      var d = document.createElement("div"); d.className = "goal";
+      d.innerHTML = '<div class="line"><b>' + (r.state === "won" ? "🏆 " : r.state === "lost" ? "✖ " : "⏳ ") + esc(nm) + '</b><button type="button" class="x" aria-label="Togli la sfida">×</button></div><div class="meter' + (r.state === "lost" ? " over" : "") + '"><div style="width:' + Math.min(100, r.pct) + '%"></div></div><p class="small muted">' + esc(r.text) + "</p>";
+      d.querySelector(".x").onclick = function () { S.chal = S.chal.filter(function (x) { return x.id !== c.id; }); persist(); renderAll(); };
+      bx.appendChild(d);
+    });
+    $("ch-add").onclick = function () {
+      var k = $("ch-k").value, o = { id: "c" + Date.now().toString(36), kind: k, cat: $("ch-c").value, start: TODAY_KEY };
+      if (k === "limit") { var a = pnum($("ch-a").value); if (!(a > 0)) { toast("Scrivi il tetto in euro"); return; } o.amt = a; }
+      S.chal.push(o); persist(); renderAll(); toast("Sfida iniziata: da oggi per 7 giorni");
+    };
+    // salvadanaio
+    var tot = 0; Object.keys(S.spent || {}).forEach(function (k) { (S.spent[k] || []).forEach(function (e) { tot += e.rd || 0; }); }); tot = Math.max(0, Math.round((tot - (S.piggyOut || 0)) * 100) / 100);
+    $("pg-on").checked = !!S.round; $("pg-on").onchange = function () { S.round = this.checked; persist(); renderAll(); toast(S.round ? "Da ora arrotondo le nuove spese" : "Arrotondamenti spenti"); };
+    $("pg-tot").textContent = eur2.format(tot) + " da parte";
+    var mv = $("pg-move"); mv.innerHTML = "";
+    if (tot > 0 && S.goals.length) { var lab = document.createElement("p"); lab.className = "small muted"; lab.textContent = "Sposta questi soldi in un obiettivo:"; mv.appendChild(lab); S.goals.forEach(function (g) { var b = document.createElement("button"); b.type = "button"; b.textContent = g.name; b.onclick = function () { var before = g.saved; g.saved += tot; g.hist = (g.hist || []).concat([{ d: TODAY_KEY, a: tot }]); S.piggyOut = (S.piggyOut || 0) + tot; persist(); renderAll(); if (before < g.target && g.saved >= g.target) { confetti(); toast("Obiettivo raggiunto 🎉"); } else toast(eur2.format(tot) + " spostati in " + g.name); }; mv.appendChild(b); }); }
+    else if (tot > 0) mv.innerHTML = '<p class="small muted">Crea un obiettivo per poterci spostare questi soldi.</p>';
+    // fondo emergenze
+    var m = liveMonth(), est = Math.round(m.fixTot + m.V), v = S.efund > 0 ? S.efund : 0;
+    $("ef-hint").textContent = est > 0 ? "Le tue spese di ogni mese sono circa " + eur.format(est) + " (spese fisse e budget). Il fondo serve per restare tranquillo se un mese va storto." : "Imposta lo stipendio e le spese fisse per calcolare il fondo.";
+    var ev = $("ef-v"); if (document.activeElement !== ev) ev.value = v ? String(v).replace(".", ",") : ""; ev.onchange = function () { var x = pnum(this.value); S.efund = x > 0 ? x : 0; persist(); renderAll(); };
+    $("ef-lv").innerHTML = est > 0 ? [1, 3, 6].map(function (L) { var t = est * L, pc = Math.min(100, v / t * 100); return '<div class="catrow"><div class="top2"><span>' + (pc >= 100 ? "✓ " : "") + L + (L === 1 ? " mese" : " mesi") + '</span><span class="num">' + eur.format(Math.min(v, t)) + " di " + eur.format(t) + '</span></div><div class="meter' + (pc >= 100 ? "" : " blue") + '"><div style="width:' + pc + '%"></div></div></div>'; }).join("") : "";
+  }
+  $("fast-url").value = location.origin + location.pathname.replace(/[^/]*$/, "") + "index.html?nuova=1";
+  $("fast-copy").onclick = function () { var u = $("fast-url"); u.select(); try { navigator.clipboard.writeText(u.value).then(function () { toast("Indirizzo copiato"); }, function () { document.execCommand("copy"); toast("Indirizzo copiato"); }); } catch (e) { try { document.execCommand("copy"); toast("Indirizzo copiato"); } catch (e2) {} } };
+  $("exp-amount").addEventListener("input", function () { var t = this.value, el = $("exp-calc"); if (/[+*/x×÷]|.-/i.test(t.trim())) { var r = evalExpr(t.replace(/[x×]/gi, "*")); el.hidden = false; el.textContent = r > 0 ? "= " + eur2.format(r) : "Calcolo non valido"; } else el.hidden = true; renderCatSug(); });
+  initVoice();
   var CHANGELOG = [
-    { id: "2026-11-17i", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17j", date: "17 novembre · nuovo", items: [
+      ["Spesa a voce", "In Spese → Segna tocca “Parla” e di’: “dodici euro benzina”. L'app scrive importo, categoria e nota (dove il telefono lo permette)."],
+      ["Calcolatrice nell'importo", "Scrivi 12+3,50 e vedi subito 15,50."],
+      ["Come l'ultima volta", "Un tocco per rifare l'ultima spesa uguale."],
+      ["Categoria suggerita", "A quest'ora di solito segni… e te lo propongo."],
+      ["Tasto veloce", "Dalle istruzioni in Segna crei un tasto che apre subito “Segna una spesa”."],
+      ["Budget tuoi", "Cambia il budget di spesa, carburante e tempo libero."],
+      ["Sfide, salvadanaio e fondo emergenze", "In Piano → Obiettivi: sfide da 7 giorni, arrotondamenti da parte, fondo da 1-3-6 mesi e la data prevista per ogni obiettivo."]
+    ] },
+    { id: "2026-11-17i", date: "17 novembre", items: [
       ["Inserisci i turni", "In Lavoro c'è la nuova pagina “Inserisci turni”: scegli il turno, tocca i giorni sul calendario e, per ogni giorno, cambia gli orari o aggiungi lo straordinario."]
     ] },
     { id: "2026-11-17h", date: "17 novembre", items: [
@@ -5117,6 +5301,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("home-custom").onclick = function () { openHE(); };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };
   initWizard(); applyHome(); renderAll(); showView(); loadMarket(); syInit(); autoWork();
+  if (/[?&]nuova=1/.test(location.search)) { location.hash = "#spese/spese"; setTimeout(function () { try { $("exp-amount").focus(); } catch (e) {} }, 400); }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") autoWork(); });
 })();
 </script>
