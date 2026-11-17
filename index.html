@@ -180,6 +180,14 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .btnrow button { flex: 1 1 auto; }
 .fxe { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.fx.wi { display: grid; grid-template-columns: auto 30px 1fr auto; align-items: center; gap: 10px; }
+.fx .icb { border: 0; padding: 0; cursor: pointer; }
+.fxg { margin: 14px 0 2px; font-size: 14px; color: var(--muted); font-weight: 700; }
+.icgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px; margin: 4px 0 8px; background: var(--bg); border-radius: 14px; }
+.icgrid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1.5px solid transparent; border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
+.icgrid button.on { border-color: var(--accent); }
+.icgrid small { font-size: 11px; text-align: center; line-height: 1.15; }
+.fxsplit { padding: 12px; margin-bottom: 10px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .fxe.fxe { gap: 0; padding: 6px 0; }
 .fxh { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 6px 0; background: none; border: 0; color: var(--text); text-align: left; font: inherit; }
 .fxh .fxt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -765,6 +773,7 @@ html, body { touch-action: pan-x pan-y; }
     </section>
     <section data-sub="fisse" class="card" aria-labelledby="t-fix">
       <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
+      <p class="small muted" style="margin:0 0 4px">Tocca l'icona di una voce per cambiarla.</p>
       <div id="fix-list"></div>
       <p class="small" id="next-due" hidden></p>
       <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
@@ -1691,7 +1700,7 @@ create policy "solo i miei dati" on stipendio_pilota
   var ICON_OPTS = [["", "Automatica (logo se noto)"], ["home", "Casa"], ["bolt", "Energia"], ["bulb", "Luce"], ["flame", "Gas"], ["drop", "Acqua"], ["wifi", "Internet"], ["phone", "Telefono"], ["tv", "Streaming e TV"], ["music", "Musica"], ["gym", "Palestra e sport"], ["shield", "Assicurazione"], ["car", "Auto"], ["fuel", "Carburante"], ["gear", "Manutenzione"], ["bus", "Trasporti"], ["cross", "Salute"], ["book", "Scuola e corsi"], ["gift", "Regali"], ["plane", "Viaggi"], ["paw", "Animali"], ["coffee", "Bar e ristoranti"], ["shirt", "Vestiti"], ["card", "Rate e carte"], ["bank", "Tasse"], ["cart", "Spesa"], ["smile", "Svago"], ["tag", "Altro"]];
   function iconKey(n) {
     n = String(n).toLowerCase();
-    var R = [[/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl/, "wifi"], [/telefon|cellulare|sim\b|ricaric|tim\b|vodafone|iliad|windtre|ho\.? mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette|abbon/, "bolt"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
+    var R = [[/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl/, "wifi"], [/telefon|cellulare|sim\b|ricaric|tim\b|vodafone|iliad|windtre|ho\.? mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette/, "bolt"], [/abbon/, "tv"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
     for (var i = 0; i < R.length; i++) if (R[i][0].test(n)) return R[i][1];
     return "tag";
   }
@@ -1906,15 +1915,41 @@ create policy "solo i miei dati" on stipendio_pilota
     $("fix-badge").className = "badge " + (m.paidSum >= m.fixTot && m.fixTot > 0 ? "ok" : "none");
     $("fix-badge").textContent = "Pagato " + eur.format(m.paidSum) + " di " + eur.format(m.fixTot);
     $("fix-list").innerHTML = "";
-    m.fixed.forEach(function (f) {
-      var on = !!m.pd[f.id], row = document.createElement("label");
-      var di = dueInfo(f); row.className = "fx" + (on ? " done" : "") + (!on && di.diff !== null && di.diff < 0 ? " late" : "");
-      row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + f.name + ' come pagato"><span class="t"><b>' + f.name + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
-      row.querySelector("input").onchange = function () {
-        var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
-        S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
+    var GRP = [["casa", "Casa"], ["loan", "Prestiti e rate"], ["bill", "Bollette"], ["sub", "Abbonamenti"], ["fix", "Altre spese"]], multi = GRP.filter(function (g) { return m.fixed.some(function (f) { return f.kind === g[0]; }); }).length > 1;
+    var combo = S.fixedList.filter(function (x) { return /bollette e abbonamenti/i.test(x.name) && x.amount > 0; })[0];
+    if (combo) {
+      var cb = document.createElement("div"); cb.className = "fxsplit";
+      cb.innerHTML = '<b>Dividi «' + esc(combo.name) + '»</b><p class="small muted">Metti quanto spendi in ciascuna: le avrai in due gruppi separati.</p><div class="fields"><label class="f">Bollette (€)<input type="text" inputmode="decimal" class="sp-b" value="' + txt(combo.amount) + '"></label><label class="f">Abbonamenti (€)<input type="text" inputmode="decimal" class="sp-s" value="0"></label></div><button type="button" class="primary sp-go">Dividi in due voci</button>';
+      cb.querySelector(".sp-go").onclick = function () {
+        var b = pnum(cb.querySelector(".sp-b").value), s = pnum(cb.querySelector(".sp-s").value); b = isNaN(b) ? 0 : Math.max(0, b); s = isNaN(s) ? 0 : Math.max(0, s);
+        S.fixedList = S.fixedList.map(function (x) { return x.id === combo.id ? Object.assign({}, x, { name: "Bollette", amount: b, kind: "bill" }) : x; });
+        if (s > 0) S.fixedList.push({ id: "f" + (S.nextId++), name: "Abbonamenti", amount: s, due: combo.due, split: combo.split, kind: "sub", end: "", ic: "" });
+        persist(); renderAll(); toast("Diviso in Bollette e Abbonamenti ✓");
       };
-      $("fix-list").appendChild(row);
+      $("fix-list").appendChild(cb);
+    }
+    GRP.forEach(function (g) {
+      var items = m.fixed.filter(function (f) { return f.kind === g[0]; }); if (!items.length) return;
+      if (multi) { var hd = document.createElement("h3"); hd.className = "fxg"; hd.textContent = g[1]; $("fix-list").appendChild(hd); }
+      items.forEach(function (f) {
+        var on = !!m.pd[f.id], row = document.createElement("label"), src = S.fixedList.filter(function (x) { return x.id === f.id; })[0] || {};
+        var di = dueInfo(f); row.className = "fx wi" + (on ? " done" : "") + (!on && di.diff !== null && di.diff < 0 ? " late" : "");
+        row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + esc(f.name) + ' come pagato"><button type="button" class="ico sm icb" aria-label="Cambia icona di ' + esc(f.name) + '" style="--c:var(--accent)">' + iconSvg(f.kind === "casa" ? "home" : iconFor(f.name, src.ic), f.kind === "casa" ? "" : f.name, src.ic) + '</button><span class="t"><b>' + esc(f.name) + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
+        row.querySelector("input").onchange = function () {
+          var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
+          S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
+        };
+        row.querySelector(".icb").onclick = function (ev) {
+          ev.preventDefault(); ev.stopPropagation();
+          var nx = row.nextSibling; if (nx && nx.className === "icgrid") { nx.remove(); return; }
+          document.querySelectorAll("#fix-list .icgrid").forEach(function (e) { e.remove(); });
+          var gr = document.createElement("div"); gr.className = "icgrid";
+          gr.innerHTML = ICON_OPTS.map(function (o) { return '<button type="button" data-i="' + o[0] + '"' + ((src.ic || "") === o[0] ? ' class="on"' : "") + '><span class="ico sm" style="--c:var(--accent)">' + iconSvg(o[0] || iconKey(f.name), f.name, o[0]) + "</span><small>" + esc(o[1].replace(" (logo se noto)", "")) + "</small></button>"; }).join("");
+          gr.querySelectorAll("button").forEach(function (b) { b.onclick = function () { var v = this.getAttribute("data-i"); S.fixedList = S.fixedList.map(function (x) { return x.id === f.id ? Object.assign({}, x, { ic: v }) : x; }); persist(); renderAll(); }; });
+          row.parentNode.insertBefore(gr, row.nextSibling);
+        };
+        $("fix-list").appendChild(row);
+      });
     });
     $("pocket").textContent = eur2.format(m.pocket);
     $("pocket").style.color = m.pocket < 0 ? "var(--bad)" : "";
@@ -2037,7 +2072,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.53";
+  var APP_VERSION = "2026-11-17.54";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
