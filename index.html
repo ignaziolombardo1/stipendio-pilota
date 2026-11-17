@@ -211,6 +211,10 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .icgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px; margin: 4px 0 8px; background: var(--bg); border-radius: 14px; }
 .icgrid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1.5px solid transparent; border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
 .icgrid button.on { border-color: var(--accent); }
+.icgrid .lgx { grid-column: 1 / -1; }
+.icgrid .lgsite { display: flex; gap: 8px; margin: 4px 0 8px; }
+.icgrid .lgsite input { flex: 1; min-width: 0; }
+.icgrid .lgx .pch { margin: 4px 0 8px; }
 .icgrid small { font-size: 11px; text-align: center; line-height: 1.15; }
 .fxsplit { padding: 12px; margin-bottom: 10px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .fxe.fxe { gap: 0; padding: 6px 0; }
@@ -384,6 +388,20 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .nw b { display: block; font-size: 15px; }
 .nw span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
 .nwv { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--accent); }
+.hrow { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 10px; margin: 8px 0; border: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent); border-radius: 16px; background: var(--surface); }
+.hrow .hg { font-size: 20px; letter-spacing: -4px; color: var(--muted); text-align: center; touch-action: none; cursor: grab; user-select: none; min-height: 40px; display: grid; place-items: center; }
+.hrow .ht b { display: block; font-size: 15px; }
+.hrow .ht small { color: var(--muted); font-size: 12.5px; }
+.hrow.drag { transform: rotate(-1.2deg) scale(1.02); box-shadow: 0 14px 26px rgba(0, 0, 0, .35); border-style: solid; position: relative; z-index: 3; }
+.sw2 { position: relative; width: 46px; height: 28px; flex: none; }
+.sw2 input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.sw2 i { position: absolute; inset: 0; border-radius: 14px; background: var(--line); transition: background .15s; pointer-events: none; }
+.sw2 i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.sw2 input:checked + i { background: var(--accent); }
+.sw2 input:checked + i::after { transform: translateX(18px); }
+.sw2 input:focus-visible + i { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pch button.qk { display: inline-flex; gap: 6px; align-items: center; }
+.pch button.qk.ed { border-color: var(--bad, #c0392b); }
 .savebar { position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
   padding-top: 12px; padding-bottom: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .savebar .in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
@@ -429,6 +447,7 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .ico { position: relative; overflow: hidden; }
 .ico img.lg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 22%; background: #fff; border-radius: inherit; }
 .ico.sm img.lg { padding: 20%; }
+.ico img.lg.up { padding: 0; object-fit: cover; background: none; }
 .ico:has(svg[data-k="home"]) { --c: #4f7cff !important; }
 .ico:has(svg[data-k="bolt"]) { --c: #f5a623 !important; }
 .ico:has(svg[data-k="bulb"]) { --c: #f2b01e !important; }
@@ -810,7 +829,8 @@ html, body { touch-action: pan-x pan-y; }
     </section>
     </div>
     <button type="button" class="link" id="simple-toggle" style="order:98"></button>
-    <button type="button" class="link" id="home-custom" style="order:99">Personalizza questa pagina</button>
+    <div class="newsov" id="hedit" hidden role="dialog" aria-modal="true" aria-labelledby="hedit-t"><div class="newsbox"><div class="line"><h2 id="hedit-t" style="margin:0">Modifica Home</h2><button type="button" class="primary" id="hedit-ok">Fatto</button></div><p class="small muted">Tieni premuto <b>⋮⋮</b> e trascina un blocco per spostarlo. L'interruttore lo mostra o lo nasconde.</p><div id="hedit-note" class="small" hidden>La modalità semplice nasconde alcuni blocchi. <button type="button" class="link" id="hedit-all">Mostra tutti</button></div><div id="hedit-list"></div></div></div>
+    <button type="button" class="link" id="home-custom" style="order:99">Modifica questa pagina</button>
   </main>
 
   <!-- SPESE -->
@@ -824,6 +844,12 @@ html, body { touch-action: pan-x pan-y; }
       </div>
       <div class="meter" id="sp-meter" role="progressbar" aria-labelledby="t-sp" aria-valuemin="0" aria-valuemax="100"><div id="sp-fill" style="width:0%"></div></div>
       <p class="small muted" id="sp-note"></p>
+    </section>
+    <section data-sub="spese" class="card" aria-labelledby="t-qk">
+      <div class="line"><h2 id="t-qk">Scorciatoie</h2><button type="button" class="link" id="qk-edit">Modifica</button></div>
+      <p class="small muted" id="qk-hint">Spese che fai spesso: un tocco e la segno.</p>
+      <div class="pch" id="qk-list"></div>
+      <form id="qk-form" hidden style="display:none;flex-direction:column;gap:10px"><label class="f">Nome<input type="text" id="qk-name" maxlength="30" placeholder="Es. Caffè"></label><div class="fields"><label class="f">Importo (€)<input type="text" id="qk-amt" inputmode="decimal" placeholder="1,20"></label><label class="f">Categoria<select id="qk-cat"></select></label></div><div class="btnrow" style="display:flex;gap:8px"><button type="submit" class="primary" style="flex:1">Salva scorciatoia</button><button type="button" id="qk-cancel" style="flex:1">Annulla</button></div></form>
     </section>
     <section data-sub="spese" class="card" aria-labelledby="t-add">
       <h2 id="t-add">Segna una spesa</h2>
@@ -1846,9 +1872,11 @@ create policy "solo i miei dati" on stipendio_pilota
     if (typeof VBRANDS === "function") { var L = VBRANDS(); for (var j = 0; j < L.length; j++) { var b = L[j][0].toLowerCase(); if (["mini", "smart", "ds", "mg", "seat", "byd"].indexOf(b) < 0 && new RegExp("(^|[^a-zà-ü])" + b.replace(/[^a-z0-9à-ü ]/g, ".") + "($|[^a-zà-ü])").test(n)) return L[j][1]; } }
     return "";
   }
-  function iconSvg(k, name, ic) {
-    var s = '<svg viewBox="0 0 24 24" aria-hidden="true" data-k="' + (ICONS[k] ? k : "tag") + '">' + (ICONS[k] || ICONS.tag) + "</svg>";
-    var d = name && !ic ? brandDomain(name) : "";
+  function iconSvg(k, name, ic, logo) {
+    var s = '<svg viewBox="0 0 24 24" aria-hidden="true" data-k="' + (ICONS[k] ? k : "tag") + '">' + (ICONS[k] || ICONS.tag) + "</svg>", l = String(logo || "");
+    if (l.indexOf("i:") === 0) return s + '<img class="lg up" alt="" src="' + l.slice(2) + '">';
+    if (l.indexOf("d:") === 0) return s + logoImg(l.slice(2));
+    var d = l === "none" ? "" : (name && !ic ? brandDomain(name) : "");
     return d ? s + logoImg(d) : s;
   }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -2067,13 +2095,13 @@ create policy "solo i miei dati" on stipendio_pilota
       items.forEach(function (f) {
         var on = !!m.pd[f.id], row = document.createElement("label"), src = S.fixedList.filter(function (x) { return x.id === f.id; })[0] || {};
         var di = dueInfo(f); row.className = "fx wi" + (on ? " done" : "") + (!on && di.diff !== null && di.diff < 0 ? " late" : "");
-        row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + esc(f.name) + ' come pagato"><button type="button" class="ico sm icb" aria-label="Cambia icona di ' + esc(f.name) + '" style="--c:var(--accent)">' + iconSvg(f.kind === "casa" ? "home" : iconFor(f.name, src.ic), f.kind === "casa" ? "" : f.name, src.ic) + '</button><span class="t"><b>' + esc(f.name) + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + '</b><button type="button" class="fxed" aria-label="Modifica ' + esc(f.name) + '">✎</button>';
+        row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + esc(f.name) + ' come pagato"><button type="button" class="ico sm icb" aria-label="Cambia icona di ' + esc(f.name) + '" style="--c:var(--accent)">' + iconSvg(f.kind === "casa" ? "home" : iconFor(f.name, src.ic), f.kind === "casa" ? "" : f.name, src.ic, src.logo) + '</button><span class="t"><b>' + esc(f.name) + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + '</b><button type="button" class="fxed" aria-label="Modifica ' + esc(f.name) + '">✎</button>';
         row.querySelector(".fxed").onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); openFxEdit(row, S.fixedList.filter(function (x) { return x.id === f.id; })[0], false); };
         row.querySelector("input").onchange = function () {
           var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
           S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
         };
-        row.querySelector(".icb").onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pickIcon(row, src.ic, f.name, function (v) { S.fixedList = S.fixedList.map(function (x) { return x.id === f.id ? Object.assign({}, x, { ic: v }) : x; }); persist(); renderAll(); }); };
+        row.querySelector(".icb").onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); pickIcon(row, src.ic, f.name, function (v) { S.fixedList = S.fixedList.map(function (x) { return x.id === f.id ? Object.assign({}, x, { ic: v, logo: v ? "none" : x.logo }) : x; }); persist(); renderAll(); }, function (lv) { S.fixedList = S.fixedList.map(function (x) { return x.id === f.id ? Object.assign({}, x, { logo: lv, ic: lv && lv !== "none" ? "" : x.ic }) : x; }); persist(); renderAll(); }); };
         row.querySelector(".icb").onclick0 = function (ev) {
           ev.preventDefault(); ev.stopPropagation();
           var nx = row.nextSibling; if (nx && nx.className === "icgrid") { nx.remove(); return; }
@@ -2173,16 +2201,36 @@ create policy "solo i miei dati" on stipendio_pilota
     if (isNew) { host.innerHTML = ""; host.appendChild(w); var a = d.querySelector(".fx-name"); w.scrollIntoView({ block: "center" }); if (a) a.focus(); }
     else row.parentNode.insertBefore(w, row.nextSibling);
   }
-  function pickIcon(row, cur, name, onPick) {
+  function logoFromFile(file, cb) {
+    var fr = new FileReader(); fr.onload = function () { var im = new Image(); im.onload = function () { var c = document.createElement("canvas"); c.width = c.height = 96; var x = c.getContext("2d"), s = Math.min(im.width, im.height); x.fillStyle = "#fff"; x.fillRect(0, 0, 96, 96); x.drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 96, 96); cb(c.toDataURL("image/jpeg", 0.85)); }; im.onerror = function () { toast("Immagine non valida"); }; im.src = fr.result; }; fr.readAsDataURL(file);
+  }
+  function pickIcon(row, cur, name, onPick, lg) {
     var nx = row.nextSibling; if (nx && nx.className === "icgrid") { nx.remove(); return; }
     document.querySelectorAll(".icgrid").forEach(function (e) { e.remove(); });
     var gr = document.createElement("div"); gr.className = "icgrid";
-    gr.innerHTML = ICON_OPTS.map(function (o) { return '<button type="button" data-i="' + o[0] + '"' + ((cur || "") === o[0] ? ' class="on"' : "") + '><span class="ico sm" style="--c:var(--accent)">' + iconSvg(o[0] || iconKey(name), name, o[0]) + "</span><small>" + esc(o[1].replace(" (logo se noto)", "")) + "</small></button>"; }).join("");
-    gr.querySelectorAll("button").forEach(function (b) { b.onclick = function () { onPick(this.getAttribute("data-i")); }; });
+    var h = "";
+    if (lg) h += '<div class="lgx"><b class="small">Logo</b><div class="pch"><button type="button" data-a="site">Cerca dal sito</button><button type="button" data-a="up">Carica immagine</button><button type="button" data-a="none">Nessun logo</button><button type="button" data-a="auto">Automatico</button></div><div class="lgsite" hidden><input type="text" inputmode="url" autocapitalize="none" placeholder="Es. 1mobile.it"><button type="button" class="primary">Usa</button></div><input type="file" accept="image/*" hidden></div><b class="small lgx">Oppure scegli un\'icona</b>';
+    h += ICON_OPTS.map(function (o) { return '<button type="button" data-i="' + o[0] + '"' + ((cur || "") === o[0] ? ' class="on"' : "") + '><span class="ico sm" style="--c:var(--accent)">' + iconSvg(o[0] || iconKey(name), name, o[0]) + "</span><small>" + esc(o[1].replace(" (logo se noto)", "")) + "</small></button>"; }).join("");
+    gr.innerHTML = h;
+    gr.querySelectorAll("button[data-i]").forEach(function (b) { b.onclick = function () { onPick(this.getAttribute("data-i")); }; });
+    if (lg) {
+      var site = gr.querySelector(".lgsite"), fi = gr.querySelector('input[type="file"]');
+      gr.querySelectorAll(".lgx button[data-a]").forEach(function (b) { b.onclick = function () {
+        var a = this.getAttribute("data-a");
+        if (a === "site") { site.hidden = false; site.querySelector("input").focus(); }
+        else if (a === "up") fi.click(); else lg(a === "none" ? "none" : "");
+      }; });
+      site.querySelector("button").onclick = function () {
+        var v = site.querySelector("input").value.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").split(/[\/?#]/)[0].toLowerCase();
+        if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(v)) { toast("Scrivi un indirizzo, per esempio 1mobile.it"); return; }
+        lg("d:" + v);
+      };
+      fi.onchange = function () { if (fi.files[0]) logoFromFile(fi.files[0], function (u) { lg("i:" + u); }); };
+    }
     row.parentNode.insertBefore(gr, row.nextSibling);
   }
   function renderChips() {
-    renderRecent();
+    renderRecent(); renderQuick();
     $("chips").innerHTML = CATS.map(function (c) {
       return '<label class="' + (S.cat === c.id ? "on" : "") + '"><input type="radio" name="cat" value="' + c.id + '"' + (S.cat === c.id ? " checked" : "") + '><span class="ico sm" style="--c:' + c.color + '">' + iconSvg(c.id === "spesa" ? "cart" : c.id === "carb" ? "fuel" : c.id === "svago" ? "smile" : "tag") + "</span>" + c.name + "</label>";
     }).join("");
@@ -2238,7 +2286,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.64";
+  var APP_VERSION = "2026-11-17.65";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2247,6 +2295,24 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   var NOTE_CAT = {};
   function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  var qkEdit = false;
+  function renderQuick() {
+    var box = $("qk-list"); if (!box) return; box.innerHTML = "";
+    S.quick.forEach(function (q) {
+      var b = document.createElement("button"); b.type = "button"; b.className = "qk" + (qkEdit ? " ed" : "");
+      b.innerHTML = esc(q.name) + " <b>" + eur2.format(q.amt) + "</b>" + (qkEdit ? " ×" : "");
+      b.onclick = function () {
+        if (qkEdit) { S.quick = S.quick.filter(function (x) { return x.id !== q.id; }); persist(); renderQuick(); toast("Scorciatoia eliminata"); return; }
+        if (pending) { toast("Prima avvia il nuovo mese"); return; }
+        var id = S.nextId++, list = (S.spent[S.monthKey] || []).slice(); list.push({ id: id, amount: q.amt, cat: q.cat, note: q.name, date: new Date().toISOString() });
+        S.spent[S.monthKey] = list; persist(); renderAll();
+        toast(q.name + " " + eur2.format(q.amt) + " segnata ✓", "Annulla", function () { S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== id; }); persist(); renderAll(); });
+      };
+      box.appendChild(b);
+    });
+    var add = document.createElement("button"); add.type = "button"; add.textContent = "+ Nuova"; add.onclick = function () { $("qk-form").hidden = false; $("qk-form").style.display = "flex"; $("qk-name").focus(); }; box.appendChild(add);
+    $("qk-edit").textContent = qkEdit ? "Fatto" : "Modifica"; $("qk-edit").hidden = !S.quick.length;
+  }
   function renderRecent() {
     var box = $("recent"); if (!box) return; var seen = {}, out = [];
     Object.keys(S.spent || {}).sort().reverse().forEach(function (k) { (S.spent[k] || []).slice().reverse().forEach(function (e) { var n = (e.note || "").trim(); if (n && !seen[n.toLowerCase()] && out.length < 6) { seen[n.toLowerCase()] = 1; out.push([n, e.cat]); } }); });
@@ -2626,7 +2692,7 @@ create policy "solo i miei dati" on stipendio_pilota
     h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     var ho = kind === "casa" ? "home" : iconFor(f.name, f.ic);
-    d.innerHTML = '<button type="button" class="fxh" aria-expanded="false"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(ho, kind === "casa" ? "" : f.name, f.ic) + '</span><span class="fxt"><b>' + esc(kind === "casa" ? HOUSING[housing][0] : (f.name || "Nuova voce")) + "</b><small>" + (f.amount > 0 ? eur.format(f.amount) + " · il " + f.due + " del mese" : "Tocca per compilare") + '</small></span><span class="fxc" aria-hidden="true">›</span></button><div class="fxb">' + h + "</div>";
+    d.innerHTML = '<button type="button" class="fxh" aria-expanded="false"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(ho, kind === "casa" ? "" : f.name, f.ic, f.logo) + '</span><span class="fxt"><b>' + esc(kind === "casa" ? HOUSING[housing][0] : (f.name || "Nuova voce")) + "</b><small>" + (f.amount > 0 ? eur.format(f.amount) + " · il " + f.due + " del mese" : "Tocca per compilare") + '</small></span><span class="fxc" aria-hidden="true">›</span></button><div class="fxb">' + h + "</div>";
     var hb = d.querySelector(".fxh");
     hb.onclick = function () { var o = d.classList.toggle("open"); hb.setAttribute("aria-expanded", o ? "true" : "false"); };
     if (!(f.amount > 0) && kind !== "casa") { d.classList.add("open"); hb.setAttribute("aria-expanded", "true"); }
@@ -2652,7 +2718,8 @@ create policy "solo i miei dati" on stipendio_pilota
       var kind = d.getAttribute("data-kind"), kk = d.querySelector(".fx-k"); if (kk) kind = kk.value; amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
       var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
       var nm = d.querySelector(".fx-name");
-      return { id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" };
+      var prev = S.fixedList.filter(function (x) { return x.id === d.getAttribute("data-id"); })[0] || {};
+      return Object.assign({}, prev, { id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
   }
   function readFixedEditor() {
     var out = [], hs = readHousing() || S.me.housing;
@@ -3069,7 +3136,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var pct = a.amount > 0 ? Math.min(100, a.saved / a.amount * 100) : 0, base = a.amount / 12, ml = annMonthsLeft(a), left = Math.max(0, a.amount - a.saved), dep = annDep(a, CUR);
       var line2 = "Quota mensile " + eur.format(Math.round(base)) + " al mese" + (a.due && left > 0 ? " · per arrivare in tempo " + eur.format(Math.ceil(left / ml)) + " al mese" : "");
       var row = document.createElement("div"); row.className = "ann";
-      row.innerHTML = '<div class="line"><b style="display:flex;align-items:center;gap:8px"><button type="button" class="ico sm icb a-ic" aria-label="Cambia icona" style="--c:var(--c-save)">' + iconSvg(iconFor(a.name, a.ic), a.name, a.ic) + '</button>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
+      row.innerHTML = '<div class="line"><b style="display:flex;align-items:center;gap:8px"><button type="button" class="ico sm icb a-ic" aria-label="Cambia icona" style="--c:var(--c-save)">' + iconSvg(iconFor(a.name, a.ic), a.name, a.ic, a.logo) + '</button>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
         '<p class="small muted">' + (a.due ? "Scade il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(dOf(a.due)) + " · " + (ml <= 1 ? "entro un mese" : "tra " + ml + " mesi") : "Nessuna scadenza indicata") + "</p>" +
         '<div class="meter blue" role="progressbar" aria-label="' + esc(a.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>' +
         '<p class="small">Messi da parte ' + eur.format(a.saved) + " su " + eur.format(a.amount) + (left > 0 ? " · mancano " + eur.format(left) : " · pronti ✓") + "</p>" +
@@ -3077,7 +3144,7 @@ create policy "solo i miei dati" on stipendio_pilota
         '<div class="annact"><input type="text" inputmode="decimal" autocomplete="off" aria-label="Quanto metti da parte per ' + esc(a.name) + '" placeholder="' + Math.max(1, Math.ceil(base - dep)) + '"><button type="button" class="dep primary">Metti da parte</button></div>' +
         '<div class="annact2"><button type="button" class="paid">Pagata</button><button type="button" class="x del" aria-label="Elimina voce">×</button></div>';
       var inp = row.querySelector("input");
-      row.querySelector(".a-ic").onclick = function () { pickIcon(row, a.ic, a.name, function (v) { a.ic = v; persist(); renderAll(); }); };
+      row.querySelector(".a-ic").onclick = function () { pickIcon(row, a.ic, a.name, function (v) { a.ic = v; if (v) a.logo = "none"; persist(); renderAll(); }, function (lv) { a.logo = lv; if (lv && lv !== "none") a.ic = ""; persist(); renderAll(); }); };
       row.querySelector(".dep").onclick = function () {
         var n = pnum(inp.value) || Math.max(1, Math.ceil(base - dep));
         if (!(n > 0)) { toast("Scrivi quanto metti da parte"); return; }
@@ -3372,7 +3439,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var c = dlCat(it.cat), n = daysTo(it.date), row = document.createElement("div");
     row.className = "dl" + (n < 0 ? " late" : "");
     var ico = catIco(c);
-    if (it.kind === "fix" && it.f) { var sf = S.fixedList.filter(function (x) { return x.id === it.f.id; })[0] || {}; ico = '<span class="ico" style="--c:' + c.color + '">' + iconSvg(it.f.kind === "casa" ? "home" : iconFor(it.name, sf.ic), it.f.kind === "casa" ? "" : it.name, sf.ic) + "</span>"; }
+    if (it.kind === "fix" && it.f) { var sf = S.fixedList.filter(function (x) { return x.id === it.f.id; })[0] || {}; ico = '<span class="ico" style="--c:' + c.color + '">' + iconSvg(it.f.kind === "casa" ? "home" : iconFor(it.name, sf.ic), it.f.kind === "casa" ? "" : it.name, sf.ic, sf.logo) + "</span>"; }
     else if (it.kind === "dl") ico = '<span class="ico" style="--c:' + c.color + '">' + iconSvg(iconKey(it.name) !== "tag" ? iconKey(it.name) : "cal", it.name) + "</span>";
     row.innerHTML = ico + '<div class="t"><b>' + esc(it.name) + "</b><small>" + dlDueText(it.date) + (it.kind === "fix" ? " · spesa fissa" : "") + '</small></div><b class="num">' + (it.amount > 0 ? eur2.format(it.amount) : "") + '</b><button type="button" class="tick" aria-label="Segna come pagata: ' + esc(it.name) + '">✓</button>';
     row.querySelector("button").onclick = function () { markDone(it, true); toast(it.name + " pagata ✓", "Annulla", function () { markDone(it, false); }); };
@@ -3977,6 +4044,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (Array.isArray(S.routes) && S.routes.length && !S.routes.some(function (r) { return r.work; })) S.routes[0].work = true;
     if (!Array.isArray(S.annual)) S.annual = [];
     if (!Array.isArray(S.veh)) S.veh = [];
+    if (!Array.isArray(S.quick)) S.quick = [];
     S.annual.forEach(function (a) { a.due = typeof a.due === "string" ? a.due : ""; a.saved = Math.max(0, +a.saved || 0); if (!Array.isArray(a.log)) a.log = []; });
     var r = S.annRem && typeof S.annRem === "object" ? S.annRem : {}; S.annRem = { on: r.on !== false, day: Math.min(28, Math.max(1, Math.round(+r.day) || 5)) };
   }
@@ -4544,7 +4612,12 @@ create policy "solo i miei dati" on stipendio_pilota
   var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#bl-ops button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
   var CHANGELOG = [
-    { id: "2026-11-17b", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17c", date: "17 novembre · nuovo", items: [
+      ["Home trascinabile", "Su Home tocca \"Modifica questa pagina\": trascini i blocchi per spostarli e li mostri o nascondi con un interruttore."],
+      ["Logo a tua scelta", "Tocca l'icona di una voce: cerca il logo dal sito, carica un'immagine tua o togli il logo."],
+      ["Scorciatoie di spesa", "In Spese → Segna crei tasti per le spese che fai spesso: un tocco e sono segnate."]
+    ] },
+    { id: "2026-11-17b", date: "17 novembre", items: [
       ["Più loghi", "Ora hanno il logo anche le assicurazioni (Reale Mutua, Genertel, Sara…), UnoMobile e le voci con il nome di una marca d'auto, come BMW."],
       ["Loghi più affidabili", "Se il primo servizio non trova un logo, l'app ne prova altri tre prima di usare l'icona colorata."],
       ["Assicurazione ogni 6 mesi", "Nei veicoli puoi scegliere se la paghi ogni mese, ogni 6 mesi o ogni anno."],
@@ -4693,6 +4766,42 @@ create policy "solo i miei dati" on stipendio_pilota
       var s = document.createElement("span"); s.className = "ico"; s.innerHTML = iconSvg(k); a.classList.add("mi"); a.insertBefore(s, a.firstChild);
     });
   })();
+  function renderHE() {
+    homeNorm(); var box = $("hedit-list"); box.innerHTML = ""; $("hedit-note").hidden = S.simple === false;
+    S.home.order.forEach(function (id) {
+      var w = HOME_W.filter(function (x) { return x[0] === id; })[0]; if (!w || !anyMod(WMOD[id])) return;
+      var on = S.home.off.indexOf(id) < 0, r = document.createElement("div"); r.className = "hrow"; r.setAttribute("data-id", id);
+      r.innerHTML = '<span class="hg" role="button" tabindex="0" aria-label="Sposta ' + esc(w[1]) + '">⋮⋮</span><span class="ht"><b>' + esc(w[1]) + "</b><small>" + esc(w[2]) + '</small></span><label class="sw2"><input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Mostra ' + esc(w[1]) + '"><i></i></label>';
+      r.querySelector("input").onchange = function () { S.home.custom = true; S.home.off = this.checked ? S.home.off.filter(function (x) { return x !== id; }) : S.home.off.concat([id]); persist(); applyHome(); };
+      var g = r.querySelector(".hg");
+      function commit() { var ids = [].slice.call(box.children).map(function (x) { return x.getAttribute("data-id"); }); S.home.custom = true; S.home.order = ids.concat(S.home.order.filter(function (x) { return ids.indexOf(x) < 0; })); persist(); applyHome(); }
+      g.onpointerdown = function (e) {
+        e.preventDefault(); r.classList.add("drag");
+        function mv(ev) {
+          var y = ev.clientY, sibs = [].slice.call(box.children).filter(function (x) { return x !== r; }), before = null;
+          for (var k = 0; k < sibs.length; k++) { var bb = sibs[k].getBoundingClientRect(); if (y < bb.top + bb.height / 2) { before = sibs[k]; break; } }
+          if (before) { if (r.nextSibling !== before) box.insertBefore(r, before); } else if (box.lastChild !== r) box.appendChild(r);
+        }
+        function up() { document.removeEventListener("pointermove", mv); document.removeEventListener("pointerup", up); document.removeEventListener("pointercancel", up); r.classList.remove("drag"); commit(); }
+        document.addEventListener("pointermove", mv); document.addEventListener("pointerup", up); document.addEventListener("pointercancel", up);
+      };
+      g.onkeydown = function (e) { var d = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0; if (!d) return; e.preventDefault(); var s = d < 0 ? r.previousSibling : r.nextSibling; if (!s) return; if (d < 0) box.insertBefore(r, s); else box.insertBefore(s, r); g.focus(); commit(); };
+      box.appendChild(r);
+    });
+  }
+  function openHE() { renderHE(); $("hedit").hidden = false; $("hedit-ok").focus(); }
+  function closeHE() { $("hedit").hidden = true; }
+  $("hedit-ok").onclick = closeHE; $("hedit").onclick = function (e) { if (e.target === this) closeHE(); };
+  $("hedit-all").onclick = function () { S.simple = false; persist(); tabsNorm(); renderAll(); renderHE(); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("hedit").hidden) closeHE(); });
+  $("qk-cat").innerHTML = CATS.map(function (c) { return '<option value="' + c.id + '">' + c.name + "</option>"; }).join("");
+  $("qk-edit").onclick = function () { qkEdit = !qkEdit; renderQuick(); };
+  $("qk-cancel").onclick = function () { $("qk-form").hidden = true; $("qk-form").style.display = "none"; };
+  $("qk-form").onsubmit = function (e) {
+    e.preventDefault(); var n = $("qk-name").value.trim().slice(0, 30), a = pnum($("qk-amt").value);
+    if (!n) { toast("Scrivi un nome"); return; } if (!(a > 0)) { toast("Scrivi l'importo"); return; }
+    S.quick = S.quick.concat([{ id: "q" + (S.nextId++), name: n, amt: a, cat: $("qk-cat").value }]); persist(); $("qk-name").value = ""; $("qk-amt").value = ""; $("qk-form").hidden = true; $("qk-form").style.display = "none"; renderQuick(); toast("Scorciatoia aggiunta ✓");
+  };
   function setSimple(on) { S.simple = !!on; persist(); tabsNorm(); renderAll(); showView(); toast(on ? "Modalità semplice attiva" : "Ora vedi tutte le funzioni"); }
   $("simple-on").onchange = function () { setSimple(this.checked); };
   $("simple-toggle").onclick = function () { setSimple(S.simple === false); };
@@ -4752,7 +4861,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("month").textContent = mlabel(CUR);
   initReset(); initNotif(); $("sd-form").onsubmit = addDayExpense; $("ct-add").onclick = addContact;
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
-  $("home-custom").onclick = function () { location.hash = "#profilo/comp"; };
+  $("home-custom").onclick = function () { openHE(); };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };
   initWizard(); applyHome(); renderAll(); showView(); loadMarket(); syInit();
 })();
