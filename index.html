@@ -866,6 +866,7 @@ html, body { touch-action: pan-x pan-y; }
       <h2 id="t-add">Segna una spesa</h2>
       <form id="exp-form" style="display:flex;flex-direction:column;gap:14px">
         <label class="f bigamt" for="exp-amount">Quanto hai speso?<span class="amtbox"><input id="exp-amount" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"><b>€</b></span></label>
+        <div class="pch"><button type="button" id="scan-btn">📷 Leggi lo scontrino</button><input type="file" id="scan-file" accept="image/*" capture="environment" hidden></div>
         <div class="chips" id="chips" role="radiogroup" aria-label="Categoria"></div>
         <div class="pch" id="recent" hidden></div>
         <details id="exp-more"><summary>Aggiungi nota o data</summary>
@@ -1386,6 +1387,8 @@ create policy "stipendio pilota documenti" on storage.objects
       <p class="hint">Nel giorno della paga il telefono ti manda una notifica per ricordarti di scrivere quanto hai preso. Serve l'account cloud (Profilo → Dati). Su iPhone l'app deve essere aggiunta alla schermata Home.</p>
       <label class="chk"><input type="checkbox" id="nf-on"><span>Avvisami con una notifica</span></label>
       <label class="f" for="nf-hour">A che ora<select id="nf-hour"></select></label>
+      <label class="chk"><input type="checkbox" id="nf-eve"><span>Ricordami la sera di segnare le spese</span></label>
+      <label class="f" for="nf-eveh" id="nf-eveh-l">A che ora la sera<select id="nf-eveh"></select></label>
       <button type="button" id="nf-test">Prova una notifica adesso</button>
       <p class="small muted" id="nf-msg"></p>
     </section>
@@ -2297,7 +2300,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.68";
+  var APP_VERSION = "2026-11-17.69";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3138,7 +3141,13 @@ create policy "solo i miei dati" on stipendio_pilota
     var due = trDue(); if (!due) return [];
     return [{ k: "tred-" + xmSeason(), date: due, text: "Oggi dovrebbe arrivare la tredicesima. Aprila e scrivi quanto è arrivata: ti dico come dividerla." }];
   }
-  function remList() { return annRemList().concat(tredRem()); }
+  function eveRem() {
+    if (!pnf.on || !pnf.eve) return [];
+    var out = [], now = new Date(), h = +pnf.eveH || 21;
+    for (var i = (now.getHours() >= h ? 1 : 0); i < 7; i++) { var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i); out.push({ k: "sera-" + ymd(d), date: ymd(d), h: h, text: "Hai segnato le spese di oggi? Ci vuole un attimo." }); }
+    return out;
+  }
+  function remList() { return annRemList().concat(tredRem(), eveRem()); }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -4246,6 +4255,8 @@ create policy "solo i miei dati" on stipendio_pilota
     var on = $("nf-on"); if (!on) return;
     var hs = $("nf-hour"); if (!hs.options.length) for (var h = 6; h <= 21; h++) { var o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; hs.appendChild(o); }
     on.checked = !!pnf.on; hs.value = String(pnf.hour);
+    var eh = $("nf-eveh"); if (!eh.options.length) for (var q = 19; q <= 23; q++) { var o2 = document.createElement("option"); o2.value = q; o2.textContent = q + ":00"; eh.appendChild(o2); }
+    $("nf-eve").checked = !!pnf.eve; eh.value = String(pnf.eveH || 21); $("nf-eveh-l").hidden = !pnf.eve;
     if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00.");
   }
   function nfTest() {
@@ -4270,6 +4281,8 @@ create policy "solo i miei dati" on stipendio_pilota
       if (want) nfEnable().catch(function () { pnf.on = false; nfSave(); box.checked = false; }); else nfDisable();
     };
     $("nf-hour").onchange = function () { pnf.hour = +this.value; nfSave(); if (pnf.on) { nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); nfResync(); } };
+    $("nf-eve").onchange = function () { pnf.eve = this.checked; if (!pnf.eveH) pnf.eveH = 21; nfSave(); $("nf-eveh-l").hidden = !pnf.eve; if (pnf.eve && !pnf.on) { toast("Attiva prima “Avvisami con una notifica”"); } else if (pnf.on) { nfMsg(pnf.eve ? "Ti ricordo di segnare le spese alle " + pnf.eveH + ":00. L'app deve essere aperta almeno una volta a settimana." : "Promemoria serale spento."); nfResync(); } };
+    $("nf-eveh").onchange = function () { pnf.eveH = +this.value; nfSave(); if (pnf.on && pnf.eve) { nfMsg("Ti ricordo di segnare le spese alle " + pnf.eveH + ":00."); nfResync(); } };
     renderNotif();
   }
 
@@ -4690,8 +4703,48 @@ create policy "solo i miei dati" on stipendio_pilota
     bx.innerHTML = h; $("recap").hidden = false;
   }
   $("recap-btn").onclick = openRecap; $("recap-ok").onclick = function () { $("recap").hidden = true; }; $("recap").onclick = function (e) { if (e.target === this) this.hidden = true; };
+
+  /* ---------- lettura scontrino ---------- */
+  function receiptTotal(text) {
+    var lines = String(text || "").split(/\n+/), all = [], kt = null, ko = null;
+    function nums(ln) { var re = /(\d{1,4}[.,]\d{2})(?!\d)/g, m, o = []; while ((m = re.exec(ln))) o.push(parseFloat(m[1].replace(",", "."))); return o; }
+    lines.forEach(function (ln, i) {
+      var n = nums(ln); n.forEach(function (x) { all.push(x); });
+      var isTot = /total/i.test(ln) && !/subtotal|iva|sconto/i.test(ln), isOth = /da pagare|importo|pagato|contant|carta|bancomat/i.test(ln) && !/resto|sconto/i.test(ln);
+      if (isTot && !n.length && lines[i + 1]) n = nums(lines[i + 1]);
+      if (isTot && n.length && kt === null) kt = n[n.length - 1]; else if (isOth && n.length && ko === null) ko = n[n.length - 1];
+    });
+    var v = kt !== null ? kt : ko !== null ? ko : (all.length ? Math.max.apply(null, all) : 0);
+    return v > 0 ? v : 0;
+  }
+  function loadTess() {
+    return new Promise(function (ok, ko) {
+      if (window.Tesseract) return ok(window.Tesseract);
+      var sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"; sc.onload = function () { ok(window.Tesseract); }; sc.onerror = function () { ko(new Error("offline")); }; document.head.appendChild(sc);
+    });
+  }
+  function scanReceipt(file) {
+    if (!file) return; toast("Leggo lo scontrino… può volerci qualche secondo");
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      var read = ("TextDetector" in window) ? new window.TextDetector().detect(c).then(function (bs) { return bs.map(function (b) { return b.rawValue; }).join("\n"); }) : loadTess().then(function (T) { return T.recognize(c, "ita").then(function (r) { return r.data.text; }); });
+      read.then(function (t) {
+        var v = receiptTotal(t);
+        if (v > 0) { $("exp-amount").value = String(v).replace(".", ","); $("exp-amount").dispatchEvent(new Event("input", { bubbles: true })); toast("Ho letto " + eur2.format(v) + ": controlla che sia giusto"); }
+        else toast("Non riesco a leggere il totale: scrivilo tu");
+      }).catch(function () { toast("Lettura non riuscita (serve internet la prima volta): scrivi l'importo"); });
+    };
+    img.onerror = function () { toast("Non riesco ad aprire la foto"); }; img.src = url;
+  }
+  $("scan-btn").onclick = function () { $("scan-file").click(); }; $("scan-file").onchange = function () { var f = this.files[0]; this.value = ""; scanReceipt(f); };
+  window.__receiptTotal = receiptTotal;
   var CHANGELOG = [
-    { id: "2026-11-17e", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17f", date: "17 novembre · nuovo", items: [
+      ["Promemoria serale", "In Altro → Notifiche attiva “Ricordami la sera”: ti arriva un avviso per segnare le spese (serve aprire l'app almeno una volta a settimana)."],
+      ["Leggi lo scontrino", "In Spese → Segna tocca “Leggi lo scontrino”: scatti la foto e l'app prova a scrivere il totale per te. Controllalo sempre prima di salvare."]
+    ] },
+    { id: "2026-11-17e", date: "17 novembre", items: [
       ["Spese dei giorni di lavoro", "Quando crei una scorciatoia (es. Caffè) puoi farla aggiungere da sola nei giorni in cui lavori. Se ti sbagli, tocca Annulla."],
       ["Riepilogo del mese", "In fondo alla Home: dove sono andati i soldi, il confronto col mese scorso e un consiglio."],
       ["Foto sugli obiettivi", "Tocca l'icona di un obiettivo e carica una tua foto."],

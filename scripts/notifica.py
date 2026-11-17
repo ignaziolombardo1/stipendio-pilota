@@ -39,10 +39,8 @@ for r in rows:
     except Exception:
         now = datetime.datetime.now(ZoneInfo("Europe/Rome"))
     today = now.date().isoformat()
-    if now.hour < int(r["hour"]):
-        continue
     day = min(int(r["payday"]), calendar.monthrange(now.year, now.month)[1])
-    if now.day == day and r.get("last_sent") != today:
+    if now.hour >= int(r["hour"]) and now.day == day and r.get("last_sent") != today:
         if send(r, "Stipendio Pilota", "Oggi è il giorno della paga. Quanto hai preso questo mese? Aprila e scrivilo: ti preparo il nuovo mese."):
             rpc("sp_push_mark", {"p_token": TOKEN, "p_user": r["user_id"], "p_day": today, "p_drop": False})
             sent += 1
@@ -51,8 +49,16 @@ for r in rows:
         k, d = it.get("k"), it.get("date")
         if not k or not d or k in done or today < d:
             continue
-        if (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(d)).days > 14:
-            continue
+        h = it.get("h")
+        if h is not None:
+            # promemoria a ora fissa (es. la sera): solo nel giorno giusto e dopo quell'ora
+            if today != d or now.hour < int(h):
+                continue
+        else:
+            if now.hour < int(r["hour"]):
+                continue
+            if (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(d)).days > 14:
+                continue
         if send(r, "Stipendio Pilota", it.get("text") or "Ricordati di mettere da parte i soldi del mese."):
             try:
                 rpc("sp_push_sent", {"p_token": TOKEN, "p_user": r["user_id"], "p_key": k})
