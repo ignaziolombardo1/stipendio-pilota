@@ -189,6 +189,18 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .fxe { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .fx.wi { display: grid; grid-template-columns: auto 30px 1fr auto auto; align-items: center; gap: 10px; }
 .icb { border: 0; padding: 0; cursor: pointer; font: inherit; }
+.vsum { display: flex; flex-direction: column; gap: 6px; }
+.vsum .vtot { font-family: var(--font-head); font-size: 30px; font-weight: 800; }
+.vsum .vln { display: flex; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--muted); }
+.vrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--text); text-align: left; font: inherit; cursor: pointer; min-height: 64px; }
+.vrow .ico { width: 44px; height: 44px; border-radius: 14px; }
+.vrow .ico img.lg { padding: 18%; }
+.vrow b { display: block; }
+.vrow small { display: block; color: var(--muted); font-size: 13px; }
+.vrow .num { font-weight: 800; }
+.veh-form { padding: 12px; margin: 6px 0 12px; border-radius: 14px; background: var(--bg); display: flex; flex-direction: column; gap: 10px; }
+.veh-form .est { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); font-size: 14px; }
+.veh-form h3 { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
 .fxed { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--bg); color: var(--muted); font-size: 18px; cursor: pointer; }
 .fxinl { padding: 10px 12px; margin: 4px 0 10px; border-radius: 14px; background: var(--bg); }
 .fxinl .fxh, .fxinl .fx-del { display: none; }
@@ -1267,6 +1279,7 @@ create policy "stipendio pilota documenti" on storage.objects
         <a href="#profilo/comp"><b>Composizione dell'app</b><small>Cosa usare, icone in basso, Home e colori</small></a>
         <a href="#profilo/io"><b>Io e il mio lavoro</b><small>Nome, lavoro, stipendio, notifica, contatti</small></a>
         <a href="#profilo/casa"><b>Casa e spese fisse</b><small>Affitto, bollette, assicurazioni, rate</small></a>
+        <a href="#profilo/veicoli"><b>I miei veicoli</b><small>Auto, bollo calcolato, assicurazione, revisione</small></a>
         <a href="#profilo/auto" data-mod="viaggi"><b>Auto e viaggi</b><small>Tragitti, carburante, pedaggi</small></a>
         <a href="#profilo/budget"><b>Budget e investimenti</b><small>Come dividi il mese, quanto investire, broker</small></a>
         <a href="#profilo/natale" data-adv="1"><b>Natale e tredicesima</b><small>Tredicesima, come dividerla e budget regali</small></a>
@@ -1364,6 +1377,8 @@ create policy "stipendio pilota documenti" on storage.objects
       <h2 id="t-bl">Bollette</h2>
       <p class="hint">Luce, gas, acqua, internet, telefono, rifiuti. Tocca una voce per aggiungerla, poi metti importo e giorno. Una stima media va bene.</p>
       <div class="pch" id="bl-chips"></div>
+      <p class="small muted" style="margin:0 0 6px">Gestori telefonici e internet</p>
+      <div class="pch" id="bl-ops"></div>
       <div id="fx-bills"></div>
       <button type="button" id="bl-add">+ Aggiungi una bolletta</button>
     </section>
@@ -1380,6 +1395,18 @@ create policy "stipendio pilota documenti" on storage.objects
       <p class="hint">Assicurazione, tasse, scuola… tutto ciò che si ripete ogni mese e non è una bolletta né un abbonamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota in "Io".</p>
       <div id="fx-edit"></div>
       <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
+    </section>
+    <section data-sub="veicoli" class="card" aria-labelledby="t-vs">
+      <h2 id="t-vs">I miei veicoli</h2>
+      <p class="hint">Inserisci la tua auto: calcolo il bollo e metto da parte ogni mese bollo, revisione, tagliando e assicurazione. Entrano da soli nel piano del mese.</p>
+      <div id="veh-sum" class="vsum"></div>
+    </section>
+    <section data-sub="veicoli" class="card" aria-labelledby="t-vl">
+      <h2 id="t-vl">Le tue auto</h2>
+      <div id="veh-list"></div>
+      <div id="veh-new"></div>
+      <button type="button" id="veh-add">+ Aggiungi un'auto</button>
+      <p class="small muted">Il bollo è una stima da kW e classe Euro (tariffe base nazionali). Ogni Regione può applicare una tariffa diversa: se hai l'importo dell'ultimo bollo, scrivilo e uso quello. <a href="https://www.aci.it/i-servizi/servizi-online/calcolo-bollo-auto.html" target="_blank" rel="noopener">Calcolo ufficiale ACI</a></p>
     </section>
     <section data-sub="auto" class="card" aria-labelledby="t-p3">
       <h2 id="t-p3">I tuoi tragitti</h2>
@@ -1785,7 +1812,7 @@ create policy "solo i miei dati" on stipendio_pilota
   var ICON_OPTS = [["", "Automatica (logo se noto)"], ["home", "Casa"], ["bolt", "Energia"], ["bulb", "Luce"], ["flame", "Gas"], ["drop", "Acqua"], ["wifi", "Internet"], ["phone", "Telefono"], ["tv", "Streaming e TV"], ["play", "Video e film"], ["game", "Giochi e console"], ["spark", "Intelligenza artificiale"], ["cloud", "Cloud e spazio"], ["bag", "Acquisti online"], ["music", "Musica"], ["gym", "Palestra e sport"], ["shield", "Assicurazione"], ["car", "Auto"], ["fuel", "Carburante"], ["gear", "Manutenzione"], ["bus", "Trasporti"], ["cross", "Salute"], ["book", "Scuola e corsi"], ["gift", "Regali"], ["plane", "Viaggi"], ["paw", "Animali"], ["coffee", "Bar e ristoranti"], ["shirt", "Vestiti"], ["card", "Rate e carte"], ["bank", "Tasse"], ["cart", "Spesa"], ["smile", "Svago"], ["tag", "Altro"]];
   function iconKey(n) {
     n = String(n).toLowerCase();
-    var R = [[/playstation|\bps ?(plus|5|4)\b|xbox|game ?pass|nintendo|steam|videogioc|gaming/, "game"], [/claude|chatgpt|openai|gemini|copilot|anthropic|intelligenza artificiale|\bai\b/, "spark"], [/netflix|disney|prime|dazn|youtube|paramount|infinity|apple tv|now tv|\bsky\b|streaming/, "play"], [/icloud|dropbox|google one|onedrive|\bcloud\b/, "cloud"], [/amazon|zalando|shein|ebay|acquisti online/, "bag"], [/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl/, "wifi"], [/telefon|cellulare|sim\b|ricaric|tim\b|vodafone|iliad|windtre|ho\.? mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette/, "bolt"], [/abbon/, "tv"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
+    var R = [[/playstation|\bps ?(plus|5|4)\b|xbox|game ?pass|nintendo|steam|videogioc|gaming/, "game"], [/claude|chatgpt|openai|gemini|copilot|anthropic|intelligenza artificiale|\bai\b/, "spark"], [/netflix|disney|prime|dazn|youtube|paramount|infinity|apple tv|now tv|\bsky\b|streaming/, "play"], [/icloud|dropbox|google one|onedrive|\bcloud\b/, "cloud"], [/amazon|zalando|shein|ebay|acquisti online/, "bag"], [/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl|fastweb|tiscali|linkem|eolo|sky wifi/, "wifi"], [/telefon|cellulare|sim\b|ricaric|\btim\b|vodafone|iliad|windtre|wind tre|ho\.? mobile|poste ?mobile|coop ?voce|spusu|lyca|kena|very mobile|digi ?mobil|1 ?mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette/, "bolt"], [/abbon/, "tv"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
     for (var i = 0; i < R.length; i++) if (R[i][0].test(n)) return R[i][1];
     return "tag";
   }
@@ -1796,7 +1823,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var a = S.annual.filter(function (x) { return x.name.trim().toLowerCase() === q; })[0];
     return a && a.ic && ICONS[a.ic] ? a.ic : iconKey(name);
   }
-  var BRANDS = [[/netflix/, "netflix.com"], [/disney/, "disneyplus.com"], [/prime video|amazon prime|\bprime\b/, "primevideo.com"], [/amazon/, "amazon.it"], [/dazn/, "dazn.com"], [/sky\b/, "sky.it"], [/now tv|nowtv/, "nowtv.it"], [/youtube/, "youtube.com"], [/spotify/, "spotify.com"], [/gemini/, "gemini.google.com"], [/steam/, "steampowered.com"], [/paramount/, "paramountplus.com"], [/zalando/, "zalando.it"], [/ebay/, "ebay.it"], [/shein/, "shein.com"], [/google one/, "one.google.com"], [/apple music|icloud|apple tv|apple one|\bapple\b/, "apple.com"], [/deezer/, "deezer.com"], [/tim\b/, "tim.it"], [/vodafone/, "vodafone.it"], [/wind ?tre|\bwind\b|\bwindtre/, "windtre.it"], [/iliad/, "iliad.it"], [/fastweb/, "fastweb.it"], [/ho\.? ?mobile/, "ho-mobile.it"], [/kena/, "kenamobile.it"], [/very mobile/, "verymobile.it"], [/enel/, "enel.it"], [/\beni\b|plenitude/, "eniplenitude.com"], [/edison/, "edison.it"], [/a2a/, "a2a.it"], [/hera\b/, "gruppohera.it"], [/acea/, "gruppo.acea.it"], [/unipol/, "unipol.it"], [/generali/, "generali.it"], [/allianz/, "allianz.it"], [/axa\b/, "axa.it"], [/zurich/, "zurich.it"], [/linear/, "linear.it"], [/direct line/, "directline.it"], [/postepay|poste\b/, "poste.it"], [/paypal/, "paypal.com"], [/revolut/, "revolut.com"], [/satispay/, "satispay.com"], [/chatgpt|openai/, "openai.com"], [/claude|anthropic/, "claude.ai"], [/google|gmail|drive/, "google.com"], [/microsoft|office 365|onedrive/, "microsoft.com"], [/dropbox/, "dropbox.com"], [/playstation|psn|ps plus/, "playstation.com"], [/xbox|game pass/, "xbox.com"], [/nintendo/, "nintendo.com"], [/twitch/, "twitch.tv"], [/audible/, "audible.it"], [/kindle/, "amazon.it"], [/tiktok/, "tiktok.com"], [/linkedin/, "linkedin.com"], [/canva/, "canva.com"], [/adobe/, "adobe.com"], [/duolingo/, "duolingo.com"], [/telepass/, "telepass.com"], [/autostrade/, "autostrade.it"], [/trenitalia/, "trenitalia.com"], [/italo/, "italotreno.it"], [/rai\b/, "rai.it"], [/mediaset|infinity/, "mediasetinfinity.mediaset.it"]];
+  var BRANDS = [[/netflix/, "netflix.com"], [/disney/, "disneyplus.com"], [/prime video|amazon prime|\bprime\b/, "primevideo.com"], [/amazon/, "amazon.it"], [/dazn/, "dazn.com"], [/sky\b/, "sky.it"], [/now tv|nowtv/, "nowtv.it"], [/youtube/, "youtube.com"], [/spotify/, "spotify.com"], [/gemini/, "gemini.google.com"], [/steam/, "steampowered.com"], [/paramount/, "paramountplus.com"], [/zalando/, "zalando.it"], [/ebay/, "ebay.it"], [/shein/, "shein.com"], [/google one/, "one.google.com"], [/apple music|icloud|apple tv|apple one|\bapple\b/, "apple.com"], [/deezer/, "deezer.com"], [/\btim\b/, "tim.it"], [/poste ?mobile|postemobile/, "postemobile.it"], [/coop ?voce|coopvoce/, "coopvoce.it"], [/spusu/, "spusu.it"], [/lyca/, "lycamobile.it"], [/tiscali/, "tiscali.it"], [/linkem/, "linkem.com"], [/eolo/, "eolo.it"], [/digi ?mobil|\bdigi\b/, "digimobil.it"], [/optima/, "optimaitalia.com"], [/\b1 ?mobile\b/, "1mobile.it"], [/sky wifi/, "sky.it"], [/vodafone/, "vodafone.it"], [/wind ?tre|\bwind\b|\bwindtre/, "windtre.it"], [/iliad/, "iliad.it"], [/fastweb/, "fastweb.it"], [/ho\.? ?mobile/, "ho-mobile.it"], [/kena/, "kenamobile.it"], [/very mobile/, "verymobile.it"], [/enel/, "enel.it"], [/\beni\b|plenitude/, "eniplenitude.com"], [/edison/, "edison.it"], [/a2a/, "a2a.it"], [/hera\b/, "gruppohera.it"], [/acea/, "gruppo.acea.it"], [/unipol/, "unipol.it"], [/generali/, "generali.it"], [/allianz/, "allianz.it"], [/axa\b/, "axa.it"], [/zurich/, "zurich.it"], [/linear/, "linear.it"], [/direct line/, "directline.it"], [/postepay|poste\b/, "poste.it"], [/paypal/, "paypal.com"], [/revolut/, "revolut.com"], [/satispay/, "satispay.com"], [/chatgpt|openai/, "openai.com"], [/claude|anthropic/, "claude.ai"], [/google|gmail|drive/, "google.com"], [/microsoft|office 365|onedrive/, "microsoft.com"], [/dropbox/, "dropbox.com"], [/playstation|psn|ps plus/, "playstation.com"], [/xbox|game pass/, "xbox.com"], [/nintendo/, "nintendo.com"], [/twitch/, "twitch.tv"], [/audible/, "audible.it"], [/kindle/, "amazon.it"], [/tiktok/, "tiktok.com"], [/linkedin/, "linkedin.com"], [/canva/, "canva.com"], [/adobe/, "adobe.com"], [/duolingo/, "duolingo.com"], [/telepass/, "telepass.com"], [/autostrade/, "autostrade.it"], [/trenitalia/, "trenitalia.com"], [/italo/, "italotreno.it"], [/rai\b/, "rai.it"], [/mediaset|infinity/, "mediasetinfinity.mediaset.it"]];
   function brandDomain(n) { n = String(n || "").toLowerCase(); if (n.length < 2) return ""; for (var i = 0; i < BRANDS.length; i++) if (BRANDS[i][0].test(n)) return BRANDS[i][1]; return ""; }
   function iconSvg(k, name, ic) {
     var s = '<svg viewBox="0 0 24 24" aria-hidden="true" data-k="' + (ICONS[k] ? k : "tag") + '">' + (ICONS[k] || ICONS.tag) + "</svg>";
@@ -2190,7 +2217,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.58";
+  var APP_VERSION = "2026-11-17.60";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3928,6 +3955,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (S.workMode !== "turni") S.workMode = "fisso";
     if (Array.isArray(S.routes) && S.routes.length && !S.routes.some(function (r) { return r.work; })) S.routes[0].work = true;
     if (!Array.isArray(S.annual)) S.annual = [];
+    if (!Array.isArray(S.veh)) S.veh = [];
     S.annual.forEach(function (a) { a.due = typeof a.due === "string" ? a.due : ""; a.saved = Math.max(0, +a.saved || 0); if (!Array.isArray(a.log)) a.log = []; });
     var r = S.annRem && typeof S.annRem === "object" ? S.annRem : {}; S.annRem = { on: r.on !== false, day: Math.min(28, Math.max(1, Math.round(+r.day) || 5)) };
   }
@@ -4440,7 +4468,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
   var VIEWS = ["home", "spese", "lavoro", "archivio", "piano", "storico", "profilo"];
   var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
-    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Auto e viaggi"], ["budget", "Budget e investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
+    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["veicoli", "Veicoli"], ["auto", "Auto e viaggi"], ["budget", "Budget e investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
     var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
@@ -4466,7 +4494,7 @@ create policy "solo i miei dati" on stipendio_pilota
     document.querySelectorAll("#tabs a").forEach(function (a) { var v = a.getAttribute("data-v"); a.hidden = S.tabs.indexOf(v) < 0 || (v === "archivio" && !anyMod(["scad", "doc"])) || (v === "lavoro" && !modOn("viaggi")); });
     document.querySelectorAll(".menu a[data-mod], .menu a[data-tab]").forEach(function (a) { var md = a.getAttribute("data-mod"), tb = a.getAttribute("data-tab"); a.hidden = (md && !anyMod(md.split(","))) || (tb && S.tabs.indexOf(tb) >= 0); });
     var sec = $("mg-sec"); if (sec) sec.hidden = !sec.querySelectorAll("a:not([hidden])").length;
-    var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu" && sub !== "condivisa" && sub !== "natale";
+    var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu" && sub !== "condivisa" && sub !== "natale" && sub !== "veicoli";
     $("savebar").hidden = !showSave;
     document.body.className = showSave ? "has-save" : "";
     document.querySelectorAll("#tabs a").forEach(function (a) {
@@ -4477,12 +4505,13 @@ create policy "solo i miei dati" on stipendio_pilota
     if (h === "profilo" && sub === "comp") { renderHomeEditor(); renderBarEditor(); }
     if (h === "profilo" && sub === "condivisa") renderCasa();
     if (h === "profilo" && sub === "natale") renderXmas();
+    if (h === "profilo" && sub === "veicoli") renderVeh();
     curView = h;
     $("fab").hidden = h === "profilo" || h === "archivio" || (h === "spese" && (sub === "spese" || sub === "importa")) || !S.saved;
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -4491,9 +4520,14 @@ create policy "solo i miei dati" on stipendio_pilota
   $("go-spese").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
   $("save").onclick = function () { saveForm(); };
   var asT; function autoSave() { clearTimeout(asT); asT = setTimeout(function () { if (S.saved && !$("savebar").hidden) saveForm(true); }, 900); }
-  var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
+  var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#bl-ops button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
   var CHANGELOG = [
+    { id: "2026-11-17b", date: "17 novembre · nuovo", items: [
+      ["Loghi dei gestori", "TIM, Vodafone, WindTre, Iliad, Fastweb, Poste Mobile e altri hanno il loro logo. Li trovi come tasti rapidi nelle Bollette."],
+      ["I miei veicoli", "In Altro → I miei veicoli inserisci la tua auto con marca e logo. Calcolo il bollo da kW e classe Euro."],
+      ["Costi dell'auto nel piano", "Bollo, assicurazione, revisione e tagliando vengono messi da parte ogni mese, da soli. Il consumo che scrivi aggiorna il carburante."]
+    ] },
     { id: "2026-11-17", date: "17 novembre", items: [
       ["Modalità semplice", "Mostra solo l'essenziale. La accendi e spegni da Altro o dal link in fondo alla Home."],
       ["Segna una spesa più veloce", "Importo grande, categoria con le icone e le ultime note in un tocco."],
@@ -4516,6 +4550,117 @@ create policy "solo i miei dati" on stipendio_pilota
   $("menu-news").onclick = function (e) { e.preventDefault(); openNews(); };
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("news").hidden) closeNews(); });
   newsDot();
+  var VBRANDS = function () { return [["Fiat", "fiat.it"], ["Alfa Romeo", "alfaromeo.it"], ["Lancia", "lancia.it"], ["Jeep", "jeep-official.it"], ["Ford", "ford.it"], ["Volkswagen", "volkswagen.it"], ["Audi", "audi.it"], ["BMW", "bmw.it"], ["Mercedes-Benz", "mercedes-benz.it"], ["Opel", "opel.it"], ["Peugeot", "peugeot.it"], ["Citroën", "citroen.it"], ["DS", "dsautomobiles.it"], ["Renault", "renault.it"], ["Dacia", "dacia.it"], ["Toyota", "toyota.it"], ["Lexus", "lexus.it"], ["Honda", "honda.it"], ["Nissan", "nissan.it"], ["Mazda", "mazda.it"], ["Suzuki", "suzuki.it"], ["Subaru", "subaru.it"], ["Mitsubishi", "mitsubishi-motors.it"], ["Hyundai", "hyundai.it"], ["Kia", "kia.com"], ["Seat", "seat.it"], ["Cupra", "cupraofficial.it"], ["Škoda", "skoda.it"], ["Volvo", "volvocars.com"], ["Mini", "mini.it"], ["Smart", "smart.com"], ["Tesla", "tesla.com"], ["BYD", "byd.com"], ["MG", "mgmotor.eu"], ["Land Rover", "landrover.it"], ["Jaguar", "jaguar.it"], ["Porsche", "porsche.com"]]; };
+  function vehLabel(v) { return ((v.brand || "") + " " + (v.model || "")).trim() || "Auto"; }
+  function vehLogo(v, cls) {
+    var d = "", L = VBRANDS(); for (var i = 0; i < L.length; i++) if (L[i][0] === v.brand) d = L[i][1];
+    return '<span class="ico ' + (cls || "") + '" style="--c:#64748b">' + iconSvg("car") + (d ? '<img class="lg" alt="" style="opacity:0" onload="this.style.opacity=1" referrerpolicy="no-referrer" src="https://www.google.com/s2/favicons?domain=' + d + '&sz=128" onerror="this.remove()">' : "") + "</span>";
+  }
+  function bolloCalc(v) {
+    var kw = +v.kw || 0; if (!(kw > 0)) return 0; var age = 0;
+    if (/^\d{4}-\d{2}$/.test(v.reg || "")) { var q = v.reg.split("-"); age = (NOW.getFullYear() - (+q[0])) + (NOW.getMonth() + 1 - (+q[1])) / 12; }
+    if (age >= 30) return 0;
+    var T = { 0: [3, 4.5], 1: [2.9, 4.35], 2: [2.8, 4.2], 3: [2.7, 4.05], 4: [2.58, 3.87], 5: [2.58, 3.87], 6: [2.58, 3.87] }, tr = T[v.euro] || T[6];
+    var tot = Math.min(kw, 100) * tr[0] + Math.max(0, kw - 100) * tr[1];
+    if (v.fuel === "elettrica") { if (age < 5) return 0; tot = (Math.min(kw, 100) * 2.58 + Math.max(0, kw - 100) * 3.87) * 0.25; }
+    else if (age <= 20) tot += 20 * Math.max(0, kw - 185);
+    return Math.round(tot * 100) / 100;
+  }
+  function bolloAmount(v) { return v.bolloMan > 0 ? v.bolloMan : bolloCalc(v); }
+  function nextEnd(m) { m = Math.min(12, Math.max(1, Math.round(+m) || 1)); var y = NOW.getFullYear(), d = new Date(y, m, 0); if (d < new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate())) d = new Date(y + 1, m, 0); return ymd(d); }
+  function vehParts(v) {
+    var out = [], b = bolloAmount(v); if (b > 0) out.push(["Bollo", b / 12]);
+    if (v.ins > 0) out.push(["Assicurazione", v.insEvery === "mese" ? v.ins : v.ins / 12]);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v.rev || "")) out.push(["Revisione", 80 / 2 / 12]);
+    if (v.tag > 0) out.push(["Tagliando e manutenzione", v.tag / 12]);
+    return out;
+  }
+  function syncVeh() {
+    var oldA = S.annual.filter(function (a) { return a.veh; }), oldF = S.fixedList.filter(function (f) { return f.veh; }), newA = [], newF = [];
+    S.veh.forEach(function (v) {
+      var L = vehLabel(v);
+      function ann(vk, name, amount, due, ref, ic) {
+        if (!(amount > 0)) return; var o = oldA.filter(function (a) { return a.veh === v.id && a.vk === vk; })[0];
+        newA.push({ id: o ? o.id : "v" + (S.nextId++), name: name, amount: Math.round(amount * 100) / 100, saved: o ? o.saved : 0, due: o && o.ref === ref && o.due ? o.due : due, log: o ? o.log : [], ic: ic, veh: v.id, vk: vk, ref: ref });
+      }
+      ann("bollo", "Bollo " + L, bolloAmount(v), nextEnd(v.bolloM), "m" + v.bolloM, "bank");
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v.rev || "")) ann("rev", "Revisione " + L, 80 / 2, v.rev, v.rev, "gear");
+      ann("tag", "Tagliando " + L, v.tag, "", "", "gear");
+      if (v.insEvery === "anno") ann("ins", "Assicurazione " + L, v.ins, nextEnd(v.insM), "m" + v.insM, "shield");
+      else if (v.ins > 0) { var o = oldF.filter(function (f) { return f.veh === v.id; })[0]; newF.push({ id: o ? o.id : "f" + (S.nextId++), name: "Assicurazione " + L, amount: v.ins, due: 1, split: false, kind: "fix", end: "", ic: "shield", veh: v.id, vk: "ins" }); }
+      if (v.kml > 0) { if (v.fuel === "benzina") S.kmlB = v.kml; else if (v.fuel === "diesel") S.kmlD = v.kml; }
+    });
+    S.annual = S.annual.filter(function (a) { return !a.veh; }).concat(newA);
+    S.fixedList = S.fixedList.filter(function (f) { return !f.veh; }).concat(newF);
+  }
+  function vehForm(v) {
+    var f = document.createElement("div"); f.className = "veh-form";
+    var br = '<option value="">Scegli la marca</option>' + VBRANDS().map(function (b) { return '<option' + (b[0] === v.brand ? " selected" : "") + ">" + b[0] + "</option>"; }).join("") + '<option value="Altra"' + (v.brand === "Altra" ? " selected" : "") + ">Altra marca</option>";
+    var fu = [["benzina", "Benzina"], ["diesel", "Diesel"], ["gpl", "GPL"], ["metano", "Metano"], ["ibrida", "Ibrida"], ["elettrica", "Elettrica"]].map(function (o) { return '<option value="' + o[0] + '"' + (v.fuel === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("");
+    var eu = [0, 1, 2, 3, 4, 5, 6].map(function (n) { return '<option value="' + n + '"' + (+v.euro === n ? " selected" : "") + ">Euro " + n + "</option>"; }).join("");
+    var mo = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+    var ms = function (cur) { return mo.map(function (m, i) { return '<option value="' + (i + 1) + '"' + (+cur === i + 1 ? " selected" : "") + ">" + m + "</option>"; }).join(""); };
+    f.innerHTML = '<label class="f">Marca<select class="v-brand">' + br + '</select></label><label class="f">Modello<input type="text" class="v-model" maxlength="30" placeholder="Es. Panda" value="' + esc(v.model || "") + '"></label>'
+      + '<div class="fields"><label class="f">Alimentazione<select class="v-fuel">' + fu + '</select></label><label class="f v-euro-l">Classe Euro<select class="v-euro">' + eu + "</select></label></div>"
+      + '<div class="fields"><label class="f">Potenza (kW)<input type="text" inputmode="decimal" class="v-kw" value="' + txt(v.kw || "") + '"><span class="help">Sul libretto, voce P.2</span></label><label class="f">Immatricolata a<input type="month" class="v-reg" value="' + esc(v.reg || "") + '"></label></div>'
+      + '<div class="est" id="v-est"></div>'
+      + '<label class="f">Importo bollo preciso (facoltativo)<input type="text" inputmode="decimal" class="v-bman" value="' + txt(v.bolloMan || "") + '" placeholder="Lascia vuoto per la stima"></label><label class="f">Mese di scadenza del bollo<select class="v-bm">' + ms(v.bolloM) + "</select></label>"
+      + "<h3>Assicurazione</h3>" + '<div class="fields"><label class="f">Importo (€)<input type="text" inputmode="decimal" class="v-ins" value="' + txt(v.ins || "") + '"></label><label class="f">Si paga<select class="v-ie"><option value="anno"' + (v.insEvery !== "mese" ? " selected" : "") + '>Ogni anno</option><option value="mese"' + (v.insEvery === "mese" ? " selected" : "") + ">Ogni mese</option></select></label></div>"
+      + '<label class="f v-im-l">Mese di scadenza<select class="v-im">' + ms(v.insM) + "</select></label>"
+      + "<h3>Revisione, tagliando e consumo</h3>" + '<label class="f">Prossima revisione<input type="date" class="v-rev" value="' + esc(v.rev || "") + '"><span class="help">Si fa ogni 2 anni. Costo ufficiale circa 80 €.</span></label>'
+      + '<div class="fields"><label class="f">Tagliando, all\'anno (€)<input type="text" inputmode="decimal" class="v-tag" value="' + txt(v.tag || "") + '"></label><label class="f">Consumo (km/l)<input type="text" inputmode="decimal" class="v-kml" value="' + txt(v.kml || "") + '"></label></div>';
+    return f;
+  }
+  function vehRead(f, id) {
+    var g = function (c) { return f.querySelector(c).value; }, n = function (c) { var x = pnum(g(c)); return isNaN(x) || x < 0 ? 0 : x; };
+    var reg = g(".v-reg"), bm = +g(".v-bm") || 1;
+    return { id: id, brand: g(".v-brand"), model: g(".v-model").trim().slice(0, 30), fuel: g(".v-fuel"), euro: +g(".v-euro"), kw: Math.min(1000, n(".v-kw")), reg: /^\d{4}-\d{2}$/.test(reg) ? reg : "", bolloMan: n(".v-bman"), bolloM: bm, ins: n(".v-ins"), insEvery: g(".v-ie"), insM: +g(".v-im") || 1, rev: g(".v-rev"), tag: n(".v-tag"), kml: Math.min(60, n(".v-kml")) };
+  }
+  function vehWire(f, id) {
+    function upd() {
+      var v = vehRead(f, id); f.querySelector(".v-euro-l").hidden = v.fuel === "elettrica"; f.querySelector(".v-im-l").hidden = v.insEvery === "mese";
+      var c = bolloCalc(v), est = f.querySelector("#v-est");
+      est.innerHTML = v.kw > 0 ? "Bollo stimato: <b>" + eur2.format(c) + "</b> all'anno" + (v.bolloMan > 0 ? " · uso i tuoi <b>" + eur2.format(v.bolloMan) + "</b>" : "") + ". Da parte ogni mese: <b>" + eur2.format(vehParts(v).reduce(function (a, p) { return a + p[1]; }, 0)) + "</b>." : "Scrivi i kW per calcolare il bollo.";
+    }
+    f.addEventListener("input", upd); f.addEventListener("change", function () {
+      var r = f.querySelector(".v-reg").value, bm = f.querySelector(".v-bm"); if (r && !f._bm) { var m = +r.split("-")[1] % 12 + 1; bm.value = String(m); }
+      upd();
+    });
+    f.querySelector(".v-bm").addEventListener("change", function () { f._bm = 1; });
+    upd();
+  }
+  function openVeh(row, v, isNew) {
+    var host = isNew ? $("veh-new") : row.nextSibling;
+    if (!isNew && host && host.className === "veh-form") { host.remove(); return; }
+    document.querySelectorAll("#veh-list .veh-form, #veh-new .veh-form").forEach(function (e) { e.remove(); });
+    var f = vehForm(v); vehWire(f, v.id);
+    var b = document.createElement("div"); b.className = "btnrow"; b.style.cssText = "display:flex;gap:8px";
+    b.innerHTML = '<button type="button" class="primary vs" style="flex:1">Salva</button><button type="button" class="vc" style="flex:1">Annulla</button>' + (!isNew ? '<button type="button" class="vd" style="flex:1">Elimina</button>' : "");
+    f.appendChild(b);
+    b.querySelector(".vc").onclick = function () { f.remove(); };
+    b.querySelector(".vs").onclick = function () {
+      var o = vehRead(f, v.id); if (!o.brand && !o.model) { toast("Scegli la marca o scrivi il modello"); return; }
+      if (isNew) S.veh = S.veh.concat([o]); else S.veh = S.veh.map(function (x) { return x.id === v.id ? o : x; });
+      syncVeh(); persist(); renderAll(); renderVeh(); toast("Salvato ✓ Entra nel piano del mese");
+    };
+    var d = b.querySelector(".vd"); if (d) d.onclick = function () { var old = S.veh.slice(); S.veh = S.veh.filter(function (x) { return x.id !== v.id; }); syncVeh(); persist(); renderAll(); renderVeh(); toast("Auto eliminata", "Annulla", function () { S.veh = old; syncVeh(); persist(); renderAll(); renderVeh(); }); };
+    if (isNew) { $("veh-new").innerHTML = ""; $("veh-new").appendChild(f); f.scrollIntoView({ block: "center" }); } else row.parentNode.insertBefore(f, row.nextSibling);
+  }
+  function renderVeh() {
+    var box = $("veh-list"); if (!box) return; box.innerHTML = ""; var tot = 0, lines = [];
+    (S.veh || []).forEach(function (v) {
+      var ps = vehParts(v), m = ps.reduce(function (a, p) { return a + p[1]; }, 0); tot += m;
+      ps.forEach(function (p) { var l = lines.filter(function (x) { return x[0] === p[0]; })[0]; if (l) l[1] += p[1]; else lines.push([p[0], p[1]]); });
+      var row = document.createElement("button"); row.type = "button"; row.className = "vrow";
+      var fl = { benzina: "Benzina", diesel: "Diesel", gpl: "GPL", metano: "Metano", ibrida: "Ibrida", elettrica: "Elettrica" }[v.fuel] || "";
+      row.innerHTML = vehLogo(v) + "<span><b>" + esc(vehLabel(v)) + "</b><small>" + [fl, v.kw > 0 ? v.kw + " kW" : "", v.fuel !== "elettrica" ? "Euro " + v.euro : ""].filter(Boolean).join(" · ") + (bolloAmount(v) > 0 ? " · bollo " + eur.format(bolloAmount(v)) : "") + '</small></span><span class="num">' + eur.format(Math.round(m)) + "/mese</span>";
+      row.onclick = function () { openVeh(row, v, false); };
+      box.appendChild(row);
+    });
+    if (!(S.veh || []).length) box.innerHTML = '<p class="empty">Nessun veicolo. Aggiungi la tua auto per avere bollo e costi calcolati.</p>';
+    var sm = $("veh-sum"); sm.innerHTML = tot > 0 ? '<span class="small muted">Da mettere da parte ogni mese</span><span class="vtot">' + eur2.format(tot) + "</span>" + lines.map(function (l) { return '<div class="vln"><span>' + esc(l[0]) + '</span><span class="num">' + eur2.format(l[1]) + "</span></div>"; }).join("") : '<span class="small muted">Ancora nessun costo calcolato.</span>';
+  }
+  $("veh-add").onclick = function () { openVeh(null, { id: "v" + (S.nextId++), brand: "", model: "", fuel: "benzina", euro: 6, kw: 0, reg: "", bolloM: 1, ins: 0, insEvery: "anno", insM: 1, rev: "", tag: 0, kml: 0, bolloMan: 0 }, true); };
   function setSimple(on) { S.simple = !!on; persist(); tabsNorm(); renderAll(); showView(); toast(on ? "Modalità semplice attiva" : "Ora vedi tutte le funzioni"); }
   $("simple-on").onchange = function () { setSimple(this.checked); };
   $("simple-toggle").onclick = function () { setSimple(S.simple === false); };
@@ -4535,7 +4680,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   function addFx(kind, name) { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: name || "", amount: 0, due: 1, split: true, kind: kind, end: "" }); renderFixedEditor(cur); var box = document.querySelectorAll(kind === "bill" ? "#fx-bills .fxe" : "#fx-subs .fxe"), l = box[box.length - 1]; if (l) { var a = l.querySelector(name ? ".fx-amt" : ".fx-name"); l.scrollIntoView({ block: "center" }); if (a) a.focus(); } }
   var BL_P = ["Luce", "Gas", "Acqua", "Internet", "Telefono", "Rifiuti"], SB_P = ["Netflix", "Amazon Prime", "Disney+", "DAZN", "YouTube", "Spotify", "PlayStation", "Claude", "ChatGPT", "iCloud", "Palestra"];
-  [["bl-chips", BL_P, "bill"], ["sb-chips", SB_P, "sub"]].forEach(function (c) { $(c[0]).innerHTML = c[1].map(function (n) { return '<button type="button" data-n="' + esc(n) + '">+ ' + esc(n) + "</button>"; }).join(""); $(c[0]).querySelectorAll("button").forEach(function (b) { b.onclick = function () { addFx(c[2], this.getAttribute("data-n")); }; }); });
+  [["bl-chips", BL_P, "bill"], ["bl-ops", ["TIM", "Vodafone", "WindTre", "Iliad", "Fastweb", "Ho. Mobile", "Poste Mobile", "Kena", "Very Mobile", "CoopVoce", "Tiscali", "Eolo"], "bill"], ["sb-chips", SB_P, "sub"]].forEach(function (c) { $(c[0]).innerHTML = c[1].map(function (n) { return '<button type="button" data-n="' + esc(n) + '">+ ' + esc(n) + "</button>"; }).join(""); $(c[0]).querySelectorAll("button").forEach(function (b) { b.onclick = function () { addFx(c[2], this.getAttribute("data-n")); }; }); });
   $("bl-add").onclick = function () { addFx("bill", ""); }; $("sb-add").onclick = function () { addFx("sub", ""); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: newRouteId(cur), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
