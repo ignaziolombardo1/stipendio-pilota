@@ -1835,12 +1835,16 @@ create policy "solo i miei dati" on stipendio_pilota
     var a = S.annual.filter(function (x) { return x.name.trim().toLowerCase() === q; })[0];
     return a && a.ic && ICONS[a.ic] ? a.ic : iconKey(name);
   }
+  var LOGO_SRC = function (d, n) { return [ "https://www.google.com/s2/favicons?domain=" + d + "&sz=128", "https://icons.duckduckgo.com/ip3/" + d + ".ico", "https://" + d + "/apple-touch-icon.png", "https://" + d + "/favicon.ico" ][n] || ""; };
+  function logoImg(d) { return '<img class="lg" alt="" style="opacity:0" data-d="' + d + '" data-n="0" referrerpolicy="no-referrer" onload="logoOk(this)" onerror="logoNext(this)" src="' + LOGO_SRC(d, 0) + '">'; }
+  window.logoNext = function (im) { var n = (+im.getAttribute("data-n") || 0) + 1, s = LOGO_SRC(im.getAttribute("data-d"), n); if (s) { im.setAttribute("data-n", n); im.src = s; } else im.remove(); };
+  window.logoOk = function (im) { var n = +im.getAttribute("data-n") || 0; if (im.naturalWidth < 32 && n < 2) { window.logoNext(im); return; } im.style.opacity = 1; };
   var BRANDS = [[/netflix/, "netflix.com"], [/disney/, "disneyplus.com"], [/prime video|amazon prime|\bprime\b/, "primevideo.com"], [/amazon/, "amazon.it"], [/dazn/, "dazn.com"], [/sky\b/, "sky.it"], [/now tv|nowtv/, "nowtv.it"], [/youtube/, "youtube.com"], [/spotify/, "spotify.com"], [/gemini/, "gemini.google.com"], [/steam/, "steampowered.com"], [/paramount/, "paramountplus.com"], [/zalando/, "zalando.it"], [/ebay/, "ebay.it"], [/shein/, "shein.com"], [/google one/, "one.google.com"], [/apple music|icloud|apple tv|apple one|\bapple\b/, "apple.com"], [/deezer/, "deezer.com"], [/\btim\b/, "tim.it"], [/poste ?mobile|postemobile/, "postemobile.it"], [/coop ?voce|coopvoce/, "coopvoce.it"], [/spusu/, "spusu.it"], [/lyca/, "lycamobile.it"], [/tiscali/, "tiscali.it"], [/linkem/, "linkem.com"], [/eolo/, "eolo.it"], [/digi ?mobil|\bdigi\b/, "digimobil.it"], [/optima/, "optimaitalia.com"], [/\b1 ?mobile\b/, "1mobile.it"], [/sky wifi/, "sky.it"], [/vodafone/, "vodafone.it"], [/wind ?tre|\bwind\b|\bwindtre/, "windtre.it"], [/iliad/, "iliad.it"], [/fastweb/, "fastweb.it"], [/ho\.? ?mobile/, "ho-mobile.it"], [/kena/, "kenamobile.it"], [/very mobile/, "verymobile.it"], [/enel/, "enel.it"], [/\beni\b|plenitude/, "eniplenitude.com"], [/edison/, "edison.it"], [/a2a/, "a2a.it"], [/hera\b/, "gruppohera.it"], [/acea/, "gruppo.acea.it"], [/unipol/, "unipol.it"], [/generali/, "generali.it"], [/allianz/, "allianz.it"], [/axa\b/, "axa.it"], [/zurich/, "zurich.it"], [/linear/, "linear.it"], [/direct line/, "directline.it"], [/postepay|poste\b/, "poste.it"], [/paypal/, "paypal.com"], [/revolut/, "revolut.com"], [/satispay/, "satispay.com"], [/chatgpt|openai/, "openai.com"], [/claude|anthropic/, "claude.ai"], [/google|gmail|drive/, "google.com"], [/microsoft|office 365|onedrive/, "microsoft.com"], [/dropbox/, "dropbox.com"], [/playstation|psn|ps plus/, "playstation.com"], [/xbox|game pass/, "xbox.com"], [/nintendo/, "nintendo.com"], [/twitch/, "twitch.tv"], [/audible/, "audible.it"], [/kindle/, "amazon.it"], [/tiktok/, "tiktok.com"], [/linkedin/, "linkedin.com"], [/canva/, "canva.com"], [/adobe/, "adobe.com"], [/duolingo/, "duolingo.com"], [/telepass/, "telepass.com"], [/autostrade/, "autostrade.it"], [/trenitalia/, "trenitalia.com"], [/italo/, "italotreno.it"], [/rai\b/, "rai.it"], [/mediaset|infinity/, "mediasetinfinity.mediaset.it"]];
   function brandDomain(n) { n = String(n || "").toLowerCase(); if (n.length < 2) return ""; for (var i = 0; i < BRANDS.length; i++) if (BRANDS[i][0].test(n)) return BRANDS[i][1]; return ""; }
   function iconSvg(k, name, ic) {
     var s = '<svg viewBox="0 0 24 24" aria-hidden="true" data-k="' + (ICONS[k] ? k : "tag") + '">' + (ICONS[k] || ICONS.tag) + "</svg>";
     var d = name && !ic ? brandDomain(name) : "";
-    return d ? s + '<img class="lg" alt="" style="opacity:0" onload="this.style.opacity=1" referrerpolicy="no-referrer" src="https://www.google.com/s2/favicons?domain=' + d + '&sz=128" onerror="this.remove()">' : s;
+    return d ? s + logoImg(d) : s;
   }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   var TK = [["ar", "Andata e ritorno"], ["a", "Solo andata"], ["r", "Solo ritorno"], ["n", "Non ci vado"]];
@@ -2229,7 +2233,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.61";
+  var APP_VERSION = "2026-11-17.63";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4536,6 +4540,7 @@ create policy "solo i miei dati" on stipendio_pilota
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
   var CHANGELOG = [
     { id: "2026-11-17b", date: "17 novembre · nuovo", items: [
+      ["Loghi più affidabili", "Se il primo servizio non trova un logo, l'app ne prova altri tre prima di usare l'icona colorata."],
       ["Assicurazione ogni 6 mesi", "Nei veicoli puoi scegliere se la paghi ogni mese, ogni 6 mesi o ogni anno."],
       ["Icone nel menu Altro", "Ogni voce ha la sua icona colorata."],
       ["Loghi dei gestori", "TIM, Vodafone, WindTre, Iliad, Fastweb, Poste Mobile, 1Mobile e altri hanno il loro logo. Li trovi come tasti rapidi nelle Bollette."],
@@ -4568,7 +4573,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function vehLabel(v) { return ((v.brand || "") + " " + (v.model || "")).trim() || "Auto"; }
   function vehLogo(v, cls) {
     var d = "", L = VBRANDS(); for (var i = 0; i < L.length; i++) if (L[i][0] === v.brand) d = L[i][1];
-    return '<span class="ico ' + (cls || "") + '" style="--c:#64748b">' + iconSvg("car") + (d ? '<img class="lg" alt="" style="opacity:0" onload="this.style.opacity=1" referrerpolicy="no-referrer" src="https://www.google.com/s2/favicons?domain=' + d + '&sz=128" onerror="this.remove()">' : "") + "</span>";
+    return '<span class="ico ' + (cls || "") + '" style="--c:#64748b">' + iconSvg("car") + (d ? logoImg(d) : "") + "</span>";
   }
   function bolloCalc(v) {
     var kw = +v.kw || 0; if (!(kw > 0)) return 0; var age = 0;
