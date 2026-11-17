@@ -362,6 +362,9 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .ico { border-radius: 14px; }
 .ico.sm { width: 30px; height: 30px; border-radius: 10px; flex: none; }
 .ico.sm svg { width: 17px; height: 17px; }
+.ico { position: relative; overflow: hidden; }
+.ico img.lg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 22%; background: #fff; border-radius: inherit; }
+.ico.sm img.lg { padding: 20%; }
 .chips label { border-radius: 16px; border-width: 2px; }
 .chips label.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); }
 .meter, .bar { height: 10px; border-radius: 6px; }
@@ -1651,7 +1654,7 @@ create policy "solo i miei dati" on stipendio_pilota
     card: '<rect x="2.500" y="5" width="19" height="14" rx="2"/><path d="M2.500 10h19M6 15h4"/>', bank: '<path d="M3 9l9-5 9 5M5 9v9M10 9v9M14 9v9M19 9v9M3 20h18"/>',
     music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', bus: '<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 21v-4M16 21v-4M8 14h.01M16 14h.01"/>'
   };
-  var ICON_OPTS = [["", "Automatica"], ["home", "Casa"], ["bolt", "Energia"], ["bulb", "Luce"], ["flame", "Gas"], ["drop", "Acqua"], ["wifi", "Internet"], ["phone", "Telefono"], ["tv", "Streaming e TV"], ["music", "Musica"], ["gym", "Palestra e sport"], ["shield", "Assicurazione"], ["car", "Auto"], ["fuel", "Carburante"], ["gear", "Manutenzione"], ["bus", "Trasporti"], ["cross", "Salute"], ["book", "Scuola e corsi"], ["gift", "Regali"], ["plane", "Viaggi"], ["paw", "Animali"], ["coffee", "Bar e ristoranti"], ["shirt", "Vestiti"], ["card", "Rate e carte"], ["bank", "Tasse"], ["cart", "Spesa"], ["smile", "Svago"], ["tag", "Altro"]];
+  var ICON_OPTS = [["", "Automatica (logo se noto)"], ["home", "Casa"], ["bolt", "Energia"], ["bulb", "Luce"], ["flame", "Gas"], ["drop", "Acqua"], ["wifi", "Internet"], ["phone", "Telefono"], ["tv", "Streaming e TV"], ["music", "Musica"], ["gym", "Palestra e sport"], ["shield", "Assicurazione"], ["car", "Auto"], ["fuel", "Carburante"], ["gear", "Manutenzione"], ["bus", "Trasporti"], ["cross", "Salute"], ["book", "Scuola e corsi"], ["gift", "Regali"], ["plane", "Viaggi"], ["paw", "Animali"], ["coffee", "Bar e ristoranti"], ["shirt", "Vestiti"], ["card", "Rate e carte"], ["bank", "Tasse"], ["cart", "Spesa"], ["smile", "Svago"], ["tag", "Altro"]];
   function iconKey(n) {
     n = String(n).toLowerCase();
     var R = [[/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl/, "wifi"], [/telefon|cellulare|sim\b|ricaric|tim\b|vodafone|iliad|windtre|ho\.? mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette|abbon/, "bolt"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
@@ -1665,7 +1668,13 @@ create policy "solo i miei dati" on stipendio_pilota
     var a = S.annual.filter(function (x) { return x.name.trim().toLowerCase() === q; })[0];
     return a && a.ic && ICONS[a.ic] ? a.ic : iconKey(name);
   }
-  function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
+  var BRANDS = [[/netflix/, "netflix.com"], [/disney/, "disneyplus.com"], [/prime video|amazon prime|\bprime\b/, "primevideo.com"], [/amazon/, "amazon.it"], [/dazn/, "dazn.com"], [/sky\b/, "sky.it"], [/now tv|nowtv/, "nowtv.it"], [/youtube/, "youtube.com"], [/spotify/, "spotify.com"], [/apple music|icloud|apple tv|apple one|\bapple\b/, "apple.com"], [/deezer/, "deezer.com"], [/tim\b/, "tim.it"], [/vodafone/, "vodafone.it"], [/wind ?tre|\bwind\b|\bwindtre/, "windtre.it"], [/iliad/, "iliad.it"], [/fastweb/, "fastweb.it"], [/ho\.? ?mobile/, "ho-mobile.it"], [/kena/, "kenamobile.it"], [/very mobile/, "verymobile.it"], [/enel/, "enel.it"], [/\beni\b|plenitude/, "eniplenitude.com"], [/edison/, "edison.it"], [/a2a/, "a2a.it"], [/hera\b/, "gruppohera.it"], [/acea/, "gruppo.acea.it"], [/unipol/, "unipol.it"], [/generali/, "generali.it"], [/allianz/, "allianz.it"], [/axa\b/, "axa.it"], [/zurich/, "zurich.it"], [/linear/, "linear.it"], [/direct line/, "directline.it"], [/postepay|poste\b/, "poste.it"], [/paypal/, "paypal.com"], [/revolut/, "revolut.com"], [/satispay/, "satispay.com"], [/chatgpt|openai/, "openai.com"], [/claude|anthropic/, "claude.ai"], [/google|gmail|drive/, "google.com"], [/microsoft|office 365|onedrive/, "microsoft.com"], [/dropbox/, "dropbox.com"], [/playstation|psn|ps plus/, "playstation.com"], [/xbox|game pass/, "xbox.com"], [/nintendo/, "nintendo.com"], [/twitch/, "twitch.tv"], [/audible/, "audible.it"], [/kindle/, "amazon.it"], [/tiktok/, "tiktok.com"], [/linkedin/, "linkedin.com"], [/canva/, "canva.com"], [/adobe/, "adobe.com"], [/duolingo/, "duolingo.com"], [/telepass/, "telepass.com"], [/autostrade/, "autostrade.it"], [/trenitalia/, "trenitalia.com"], [/italo/, "italotreno.it"], [/rai\b/, "rai.it"], [/mediaset|infinity/, "mediasetinfinity.mediaset.it"]];
+  function brandDomain(n) { n = String(n || "").toLowerCase(); if (n.length < 2) return ""; for (var i = 0; i < BRANDS.length; i++) if (BRANDS[i][0].test(n)) return BRANDS[i][1]; return ""; }
+  function iconSvg(k, name, ic) {
+    var s = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>";
+    var d = name && !ic ? brandDomain(name) : "";
+    return d ? s + '<img class="lg" alt="" loading="lazy" referrerpolicy="no-referrer" src="https://www.google.com/s2/favicons?domain=' + d + '&sz=64" onerror="this.remove()">' : s;
+  }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   var TK = [["ar", "Andata e ritorno"], ["a", "Solo andata"], ["r", "Solo ritorno"], ["n", "Non ci vado"]];
   function tripKind(r, k, planOnly) { var base = r.wd.indexOf(dOf(k).getDay()) >= 0, o = planOnly ? undefined : (S.dayo[k] || {})[r.id]; if (o === undefined) return base ? "ar" : "n"; o = +o; return o === 1 ? "ar" : o === 2 ? "a" : o === 3 ? "r" : "n"; }
@@ -1828,7 +1837,7 @@ create policy "solo i miei dati" on stipendio_pilota
     meta.forEach(function (g) {
       html += '<div class="group"><div class="group-title">' + g[0] + "</div>";
       g[1].forEach(function (r, i) {
-        html += '<div class="row"><span class="ico" style="--c:' + g[2][i] + '">' + iconSvg(iconFor(r[0])) + '</span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
+        html += '<div class="row"><span class="ico" style="--c:' + g[2][i] + '">' + iconSvg(iconFor(r[0]), r[0]) + '</span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
         segs.push([r[2], g[2][i]]);
       });
       html += "</div>";
@@ -1977,7 +1986,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3];
       var d = new Date(e.date);
       var row = document.createElement("div"); row.className = "entry e4 wi";
-      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note ? iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name) : iconKey(cat.name)) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x ed" aria-label="Modifica spesa">✎</button><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note ? iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name) : iconKey(cat.name), e.note) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x ed" aria-label="Modifica spesa">✎</button><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
       row.querySelector(".del").onclick = function () {
         S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== e.id; });
         if (editId === e.id) resetExpForm();
@@ -1994,7 +2003,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.47";
+  var APP_VERSION = "2026-11-17.51";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2369,7 +2378,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     h += '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>';
     if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
-    if (kind !== "casa") h += '<div class="icpick"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(iconFor(f.name, f.ic)) + '</span><label class="f">Icona<select class="fx-ic">' + ICON_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + ((f.ic || "") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
+    if (kind !== "casa") h += '<div class="icpick"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(iconFor(f.name, f.ic), f.name, f.ic) + '</span><label class="f">Icona<select class="fx-ic">' + ICON_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + ((f.ic || "") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
     h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     d.innerHTML = h;
@@ -2805,7 +2814,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var pct = a.amount > 0 ? Math.min(100, a.saved / a.amount * 100) : 0, base = a.amount / 12, ml = annMonthsLeft(a), left = Math.max(0, a.amount - a.saved), dep = annDep(a, CUR);
       var line2 = "Linea base " + eur.format(Math.round(base)) + " al mese" + (a.due && left > 0 ? " · per arrivare in tempo " + eur.format(Math.ceil(left / ml)) + " al mese" : "");
       var row = document.createElement("div"); row.className = "ann";
-      row.innerHTML = '<div class="line"><b style="display:flex;align-items:center;gap:8px"><span class="ico sm" style="--c:var(--c-save)">' + iconSvg(iconFor(a.name, a.ic)) + '</span>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
+      row.innerHTML = '<div class="line"><b style="display:flex;align-items:center;gap:8px"><span class="ico sm" style="--c:var(--c-save)">' + iconSvg(iconFor(a.name, a.ic), a.name, a.ic) + '</span>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
         '<p class="small muted">' + (a.due ? "Scade il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(dOf(a.due)) + " · " + (ml <= 1 ? "entro un mese" : "tra " + ml + " mesi") : "Nessuna scadenza indicata") + "</p>" +
         '<div class="meter blue" role="progressbar" aria-label="' + esc(a.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>' +
         '<p class="small">Messi da parte ' + eur.format(a.saved) + " su " + eur.format(a.amount) + (left > 0 ? " · mancano " + eur.format(left) : " · pronti ✓") + "</p>" +
@@ -3820,7 +3829,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!dl.length) box.insertAdjacentHTML("beforeend", '<p class="empty">Nessuna spesa in questo giorno.</p>');
     dl.forEach(function (e) {
       var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3], row = document.createElement("div"); row.className = "entry e4 wi";
-      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note && iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name)) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><span></span><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note && iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name), e.note) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><span></span><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
       row.querySelector(".del").onclick = function () {
         var mk = S.monthKey; S.spent[mk] = (S.spent[mk] || []).filter(function (x) { return x.id !== e.id; }); persist(); renderAll();
         toast("Spesa eliminata", "Annulla", function () { S.spent[mk] = (S.spent[mk] || []).concat([e]); persist(); renderAll(); });
