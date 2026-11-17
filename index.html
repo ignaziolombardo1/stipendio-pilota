@@ -384,7 +384,9 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .newsov[hidden] { display: none; }
 .newsbox { width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
 .newsbox h2 { margin: 0 0 12px; }
-@media (max-width: 440px) { .page .top { gap: 8px; } .page .top .name { font-size: 16px; } .page .top .month { font-size: 12px; } .page .top .newsbtn { margin-left: 0; width: 36px; height: 36px; } }
+@media (max-width: 440px) { .page .top { gap: 6px; } .page .top .mark { width: 30px; height: 30px; } .page .top .name { font-size: 15px; } .page .top .month { font-size: 11px; } .page .top .newsbtn { margin-left: 0; width: 34px; height: 34px; } .page .top .newsbtn svg { width: 20px; height: 20px; } }
+@media (max-width: 380px) { .page .top .month { display: none; } .page .top .name { margin-right: auto; } }
+.bellbtn { color: var(--muted) !important; background: var(--surface-2, #0001) !important; } .bellbtn.on { color: #fff !important; background: var(--accent) !important; } .bellbtn.on .bx { display: none; }
 .srchres { margin-top: 10px; }
 .srchres h3 { margin: 14px 0 4px; font-size: 14px; color: var(--muted); }
 .srchres button.sr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; width: 100%; text-align: left; padding: 11px 4px; border: 0; border-bottom: 1px solid var(--line, #0001); background: none; color: inherit; font: inherit; cursor: pointer; }
@@ -707,6 +709,7 @@ html, body { touch-action: pan-x pan-y; }
     <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12443f"/><stop offset="1" stop-color="#071a18"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#gm)"/><g fill="none" stroke-width="48" stroke-linecap="round" transform="rotate(-90 256 256)"><circle cx="256" cy="256" r="140" stroke="#7d8ca6" stroke-dasharray="202.4 677.25" stroke-dashoffset="-31"/><circle cx="256" cy="256" r="140" stroke="#e3a336" stroke-dasharray="157.9 721.75" stroke-dashoffset="-295"/><circle cx="256" cy="256" r="140" stroke="#d4608f" stroke-dasharray="25.96 853.69" stroke-dashoffset="-514.9"/><circle cx="256" cy="256" r="140" stroke="#4a82e0" stroke-dasharray="25.96 853.69" stroke-dashoffset="-602.9"/><circle cx="256" cy="256" r="140" stroke="#2fd4bb" stroke-dasharray="157.9 721.75" stroke-dashoffset="-690.9"/></g><g fill="none" stroke="#f1fbf8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M196 300 L238 258 L266 286 L322 226"/><path d="M290 226 H322 V258"/></g></svg>
     <span class="name">Stipendio Pilota</span>
     <span class="month" id="month"></span>
+    <button type="button" class="newsbtn bellbtn" id="bell-btn" aria-label="Notifiche spente: tocca per attivarle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 004 0"/><path class="bx" d="M3 3l18 18"/></svg></button>
     <button type="button" class="newsbtn" id="srch-btn" aria-label="Cerca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button type="button" class="newsbtn" id="news-btn" aria-label="Novità dell'app"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.6L18.5 10.5 12.9 12.4 11 18l-1.9-5.6L3.5 10.5 9.1 8.6z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="ndot" id="news-dot" hidden></i></button>
   </div>
@@ -2300,7 +2303,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.69";
+  var APP_VERSION = "2026-11-17.70";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4223,7 +4226,8 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- notifica stipendio (Web Push) ---------- */
   var VAPID_PUB = "BPrtbaC5Hn8Mh1IDbWsT7-MTaAUdD_fuY7Qa4xp_DWYvxWiamyCe0EQEyB-GcZRb-_Xjir5DjmQLwT_-PUrVwFc", NFK = "sp-notif-v1", pnf = { on: false, hour: 9, sent: "" };
   try { pnf = Object.assign(pnf, JSON.parse(localStorage.getItem(NFK) || "{}")); } catch (e) {}
-  function nfSave() { try { localStorage.setItem(NFK, JSON.stringify(pnf)); } catch (e) {} }
+  function nfSave() { try { localStorage.setItem(NFK, JSON.stringify(pnf)); } catch (e) {} try { bellUpd(); } catch (e) {} }
+  function bellUpd() { var b = $("bell-btn"); if (!b) return; b.classList.toggle("on", !!pnf.on); b.setAttribute("aria-label", pnf.on ? "Notifiche attive: tocca per spegnerle" : "Notifiche spente: tocca per attivarle"); b.title = pnf.on ? "Notifiche attive" : "Notifiche spente"; }
   function nfSupported() { return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window; }
   function b64u(t) { var p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
   function nfSig() { return PAYDAY + "-" + pnf.hour + "-" + JSON.stringify(remList()); }
@@ -4276,6 +4280,11 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function initNotif() {
     $("nf-test").onclick = nfTest;
+    $("bell-btn").onclick = function () {
+      var c = $("nf-on"), was = !!pnf.on; c.checked = !was; c.onchange();
+      if (was) toast("Notifiche spente"); else setTimeout(function () { toast($("nf-msg").textContent || "Controllo le notifiche…"); }, 700);
+    };
+    bellUpd();
     $("nf-on").onchange = function () {
       var want = this.checked, box = this; pnf.on = want; nfSave();
       if (want) nfEnable().catch(function () { pnf.on = false; nfSave(); box.checked = false; }); else nfDisable();
@@ -4740,7 +4749,10 @@ create policy "solo i miei dati" on stipendio_pilota
   $("scan-btn").onclick = function () { $("scan-file").click(); }; $("scan-file").onchange = function () { var f = this.files[0]; this.value = ""; scanReceipt(f); };
   window.__receiptTotal = receiptTotal;
   var CHANGELOG = [
-    { id: "2026-11-17f", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17g", date: "17 novembre · nuovo", items: [
+      ["Campanella delle notifiche", "In alto c'è una campanella: colorata = notifiche attive, grigia = spente. Un tocco per accenderle o spegnerle."]
+    ] },
+    { id: "2026-11-17f", date: "17 novembre", items: [
       ["Promemoria serale", "In Altro → Notifiche attiva “Ricordami la sera”: ti arriva un avviso per segnare le spese (serve aprire l'app almeno una volta a settimana)."],
       ["Leggi lo scontrino", "In Spese → Segna tocca “Leggi lo scontrino”: scatti la foto e l'app prova a scrivere il totale per te. Controllalo sempre prima di salvare."]
     ] },
