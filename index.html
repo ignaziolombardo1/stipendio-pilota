@@ -357,6 +357,21 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .simple-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 9%, var(--surface)); border: 1.5px solid var(--accent); cursor: pointer; }
 .simple-row input { width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--accent); flex: none; }
 .simple-row small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.top .name, .top .month { white-space: nowrap; }
+.top .month { font-size: 13px; }
+.top .newsbtn { position: relative; margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); display: grid; place-items: center; cursor: pointer; flex: none; }
+.newsbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ndot { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; background: #ff3b30; border: 2px solid var(--surface); box-shadow: 0 0 0 0 rgba(255, 59, 48, .7); }
+@media (prefers-reduced-motion: no-preference) { .ndot { animation: ndot 1.6s ease-out infinite; } }
+@keyframes ndot { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, .7); } 70% { box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
+.newsov { position: fixed; inset: 0; z-index: 60; background: rgba(0, 0, 0, .5); display: flex; align-items: flex-end; justify-content: center; }
+.newsov[hidden] { display: none; }
+.newsbox { width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
+.newsbox h2 { margin: 0 0 12px; }
+.nw { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.nw b { display: block; font-size: 15px; }
+.nw span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+.nwv { margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--accent); }
 .savebar { position: fixed; left: 0; right: 0; bottom: var(--nav-h); z-index: 20; background: var(--surface); border-top: 1px solid var(--line);
   padding-top: 12px; padding-bottom: 12px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .savebar .in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
@@ -643,6 +658,7 @@ html, body { touch-action: pan-x pan-y; }
     <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12443f"/><stop offset="1" stop-color="#071a18"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#gm)"/><g fill="none" stroke-width="48" stroke-linecap="round" transform="rotate(-90 256 256)"><circle cx="256" cy="256" r="140" stroke="#7d8ca6" stroke-dasharray="202.4 677.25" stroke-dashoffset="-31"/><circle cx="256" cy="256" r="140" stroke="#e3a336" stroke-dasharray="157.9 721.75" stroke-dashoffset="-295"/><circle cx="256" cy="256" r="140" stroke="#d4608f" stroke-dasharray="25.96 853.69" stroke-dashoffset="-514.9"/><circle cx="256" cy="256" r="140" stroke="#4a82e0" stroke-dasharray="25.96 853.69" stroke-dashoffset="-602.9"/><circle cx="256" cy="256" r="140" stroke="#2fd4bb" stroke-dasharray="157.9 721.75" stroke-dashoffset="-690.9"/></g><g fill="none" stroke="#f1fbf8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M196 300 L238 258 L266 286 L322 226"/><path d="M290 226 H322 V258"/></g></svg>
     <span class="name">Stipendio Pilota</span>
     <span class="month" id="month"></span>
+    <button type="button" class="newsbtn" id="news-btn" aria-label="Novità dell'app"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.6L18.5 10.5 12.9 12.4 11 18l-1.9-5.6L3.5 10.5 9.1 8.6z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="ndot" id="news-dot" hidden></i></button>
   </div>
 
   <div class="subtabs" id="subtabs" hidden></div>
@@ -1239,6 +1255,7 @@ create policy "stipendio pilota documenti" on storage.objects
     <div data-sub="menu"><h1>Altro</h1><p class="hint">Le altre sezioni dell'app e le impostazioni.</p></div>
     <nav data-sub="menu" class="menu" aria-label="Altro">
       <div class="mg" id="mg-sec"><p class="mgl">Sezioni</p>
+        <a href="#" id="menu-news"><b>Novità dell'app</b><small>Cosa è cambiato di recente</small></a>
         <label class="simple-row"><input type="checkbox" id="simple-on"><span><b>Modalità semplice</b><small>Mostra solo l'essenziale. Spegnila per vedere tutto: investimenti, obiettivi, Natale e altro.</small></span></label>
         <a href="#archivio" data-tab="archivio" data-mod="scad,doc"><b>Archivio</b><small>Scadenze e documenti</small></a>
         <a href="#storico" data-tab="storico"><b>Storico dei mesi</b><small>Come sono andati i mesi passati</small></a>
@@ -1575,6 +1592,7 @@ create policy "solo i miei dati" on stipendio_pilota
   </main>
 </div>
 
+<div class="newsov" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="news-t"><div class="newsbox"><h2 id="news-t">Novità</h2><div id="news-list"></div><button type="button" class="primary" id="news-ok" style="width:100%;margin-top:12px">Ho capito</button></div></div>
 <div class="savebar" id="savebar" hidden><div class="in"><span class="small muted" id="sv-st">Si salva da solo</span><button class="primary" id="save" type="button">Fatto</button></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#lavoro" data-v="lavoro"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg>Lavoro</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Altro</a></nav>
@@ -2172,7 +2190,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.57";
+  var APP_VERSION = "2026-11-17.58";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4464,7 +4482,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -4475,6 +4493,29 @@ create policy "solo i miei dati" on stipendio_pilota
   var asT; function autoSave() { clearTimeout(asT); asT = setTimeout(function () { if (S.saved && !$("savebar").hidden) saveForm(true); }, 900); }
   var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
+  var CHANGELOG = [
+    { id: "2026-11-17", date: "17 novembre", items: [
+      ["Modalità semplice", "Mostra solo l'essenziale. La accendi e spegni da Altro o dal link in fondo alla Home."],
+      ["Segna una spesa più veloce", "Importo grande, categoria con le icone e le ultime note in un tocco."],
+      ["Salvataggio automatico", "Nelle impostazioni le modifiche si salvano da sole: il tasto ora è \"Fatto\"."],
+      ["Spese fisse: aggiungi e modifica", "In Spese → Fisse puoi aggiungere, modificare ed eliminare le voci. Sono divise in Casa, Bollette, Abbonamenti e Altre."],
+      ["Icone e loghi", "Tocca l'icona di una voce per cambiarla. Ci sono icone colorate nuove e i loghi di Netflix, Prime, PlayStation, Claude e altri."],
+      ["Nuova scheda Lavoro", "Calendario, turni, settimana, prospetto e tragitti sono tutti in Lavoro, nella barra in basso."],
+      ["Pallino Novità", "Questo pallino si accende ogni volta che l'app si aggiorna, e qui vedi cosa è cambiato."]
+    ] }
+  ];
+  function seenNews() { try { return localStorage.getItem("sp-news-seen") || ""; } catch (e) { return ""; } }
+  function newsDot() { var d = $("news-dot"); if (d) d.hidden = !S.saved || seenNews() === CHANGELOG[0].id; }
+  function openNews() {
+    $("news-list").innerHTML = CHANGELOG.map(function (c) { return '<p class="nwv">' + esc(c.date) + "</p>" + c.items.map(function (i) { return '<div class="nw"><b>' + esc(i[0]) + "</b><span>" + esc(i[1]) + "</span></div>"; }).join(""); }).join("");
+    $("news").hidden = false; $("news-ok").focus();
+    try { localStorage.setItem("sp-news-seen", CHANGELOG[0].id); } catch (e) {} newsDot();
+  }
+  function closeNews() { $("news").hidden = true; }
+  $("news-btn").onclick = openNews; $("news-ok").onclick = closeNews; $("news").onclick = function (e) { if (e.target === this) closeNews(); };
+  $("menu-news").onclick = function (e) { e.preventDefault(); openNews(); };
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("news").hidden) closeNews(); });
+  newsDot();
   function setSimple(on) { S.simple = !!on; persist(); tabsNorm(); renderAll(); showView(); toast(on ? "Modalità semplice attiva" : "Ora vedi tutte le funzioni"); }
   $("simple-on").onchange = function () { setSimple(this.checked); };
   $("simple-toggle").onclick = function () { setSimple(S.simple === false); };
