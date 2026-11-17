@@ -545,6 +545,9 @@ details.shp summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
 #xmas { grid-column: 1 / -1; }
 .xmrow { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 36px; gap: 6px; align-items: end; padding: 6px 0; border-top: 1px solid var(--line); }
 .xmrow label { font-size: 11px; color: var(--muted); display: grid; gap: 2px; } .xmrow input { padding: 9px 8px; width: 100%; }
+.pctchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pctchips button { padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.pctchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
 .wkshift span { font-weight: 700; font-size: 14px; }
 .wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
@@ -870,6 +873,8 @@ html, body { touch-action: pan-x pan-y; }
           <span class="label"><span class="dot" style="background:var(--c-invest)"></span>Da investire</span>
           <span class="big num" id="inv-amt">0</span>
           <p class="small muted" id="inv-text"></p>
+          <label class="f" for="iv-pct">Quanto investire (% di quello che avanza)<input id="iv-pct" type="text" inputmode="numeric" autocomplete="off"></label>
+          <div class="pctchips" id="iv-chips"></div>
         </div>
       </div>
           <p class="small muted">Il fondo di sicurezza tienilo su un conto separato e facile da prelevare (conto deposito svincolabile o un conto a parte), non investito in azioni.</p>
@@ -1282,7 +1287,8 @@ create policy "stipendio pilota documenti" on storage.objects
     <section data-sub="budget" class="card" aria-labelledby="t-p7">
       <h2 id="t-p7">Risparmio</h2>
       <div class="fields">
-        <label class="f" for="saveShare">Da mettere da parte (% di quello che avanza)<input id="saveShare" type="text" inputmode="decimal" autocomplete="off"><span class="help">Il resto va negli investimenti</span></label>
+        <label class="f" for="invShare">Da investire (% di quello che avanza)<input id="invShare" type="text" inputmode="decimal" autocomplete="off"><span class="help">Dopo spese, risparmi annuali e budget: quanto di quello che resta va negli investimenti</span></label>
+        <label class="f" for="saveShare">Da mettere da parte (% di quello che avanza)<input id="saveShare" type="text" inputmode="decimal" autocomplete="off"><span class="help">È il resto: cambia da solo quando cambi la quota da investire</span></label>
         <label class="f" for="savedNow">Quanto hai già da parte (€)<input id="savedNow" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="f" for="months">Mesi di spese da coprire<input id="months" type="text" inputmode="numeric" autocomplete="off"><span class="help">Il tuo fondo di sicurezza</span></label>
       </div>
@@ -1549,6 +1555,10 @@ create policy "solo i miei dati" on stipendio_pilota
     ["priceD", "priceD", 0, 10], ["extraD", "extraD", 0, 100000], ["spesaPct", "spesaPct", 0, 100], ["svagoPct", "svagoPct", 0, 100],
     ["saveShare", "saveShare", 0, 100], ["savedNow", "savedNow", 0, 1e8], ["months", "months", 1, 24]];
 
+  document.addEventListener("input", function (e) {
+    var t = e.target; if (!t || (t.id !== "invShare" && t.id !== "saveShare")) return;
+    var v = Math.min(100, Math.max(0, pnum(t.value) || 0)), o = $(t.id === "invShare" ? "saveShare" : "invShare"); if (o) o.value = txt(100 - v);
+  });
   function mkFixed(o) {
     function g(k) { return typeof o[k] === "number" ? o[k] : DEFAULTS[k]; }
     return [{ id: "rent", name: "Affitto", amount: g("rent"), due: g("dueRent"), split: true, kind: "casa", end: "" }, { id: "bills", name: "Bollette e abbonamenti", amount: g("bills"), due: g("dueBills"), split: true, kind: "fix", end: "" }, { id: "ins", name: "Assicurazione", amount: g("ins"), due: g("dueIns"), split: true, kind: "fix", end: "" }];
@@ -1887,6 +1897,12 @@ create policy "solo i miei dati" on stipendio_pilota
 
     var P = PROFILES[S.profile] || PROFILES.bilanciato;
     $("inv-amt").textContent = eur.format(p.inv);
+    var ivp = $("iv-pct"), curPct = 100 - Math.min(100, Math.max(0, S.saveShare));
+    if (document.activeElement !== ivp) ivp.value = String(Math.round(curPct * 10) / 10).replace(".", ",");
+    var setPct = function (v) { v = Math.min(100, Math.max(0, v)); S.saveShare = 100 - v; $("saveShare").value = txt(S.saveShare); $("invShare").value = txt(v); persist(); renderAll(); };
+    ivp.onchange = function () { var v = pnum(this.value); if (!isFinite(v)) return; setPct(v); };
+    var ch = $("iv-chips"); ch.innerHTML = "";
+    [0, 20, 40, 60, 80, 100].forEach(function (v) { var b = document.createElement("button"); b.type = "button"; b.textContent = v + "%"; b.setAttribute("aria-pressed", Math.round(curPct) === v ? "true" : "false"); b.onclick = function () { setPct(v); }; ch.appendChild(b); });
     $("inv-text").textContent = "In " + S.years + " anni versi " + eur.format(p.inv * 12 * S.years) + " e potresti arrivare a circa " + eur.format(project(p.inv, S.years, P.ret)) + " al netto di costi e tasse.";
     $("where-sub").textContent = "Profilo " + S.profile + ", " + S.years + " anni. " + P.note + " Puoi cambiarli nel Profilo.";
     function fund(f, share) { return '<div class="fund"><b>' + f.name + '</b><span class="amt num">' + eur.format(p.inv * share / 100) + '</span><small>' + f.meta + '</small><small class="share num">' + share + "% al mese</small></div>"; }
@@ -1951,7 +1967,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-14.44";
+  var APP_VERSION = "2026-11-17.45";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2032,6 +2048,7 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- Profilo ---------- */
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
+    $("invShare").value = txt(100 - Math.min(100, Math.max(0, +src.saveShare || 0)));
     if ($("payDay").oninput) $("payDay").oninput();
     $("couple-on").checked = !!src.couple; coupleUI(!!src.couple);
     var me = src.me || DEFAULTS.me;
