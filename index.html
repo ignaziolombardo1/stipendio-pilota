@@ -385,7 +385,10 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .newsbox { width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
 .newsbox h2 { margin: 0 0 12px; }
 @media (max-width: 440px) { .page .top { gap: 6px; } .page .top .mark { width: 30px; height: 30px; } .page .top .name { font-size: 15px; } .page .top .month { font-size: 11px; } .page .top .newsbtn { margin-left: 0; width: 34px; height: 34px; } .page .top .newsbtn svg { width: 20px; height: 20px; } }
-@media (max-width: 380px) { .page .top .month { display: none; } .page .top .name { margin-right: auto; } }
+@media (max-width: 430px) { .page .top .month { display: none; } .page .top .name { margin-right: auto; } }
+html, body { overflow-x: clip; max-width: 100%; overscroll-behavior-x: none; }
+.page { overflow-x: clip; max-width: 100vw; }
+.page .top { flex-wrap: nowrap; min-width: 0; } .page .top .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .page .top .newsbtn, .page .top .mark { flex: none; }
 .bellbtn { color: var(--muted) !important; background: var(--surface-2, #0001) !important; } .bellbtn.on { color: #fff !important; background: var(--accent) !important; } .bellbtn.on .bx { display: none; }
 .srchres { margin-top: 10px; }
 .srchres h3 { margin: 14px 0 4px; font-size: 14px; color: var(--muted); }
@@ -2303,7 +2306,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.70";
+  var APP_VERSION = "2026-11-17.71";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
