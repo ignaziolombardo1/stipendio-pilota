@@ -187,8 +187,14 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
 .btnrow button { flex: 1 1 auto; }
 .fxe { display: flex; flex-direction: column; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.fx.wi { display: grid; grid-template-columns: auto 30px 1fr auto; align-items: center; gap: 10px; }
+.fx.wi { display: grid; grid-template-columns: auto 30px 1fr auto auto; align-items: center; gap: 10px; }
 .icb { border: 0; padding: 0; cursor: pointer; font: inherit; }
+.fxed { width: 40px; height: 40px; border-radius: 12px; border: 0; background: var(--bg); color: var(--muted); font-size: 18px; cursor: pointer; }
+.fxinl { padding: 10px 12px; margin: 4px 0 10px; border-radius: 14px; background: var(--bg); }
+.fxinl .fxh, .fxinl .fx-del { display: none; }
+.fxinl .fxb { display: flex; }
+.fxinl .btnrow { display: flex; gap: 8px; margin-top: 8px; }
+.fxinl .btnrow button { flex: 1; }
 .fxg { margin: 14px 0 2px; font-size: 14px; color: var(--muted); font-weight: 700; }
 .icgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 10px; margin: 4px 0 8px; background: var(--bg); border-radius: 14px; }
 .icgrid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border: 1.5px solid transparent; border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; }
@@ -831,6 +837,8 @@ html, body { touch-action: pan-x pan-y; }
       <div class="line"><h2 id="t-fix">Spese fisse da pagare</h2><span class="badge none" id="fix-badge"></span></div>
       <p class="small muted" style="margin:0 0 4px">Tocca l'icona di una voce per cambiarla.</p>
       <div id="fix-list"></div>
+      <div id="fix-new"></div>
+      <div class="pch" id="fix-addrow"><button type="button" data-k="fix">+ Spesa fissa</button><button type="button" data-k="bill">+ Bolletta</button><button type="button" data-k="sub">+ Abbonamento</button></div>
       <p class="small" id="next-due" hidden></p>
       <div class="pocket"><span>In tasca adesso</span><b class="num" id="pocket">0</b></div>
       <p class="small muted">Spunta quando paghi: l'importo viene tolto dallo stipendio. In tasca = stipendio + extra − fisse pagate − spese segnate.</p>
@@ -1993,7 +2001,8 @@ create policy "solo i miei dati" on stipendio_pilota
       items.forEach(function (f) {
         var on = !!m.pd[f.id], row = document.createElement("label"), src = S.fixedList.filter(function (x) { return x.id === f.id; })[0] || {};
         var di = dueInfo(f); row.className = "fx wi" + (on ? " done" : "") + (!on && di.diff !== null && di.diff < 0 ? " late" : "");
-        row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + esc(f.name) + ' come pagato"><button type="button" class="ico sm icb" aria-label="Cambia icona di ' + esc(f.name) + '" style="--c:var(--accent)">' + iconSvg(f.kind === "casa" ? "home" : iconFor(f.name, src.ic), f.kind === "casa" ? "" : f.name, src.ic) + '</button><span class="t"><b>' + esc(f.name) + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + "</b>";
+        row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + ' aria-label="Segna ' + esc(f.name) + ' come pagato"><button type="button" class="ico sm icb" aria-label="Cambia icona di ' + esc(f.name) + '" style="--c:var(--accent)">' + iconSvg(f.kind === "casa" ? "home" : iconFor(f.name, src.ic), f.kind === "casa" ? "" : f.name, src.ic) + '</button><span class="t"><b>' + esc(f.name) + "</b><small>" + (on ? "Pagato" : di.t) + '</small></span><b class="num">' + eur.format(f.amt) + '</b><button type="button" class="fxed" aria-label="Modifica ' + esc(f.name) + '">✎</button>';
+        row.querySelector(".fxed").onclick = function (ev) { ev.preventDefault(); ev.stopPropagation(); openFxEdit(row, S.fixedList.filter(function (x) { return x.id === f.id; })[0], false); };
         row.querySelector("input").onchange = function () {
           var cur = Object.assign({}, S.paid[S.monthKey] || {}); if (this.checked) cur[f.id] = true; else delete cur[f.id];
           S.paid[S.monthKey] = cur; persist(); renderAll(); toast(this.checked ? f.name + " pagato ✓" : "Pagamento tolto");
@@ -2076,6 +2085,28 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   /* ---------- Spese ---------- */
+  function openFxEdit(row, f, isNew) {
+    var host = isNew ? $("fix-new") : row.nextSibling;
+    if (!isNew && host && host.className === "fxinl") { host.remove(); return; }
+    document.querySelectorAll("#fix-list .fxinl, #fix-new .fxinl").forEach(function (e) { e.remove(); });
+    if (!f) return;
+    var w = document.createElement("div"); w.className = "fxinl";
+    var kind = f.kind === "casa" || f.kind === "loan" ? f.kind : (f.kind || "fix");
+    var d = fxBlock(f, kind, S.me.housing || "affitto"); d.classList.add("open"); w.appendChild(d);
+    var br = document.createElement("div"); br.className = "btnrow";
+    br.innerHTML = '<button type="button" class="primary fxs">Salva</button><button type="button" class="fxc2">Annulla</button>' + (!isNew && kind !== "casa" ? '<button type="button" class="fxd2">Elimina</button>' : "");
+    w.appendChild(br);
+    br.querySelector(".fxc2").onclick = function () { w.remove(); };
+    br.querySelector(".fxs").onclick = function () {
+      var o = readFxBlock(d, S.me.housing || "affitto");
+      if (isNew && !(o.amount > 0)) { toast("Scrivi l'importo"); return; }
+      if (isNew) S.fixedList = S.fixedList.concat([o]); else S.fixedList = S.fixedList.map(function (x) { return x.id === f.id ? Object.assign({}, x, o) : x; });
+      persist(); renderAll(); toast("Salvato ✓");
+    };
+    var dl = br.querySelector(".fxd2"); if (dl) dl.onclick = function () { var old = S.fixedList.slice(); S.fixedList = S.fixedList.filter(function (x) { return x.id !== f.id; }); persist(); renderAll(); toast("Voce eliminata", "Annulla", function () { S.fixedList = old; persist(); renderAll(); }); };
+    if (isNew) { host.innerHTML = ""; host.appendChild(w); var a = d.querySelector(".fx-name"); w.scrollIntoView({ block: "center" }); if (a) a.focus(); }
+    else row.parentNode.insertBefore(w, row.nextSibling);
+  }
   function pickIcon(row, cur, name, onPick) {
     var nx = row.nextSibling; if (nx && nx.className === "icgrid") { nx.remove(); return; }
     document.querySelectorAll(".icgrid").forEach(function (e) { e.remove(); });
@@ -2141,7 +2172,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.56";
+  var APP_VERSION = "2026-11-17.57";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2550,14 +2581,16 @@ create policy "solo i miei dati" on stipendio_pilota
     var sb = list.filter(function (f) { return f.kind === "sub" && f.amount > 0; }), st = 0; sb.forEach(function (f) { st += f.amount; });
     $("sb-sum").textContent = sb.length ? "Totale abbonamenti: " + eur.format(st) + " al mese, " + eur.format(st * 12) + " all'anno." : "";
   }
-  function readFixedEditor() {
-    var out = [], hs = readHousing() || S.me.housing;
-    document.querySelectorAll("#fx-casa .fxe, #fx-loans .fxe, #fx-bills .fxe, #fx-subs .fxe, #fx-edit .fxe").forEach(function (d) {
+  function readFxBlock(d, hs) {
+    var amt, due;
       var kind = d.getAttribute("data-kind"), kk = d.querySelector(".fx-k"); if (kk) kind = kk.value; amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
       var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
       var nm = d.querySelector(".fx-name");
-      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
-    });
+      return { id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" };
+  }
+  function readFixedEditor() {
+    var out = [], hs = readHousing() || S.me.housing;
+    document.querySelectorAll("#fx-casa .fxe, #fx-loans .fxe, #fx-bills .fxe, #fx-subs .fxe, #fx-edit .fxe").forEach(function (d) { out.push(readFxBlock(d, hs)); });
     return out;
   }
 
@@ -4441,6 +4474,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("save").onclick = function () { saveForm(); };
   var asT; function autoSave() { clearTimeout(asT); asT = setTimeout(function () { if (S.saved && !$("savebar").hidden) saveForm(true); }, 900); }
   var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
+  document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
   function setSimple(on) { S.simple = !!on; persist(); tabsNorm(); renderAll(); showView(); toast(on ? "Modalità semplice attiva" : "Ora vedi tutte le funzioni"); }
   $("simple-on").onchange = function () { setSimple(this.checked); };
   $("simple-toggle").onclick = function () { setSimple(S.simple === false); };
