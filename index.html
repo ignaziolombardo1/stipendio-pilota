@@ -777,7 +777,11 @@ html, body { touch-action: pan-x pan-y; }
       </div>
       <p class="small muted" id="cp-text"></p>
     </section>
-    <section data-sub="calendario" class="card" aria-labelledby="t-wm">
+  </main>
+
+  <!-- LAVORO -->
+  <main class="view" id="v-lavoro" hidden>
+    <section data-sub="turni" class="card" aria-labelledby="t-wm">
       <h2 id="t-wm">Il tuo lavoro</h2>
       <div class="skins" id="wm-seg" role="group" aria-label="Tipo di orario"></div>
       <p class="hint" id="wm-hint"></p>
@@ -792,7 +796,7 @@ html, body { touch-action: pan-x pan-y; }
         <p class="small muted">Ogni giorno che segni come ferie o permesso viene scalato da solo. Se i tuoi permessi sono a ore, convertili in giorni.</p>
       </details>
     </section>
-    <section data-sub="calendario" class="card" aria-labelledby="t-cal">
+    <section data-sub="turni" class="card" aria-labelledby="t-cal">
       <h2 id="t-cal">Calendario del lavoro e dei viaggi</h2>
       <p class="hint" id="cal-hint">Tocca un giorno e segna quali tragitti hai fatto davvero. I pallini pieni sono i viaggi fatti, quelli vuoti sono previsti dal tuo programma ma non ancora confermati.</p>
       <div class="navline"><button type="button" id="cm-prev" aria-label="Mese precedente">‹</button><b id="cm-title"></b><button type="button" id="cm-next" aria-label="Mese successivo">›</button></div>
@@ -800,7 +804,7 @@ html, body { touch-action: pan-x pan-y; }
       <div class="lgd" id="cal-lgd"></div>
       <div id="cal-day"></div>
     </section>
-    <section data-sub="calendario" class="card" aria-labelledby="t-wk">
+    <section data-sub="settimana" class="card" aria-labelledby="t-wk">
       <h2 id="t-wk">Settimana per settimana</h2>
       <p class="hint">Per ogni giorno scegli se hai lavorato e dove sei andato. In fondo vedi subito benzina, pedaggi e quante volte hai fatto ogni tragitto.</p>
       <div class="navline"><button type="button" id="wk-prev" aria-label="Settimana precedente">‹</button><b id="wk-title"></b><button type="button" id="wk-next" aria-label="Settimana successiva">›</button></div>
@@ -811,7 +815,7 @@ html, body { touch-action: pan-x pan-y; }
       <button type="button" class="primary" id="wk-conf">Conferma questa settimana</button>
       <p class="small muted" id="wk-st"></p>
     </section>
-    <section data-sub="calendario" class="card" aria-labelledby="t-pro">
+    <section data-sub="prospetto" class="card" aria-labelledby="t-pro">
       <h2 id="t-pro">Prospetto del mese</h2>
       <div class="navline"><button type="button" id="pro-prev" aria-label="Mese precedente">‹</button><b id="pro-title"></b><button type="button" id="pro-next" aria-label="Mese successivo">›</button></div>
       <div class="regstats" id="pro-stats"></div>
@@ -827,14 +831,14 @@ html, body { touch-action: pan-x pan-y; }
       </details>
       <div class="btnrow"><button type="button" id="pro-csv">Scarica per Excel</button><button type="button" id="pro-copy">Copia il riepilogo</button></div>
     </section>
-    <section data-sub="calendario" class="card" aria-labelledby="t-rp">
+    <section data-sub="tragitti" class="card" aria-labelledby="t-rp">
       <h2 id="t-rp">Stima e reale dei tragitti</h2>
       <p class="hint">La stima segue il tuo programma settimanale. Il reale tiene conto di quello che hai segnato.</p>
       <div id="rp-box"></div>
       <button type="button" id="cal-ics">Salva nel calendario del telefono (.ics)</button>
       <p class="small muted">Scarica un file con i viaggi del mese: aprendolo, il telefono li aggiunge al tuo calendario.</p>
     </section>
-    <section data-sub="auto" class="card" aria-labelledby="t-fu">
+    <section data-sub="tragitti" class="card" aria-labelledby="t-fu">
       <h2 id="t-fu">Rifornimenti</h2>
       <p class="hint">Segna ogni pieno: aggiungo la spesa al carburante e calcolo prezzo e consumo veri.</p>
       <form id="fu-form" style="display:flex;flex-direction:column;gap:12px">
@@ -1011,7 +1015,7 @@ html, body { touch-action: pan-x pan-y; }
         <button class="primary" type="submit">Aggiungi obiettivo</button>
       </form>
     </section>
-    <section data-sub="obiettivi" class="card" aria-labelledby="t-a">
+    <section data-sub="mese" data-mod="annuali" class="card" aria-labelledby="t-a">
       <h2 id="t-a">Da parte per le spese di ogni anno</h2>
       <p class="hint">Assicurazione, bollo, tagliando, revisione. Ogni mese ne metti da parte un dodicesimo (la linea base, già nel piano). Segna qui quanto metti davvero da parte: certi mesi di più, altri di meno.</p>
       <p class="small muted" id="annual-sum"></p>
@@ -1026,7 +1030,7 @@ html, body { touch-action: pan-x pan-y; }
         <button class="primary" type="submit">Aggiungi voce</button>
       </form>
     </section>
-    <section data-sub="obiettivi" class="card" aria-labelledby="t-ar">
+    <section data-sub="mese" data-mod="annuali" class="card" aria-labelledby="t-ar">
       <h2 id="t-ar">Promemoria</h2>
       <label class="chk"><input type="checkbox" id="ar-on"><span>Avvisami se non ho messo da parte la quota del mese</span></label>
       <label class="f" for="ar-day">Entro il giorno<select id="ar-day"></select></label>
@@ -1150,6 +1154,7 @@ create policy "stipendio pilota documenti" on storage.objects
       <div class="mg" id="mg-sec"><p class="mgl">Sezioni</p>
         <a href="#archivio" data-tab="archivio" data-mod="scad,doc"><b>Archivio</b><small>Scadenze e documenti</small></a>
         <a href="#storico" data-tab="storico"><b>Storico dei mesi</b><small>Come sono andati i mesi passati</small></a>
+        <a href="#lavoro" data-tab="lavoro" data-mod="viaggi"><b>Lavoro</b><small>Calendario, turni e prospetto</small></a>
         <a href="#piano" data-tab="piano"><b>Piano</b><small>Mese, investire, obiettivi</small></a>
         <a href="#spese" data-tab="spese"><b>Spese</b><small>Segna e guarda le spese</small></a>
       </div>
@@ -1157,9 +1162,8 @@ create policy "stipendio pilota documenti" on storage.objects
         <a href="#profilo/comp"><b>Composizione dell'app</b><small>Cosa usare, icone in basso, Home e colori</small></a>
         <a href="#profilo/io"><b>Io e il mio lavoro</b><small>Nome, lavoro, stipendio, notifica, contatti</small></a>
         <a href="#profilo/casa"><b>Casa e spese fisse</b><small>Affitto, bollette, assicurazioni, rate</small></a>
-        <a href="#profilo/auto" data-mod="viaggi"><b>Viaggi e auto</b><small>Tragitti, carburante, pedaggi</small></a>
-        <a href="#profilo/budget"><b>Budget</b><small>Quanto metti da parte e come dividi il mese</small></a>
-        <a href="#profilo/investi" data-mod="invest"><b>Investimenti</b><small>Risparmi, piano d'accumulo, broker</small></a>
+        <a href="#profilo/auto" data-mod="viaggi"><b>Auto e viaggi</b><small>Tragitti, carburante, pedaggi</small></a>
+        <a href="#profilo/budget"><b>Budget e investimenti</b><small>Come dividi il mese, quanto investire, broker</small></a>
         <a href="#profilo/natale"><b>Natale e tredicesima</b><small>Tredicesima, come dividerla e budget regali</small></a>
         <a href="#profilo/condivisa"><b>Casa condivisa</b><small>Spese in comune con chi vuoi. Il resto resta privato</small></a>
         <a href="#profilo/dati"><b>Dati, cloud e backup</b><small>Account cloud, esporta, importa, cancella</small></a>
@@ -1296,7 +1300,7 @@ create policy "stipendio pilota documenti" on storage.objects
         <label class="f" for="months">Mesi di spese da coprire<input id="months" type="text" inputmode="numeric" autocomplete="off"><span class="help">Il tuo fondo di sicurezza</span></label>
       </div>
     </section>
-    <section data-sub="investi" class="card" aria-labelledby="t-p8">
+    <section data-sub="budget" data-mod="invest" class="card" aria-labelledby="t-p8">
       <h2 id="t-p8">Investimenti</h2>
       <div class="f"><span style="font-weight:500">Quanto rischio vuoi prendere</span>
         <div class="seg" id="profile" role="radiogroup" aria-label="Profilo di rischio">
@@ -1470,7 +1474,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
 <div class="savebar" id="savebar" hidden><div class="in"><button class="primary" id="save" type="button">Salva</button></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
-<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Altro</a></nav>
+<nav class="bnav" id="tabs" aria-label="Sezioni"><a href="#home" data-v="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a><a href="#spese" data-v="spese"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/></svg>Spese</a><a href="#lavoro" data-v="lavoro"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/></svg>Lavoro</a><a href="#archivio" data-v="archivio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Archivio</a><a href="#piano" data-v="piano"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Piano</a><a href="#storico" data-v="storico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</a><a href="#profilo" data-v="profilo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="2"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></svg>Altro</a></nav>
 
 <div class="wiz" id="wiz" role="dialog" aria-modal="true" aria-labelledby="wiz-t" hidden>
   <div class="wiz-in">
@@ -1519,7 +1523,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
-  var TABS = [["home", "Home", "Il riepilogo di oggi."], ["spese", "Spese", "Segna e guarda le spese."], ["archivio", "Archivio", "Scadenze e documenti."], ["piano", "Piano", "Mese, investire, obiettivi."], ["storico", "Storico", "I mesi passati."], ["profilo", "Altro", "Le altre sezioni e le impostazioni."]];
+  var TABS = [["home", "Home", "Il riepilogo di oggi."], ["spese", "Spese", "Segna e guarda le spese."], ["lavoro", "Lavoro", "Calendario, turni e prospetto del mese."], ["archivio", "Archivio", "Scadenze e documenti."], ["piano", "Piano", "Mese, investire, obiettivi."], ["storico", "Storico", "I mesi passati."], ["profilo", "Altro", "Le altre sezioni e le impostazioni."]];
   var HOME_W = [
     ["alerts", "Avvisi sul budget", "Ti avvisa quando una categoria sta finendo il budget.", true],
     ["complete", "Completa il profilo", "Ti dice cosa manca per avere un piano preciso.", true],
@@ -1535,7 +1539,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -1990,7 +1994,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.46";
+  var APP_VERSION = "2026-11-17.47";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2501,7 +2505,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("cm-prev").onclick = function () { var n = cmShift(CM, -1); calSel = cmOf(TODAY_KEY) === n ? TODAY_KEY : n + "-01"; renderAll(); };
     $("cm-next").onclick = function () { var n = cmShift(CM, 1); calSel = cmOf(TODAY_KEY) === n ? TODAY_KEY : n + "-01"; renderAll(); };
     var grid = $("cal-grid");
-    if (!has) { grid.innerHTML = '<p class="empty" style="grid-column:1/-1">Aggiungi i tuoi tragitti in Profilo → Viaggi per usare il calendario.</p>'; $("cal-day").innerHTML = ""; $("wk-grid").innerHTML = ""; $("wk-quick").innerHTML = ""; $("rp-box").innerHTML = ""; return; }
+    if (!has) { grid.innerHTML = '<p class="empty" style="grid-column:1/-1">Aggiungi i tuoi tragitti in Lavoro → Tragitti per usare il calendario.</p>'; $("cal-day").innerHTML = ""; $("wk-grid").innerHTML = ""; $("wk-quick").innerHTML = ""; $("rp-box").innerHTML = ""; return; }
     var cd0 = cmDays(CM), sD = dOf(cd0[0]), eD = dOf(cd0[cd0.length - 1]), lead = ((sD.getDay() || 7) - 1), h = "";
     ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
     for (var i = 0; i < lead; i++) h += "<span></span>";
@@ -3650,11 +3654,13 @@ create policy "solo i miei dati" on stipendio_pilota
     ["mercato", "Notizie e mercato", "Andamento dei mercati e notizie."]
   ];
   var WMOD = { "home-dl": ["scad"], "wk-remind": ["viaggi"], "today": ["viaggi"], "tile-acc": ["annuali"], "tile-inv": ["invest"], "tile-goals": ["obiett"] };
-  var SUBMOD = { calendario: ["viaggi"], auto: ["viaggi"], panoramica: ["scad", "doc"], scadenze: ["scad"], documenti: ["doc"], investire: ["invest"], consulente: ["invest"], mercato: ["mercato"], obiettivi: ["obiett", "annuali"], investi: ["invest"] };
+  var SUBMOD = { turni: ["viaggi"], settimana: ["viaggi"], prospetto: ["viaggi"], tragitti: ["viaggi"], auto: ["viaggi"], panoramica: ["scad", "doc"], scadenze: ["scad"], documenti: ["doc"], investire: ["invest"], consulente: ["invest"], mercato: ["mercato"], obiettivi: ["obiett"] };
   function modOn(k) { return !S.mods || S.mods[k] !== false; }
   function anyMod(list) { return !list || list.some(modOn); }
   function tabsNorm() {
-    var ids = TABS.map(function (t) { return t[0]; }), t = S.tabsC && Array.isArray(S.tabs) ? S.tabs.filter(function (x) { return ids.indexOf(x) >= 0; }) : ["home", "spese", "piano", "profilo"];
+    var ids = TABS.map(function (t) { return t[0]; }), t = S.tabsC && Array.isArray(S.tabs) ? S.tabs.filter(function (x) { return ids.indexOf(x) >= 0; }) : ["home", "spese"].concat(modOn("viaggi") ? ["lavoro"] : [], ["piano", "profilo"]);
+    if (S.tabsC && !S.tabsLv) { S.tabsLv = true; if (t.indexOf("lavoro") < 0 && t.length < 5 && modOn("viaggi")) t.splice(Math.max(1, t.indexOf("spese") + 1), 0, "lavoro"); }
+    if (t.indexOf("lavoro") >= 0 && !modOn("viaggi")) t.splice(t.indexOf("lavoro"), 1);
     if (t.indexOf("home") < 0) t.unshift("home"); if (t.indexOf("profilo") < 0) t.push("profilo");
     while (t.length > 5) { var k = t.filter(function (x) { return x !== "home" && x !== "profilo"; }); t.splice(t.indexOf(k[k.length - 1]), 1); }
     S.tabs = ids.filter(function (x) { return t.indexOf(x) >= 0; });
@@ -3663,6 +3669,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var box = $("bar-list"); if (!box) return; tabsNorm(); box.innerHTML = "";
     TABS.forEach(function (t) {
       if (t[0] === "archivio" && !anyMod(["scad", "doc"])) return;
+      if (t[0] === "lavoro" && !modOn("viaggi")) return;
       var fixed = t[0] === "home" || t[0] === "profilo", on = S.tabs.indexOf(t[0]) >= 0, row = document.createElement("label"); row.className = "chk modrow";
       row.innerHTML = '<input type="checkbox"' + (on ? " checked" : "") + (fixed ? " disabled" : "") + "><span><b>" + t[1] + "</b><small>" + t[2] + (fixed ? " Sempre presente." : "") + "</small></span>";
       row.querySelector("input").onchange = function () {
@@ -4187,7 +4194,7 @@ create policy "solo i miei dati" on stipendio_pilota
       if (!r) { r = { id: newRouteId(), name: nm, km: km, toll: Math.max(0, pnum($("xt-toll").value)) || 0, car: S.routes.length ? S.routes[0].car : "benzina", wd: [], work: false }; S.routes.push(r); }
       if (go) setTripKind(go, r, back && back === go ? "ar" : "a");
       if (back && back !== go) setTripKind(back, r, "r");
-      persist(); renderAll(); $("xt-msg").textContent = "Aggiunto ✓ Lo trovi nel calendario di Spese → Lavoro."; toast("Tragitto aggiunto ✓");
+      persist(); renderAll(); $("xt-msg").textContent = "Aggiunto ✓ Lo trovi nel calendario, in Lavoro."; toast("Tragitto aggiunto ✓");
     };
     // regali
     var x = S.xmas, T = xmTotals();
@@ -4210,15 +4217,19 @@ create policy "solo i miei dati" on stipendio_pilota
     $("xm-sum").innerHTML = x.gifts.length ? "Previsto <b>" + eur.format(T.plan) + "</b> · speso <b>" + eur.format(T.spent) + "</b>" + (B > 0 ? " · budget <b>" + eur.format(B) + "</b> · " + (T.plan > B ? "<b>previsto oltre il budget di " + eur.format(T.plan - B) + "</b>" : "ancora liberi " + eur.format(B - Math.max(T.spent, T.plan))) : "") : "Aggiungi le persone a cui vuoi fare un regalo.";
   }
 
-  var VIEWS = ["home", "spese", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Spese"], ["giorni", "Giorni"], ["importa", "Importa"], ["fisse", "Fisse"], ["calendario", "Lavoro"], ["auto", "Auto"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
-    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Viaggi"], ["budget", "Budget"], ["investi", "Investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
+  var VIEWS = ["home", "spese", "lavoro", "archivio", "piano", "storico", "profilo"];
+  var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+    profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["auto", "Auto e viaggi"], ["budget", "Budget e investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
     var parts = (location.hash || "").replace("#", "").split("/"), h = parts[0], sub = parts[1];
     if (h === "obiettivi") { h = "piano"; sub = "obiettivi"; }
+    if (h === "spese" && sub === "calendario") { h = "lavoro"; sub = "turni"; }
+    if (h === "spese" && sub === "auto") { h = "lavoro"; sub = "tragitti"; }
+    if (h === "profilo" && sub === "investi") sub = "budget";
     if (VIEWS.indexOf(h) < 0) h = "home";
     if (h === "archivio" && !anyMod(["scad", "doc"])) { h = "home"; sub = ""; }
+    if (h === "lavoro" && !modOn("viaggi")) { h = "home"; sub = ""; }
     var subs = (SUBS[h] || []).filter(function (x) { return anyMod(SUBMOD[x[0]]); });
     if (h === "profilo") { if (!subs.some(function (x) { return x[0] === sub; })) sub = "menu"; }
     else if (subs.length) {
@@ -4227,10 +4238,11 @@ create policy "solo i miei dati" on stipendio_pilota
     } else sub = "";
     VIEWS.forEach(function (v) { $("v-" + v).hidden = v !== h; });
     document.querySelectorAll("#v-" + h + " [data-sub]").forEach(function (el) { el.classList.toggle("sub-off", !!sub && el.getAttribute("data-sub") !== sub && h !== "home"); });
+    document.querySelectorAll("#v-" + h + " [data-mod]").forEach(function (el) { el.hidden = !anyMod(el.getAttribute("data-mod").split(",")); });
     var st = $("subtabs"); st.hidden = !subs.length || (h === "profilo" && sub === "menu");
     if (h === "profilo") st.innerHTML = '<a href="#profilo" class="on">‹ Altro</a>'; else st.innerHTML = subs.map(function (x) { var on = x[0] === sub; return '<a href="#' + h + "/" + x[0] + '" class="' + (on ? "on" : "") + '"' + (on ? ' aria-current="page"' : "") + ">" + x[1] + "</a>"; }).join("");
     tabsNorm();
-    document.querySelectorAll("#tabs a").forEach(function (a) { var v = a.getAttribute("data-v"); a.hidden = S.tabs.indexOf(v) < 0 || (v === "archivio" && !anyMod(["scad", "doc"])); });
+    document.querySelectorAll("#tabs a").forEach(function (a) { var v = a.getAttribute("data-v"); a.hidden = S.tabs.indexOf(v) < 0 || (v === "archivio" && !anyMod(["scad", "doc"])) || (v === "lavoro" && !modOn("viaggi")); });
     document.querySelectorAll(".menu a[data-mod], .menu a[data-tab]").forEach(function (a) { var md = a.getAttribute("data-mod"), tb = a.getAttribute("data-tab"); a.hidden = (md && !anyMod(md.split(","))) || (tb && S.tabs.indexOf(tb) >= 0); });
     var sec = $("mg-sec"); if (sec) sec.hidden = !sec.querySelectorAll("a:not([hidden])").length;
     var showSave = h === "profilo" && sub !== "dati" && sub !== "comp" && sub !== "menu" && sub !== "condivisa" && sub !== "natale";
@@ -4279,7 +4291,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("qs-amt").onkeydown = $("qs-note").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); qsAdd(); } };
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("qs").hidden) qsClose(); });
   $("cal-ics").onclick = icsExport;
-  $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; location.hash = "#spese/calendario"; renderCalendar(); };
+  $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; location.hash = "#lavoro/settimana"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
   $("payDay").oninput = function () {
     var v = Math.min(31, Math.max(1, Math.round(pnum(this.value)) || 1)), keep = PAYDAY, el = $("pay-prev"); PAYDAY = v;
