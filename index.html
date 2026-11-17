@@ -386,6 +386,10 @@ html[data-lh="1"] .fab { right: auto; left: max(16px, env(safe-area-inset-left, 
 .tour { position: fixed; inset: 0; z-index: 9000; background: var(--bg); color: var(--text); display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 28px max(24px, env(safe-area-inset-right, 0px)); }
 .tour .tbig { font-size: 64px; } .tour h1 { margin: 0; } .tour .tdots { display: flex; gap: 8px; } .tour .tdots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); } .tour .tdots i.on { background: var(--accent); }
 .icopt { display: flex; gap: 14px; } .icopt button { width: 72px; height: 72px; border-radius: 18px; border: 3px solid transparent; padding: 0; overflow: hidden; } .icopt button.on { border-color: var(--accent); } .icopt img { width: 100%; height: 100%; display: block; }
+.gl details { border-bottom: 1px solid var(--line); padding: 10px 0; } .gl summary { font-weight: 700; cursor: pointer; } .gl p { margin: 6px 0 0; }
+.smrow { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+.donutw { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; } .donutw svg { width: 130px; height: 130px; flex: none; } .lg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
 .snaprow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .top .newsbtn { position: relative; margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); display: grid; place-items: center; cursor: pointer; flex: none; }
 .newsbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1112,6 +1116,27 @@ html, body { touch-action: pan-x pan-y; }
       <p class="small muted" id="where-sub"></p>
       <div id="funds"></div>
       <p class="small muted" id="proj"></p>
+    </section>
+    <section data-sub="investire" class="card" aria-labelledby="t-sim">
+      <h2 id="t-sim">E se investissi ogni mese?</h2>
+      <p class="hint">Prova con una cifra e vedi tre scenari. Sono ipotesi: nella realtà i rendimenti cambiano ogni anno e possono anche essere negativi.</p>
+      <div class="fields"><label class="f" for="sm-m">Euro al mese<input id="sm-m" type="text" inputmode="decimal" autocomplete="off" value="100"></label><label class="f" for="sm-y">Per quanti anni<input id="sm-y" type="text" inputmode="numeric" autocomplete="off" value="20"></label></div>
+      <div id="sm-out"></div>
+    </section>
+    <section data-sub="investire" class="card" aria-labelledby="t-pf">
+      <h2 id="t-pf">Il tuo portafoglio</h2>
+      <div id="pf-body"></div>
+    </section>
+    <section data-sub="investire" class="card" aria-labelledby="t-ir">
+      <h2 id="t-ir">Promemoria del versamento</h2>
+      <p class="hint">Ti ricordo di versare il giorno che scegli, solo se questo mese non hai ancora versato quanto previsto.</p>
+      <label class="chk"><input type="checkbox" id="ir-on"><span>Ricordami di versare</span></label>
+      <label class="f" for="ir-day">Giorno del mese<input id="ir-day" type="text" inputmode="numeric" maxlength="2" autocomplete="off"></label>
+      <p class="small muted" id="ir-msg"></p>
+    </section>
+    <section data-sub="investire" class="card" aria-labelledby="t-gl">
+      <h2 id="t-gl">Le parole dell'investire</h2>
+      <div id="gl-body"></div>
     </section>
     <section data-sub="investire" class="card" aria-labelledby="t-br">
       <h2 id="t-br">Il tuo broker</h2>
@@ -2422,7 +2447,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.77";
+  var APP_VERSION = "2026-11-17.78";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3296,7 +3321,7 @@ create policy "solo i miei dati" on stipendio_pilota
     CATS.slice(0, 3).forEach(function (c) { var b = m.bud[c.id] || 0, x = m.by[c.id] || 0; if (!(b > 0)) return; if (x / b >= 1) out.push({ k: "b100-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai superato il budget “" + c.name + "” di " + eur.format(x - b) + "." }); else if (x / b >= 0.8) out.push({ k: "b80-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai usato l'" + Math.round(x / b * 100) + "% del budget “" + c.name + "”: restano " + eur.format(b - x) + "." }); });
     return out;
   }
-  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
+  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem(), invRem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -4789,7 +4814,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderPf === "function") { renderPf(); renderSim(); } if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -5315,8 +5340,61 @@ create policy "solo i miei dati" on stipendio_pilota
     var w = false; try { w = !!sessionStorage.getItem("sp-nowiz"); } catch (e) {}
     if (!DV.tour) { if (S.saved) { DV.tour = 1; dvSave(); } }
   }
+
+  /* ---------- tappa 4: investire ---------- */
+  function fvCalc(m, r, y) { var i = r / 1200, n = Math.round(y * 12); if (i === 0) return m * n; return m * ((Math.pow(1 + i, n) - 1) / i); }
+  var SCEN = [["Prudente", 2, "#46c0ad"], ["Medio", 5, "#ff7f66"], ["Ottimista", 7, "#a89bff"]];
+  function renderSim() {
+    var bx = $("sm-out"); if (!bx) return; var m = pnum($("sm-m").value), y = Math.min(50, Math.max(1, Math.round(pnum($("sm-y").value) || 0)));
+    if (!(m > 0) || !(y >= 1)) { bx.innerHTML = '<p class="small muted">Scrivi quanto e per quanti anni.</p>'; return; }
+    var put = m * 12 * y, W = 300, H = 140, mx = fvCalc(m, 7, y), paths = SCEN.map(function (sc) {
+      var pts = []; for (var k = 0; k <= y; k++) pts.push((k / y * W).toFixed(1) + "," + (H - fvCalc(m, sc[1], k) / mx * H).toFixed(1)); return '<polyline fill="none" stroke="' + sc[2] + '" stroke-width="3" points="' + pts.join(" ") + '"/>'; });
+    var base = []; for (var k2 = 0; k2 <= y; k2++) base.push((k2 / y * W).toFixed(1) + "," + (H - m * 12 * k2 / mx * H).toFixed(1));
+    bx.innerHTML = '<svg viewBox="-4 -6 ' + (W + 8) + " " + (H + 12) + '" role="img" aria-label="Crescita in ' + y + ' anni nei tre scenari" style="width:100%;height:auto"><polyline fill="none" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="4 4" stroke-width="2" points="' + base.join(" ") + '"/>' + paths.join("") + "</svg>"
+      + '<div class="smrow"><span>Versati da te in ' + y + ' anni</span><b>' + _eur.format(put) + "</b></div>"
+      + SCEN.map(function (sc) { var v = fvCalc(m, sc[1], y); return '<div class="smrow"><span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:' + sc[2] + ';margin-right:8px"></i>' + sc[0] + " (" + sc[1] + "% l'anno)</span><span><b>" + _eur.format(v) + '</b> <small class="muted">+' + _eur.format(v - put) + "</small></span></div>"; }).join("")
+      + '<p class="small muted">La linea tratteggiata sono i soldi che metti tu. Non sono previsioni, non tengono conto di tasse e inflazione.</p>';
+    if (priv()) bx.querySelectorAll("b").forEach(function (x) { x.textContent = "••• €"; });
+  }
+  function renderPf() {
+    var bx = $("pf-body"); if (!bx) return; var eq = 0, bd = 0; S.invested.forEach(function (x) { if (x.fund === "bond") bd += x.amount; else eq += x.amount; }); var tot = eq + bd;
+    if (!(tot > 0)) { bx.innerHTML = '<p class="small muted">Qui compare il quadro dei tuoi investimenti appena segni il primo versamento.</p>'; return; }
+    var pe = eq / tot * 100, P = PROFILES[S.profile] || PROFILES.bilanciato, tg = P.eq, C = 2 * Math.PI * 40, d1 = C * pe / 100;
+    var by = {}; S.invested.forEach(function (x) { var k = x.monthKey || String(x.date).slice(0, 7); by[k] = (by[k] || 0) + x.amount; });
+    var ks = Object.keys(by).sort().slice(-6), mx = Math.max.apply(null, ks.map(function (k) { return by[k]; }));
+    var warn = "";
+    if (bd === 0 && tg < 100) warn = "Hai solo azioni: il tuo profilo prevede circa " + tg + "% azioni e " + (100 - tg) + "% obbligazioni.";
+    else if (eq === 0) warn = "Hai solo obbligazioni: il tuo profilo prevede circa " + tg + "% azioni.";
+    else if (Math.abs(pe - tg) > 15) warn = "Le azioni sono il " + Math.round(pe) + "% del totale, il tuo profilo ne prevede circa " + tg + "%. Puoi riequilibrare con i prossimi versamenti.";
+    bx.innerHTML = '<div class="stats"><div class="stat"><span>Versato in tutto</span><b class="num">' + eur.format(tot) + '</b></div><div class="stat"><span>Versamenti</span><b class="num">' + S.invested.length + '</b></div></div>'
+      + '<div class="donutw"><svg viewBox="0 0 100 100" role="img" aria-label="Azioni ' + Math.round(pe) + '%, obbligazioni ' + Math.round(100 - pe) + '%"><circle cx="50" cy="50" r="40" fill="none" stroke="#46c0ad" stroke-width="18"/><circle cx="50" cy="50" r="40" fill="none" stroke="#ff7f66" stroke-width="18" stroke-dasharray="' + d1.toFixed(1) + " " + (C - d1).toFixed(1) + '" transform="rotate(-90 50 50)"/></svg>'
+      + '<div class="lg"><span><i style="background:#ff7f66"></i>Azioni ' + Math.round(pe) + "% · " + eur.format(eq) + '</span><span><i style="background:#46c0ad"></i>Obbligazioni ' + Math.round(100 - pe) + "% · " + eur.format(bd) + '</span><span class="small muted">Obiettivo del tuo profilo: ' + tg + "% azioni</span></div></div>"
+      + (warn ? '<div class="notice info" style="margin-top:12px"><span>' + esc(warn) + "</span></div>" : '<p class="small muted" style="margin-top:12px">La ripartizione è vicina a quella del tuo profilo. 👍</p>')
+      + '<h3 style="margin:14px 0 6px;font-size:16px">Ultimi mesi</h3>' + ks.map(function (k) { return '<div class="catrow"><div class="top2"><span>' + esc(mlabel(k)) + '</span><b>' + eur.format(by[k]) + '</b></div><div class="bar"><i style="width:' + Math.round(by[k] / mx * 100) + '%;background:var(--accent)"></i></div></div>'; }).join("")
+      + (S.broker && S.broker.url ? '<p class="small" style="margin-top:12px">Broker: <b>' + esc(S.broker.name || "il tuo broker") + "</b></p>" : "");
+  }
+  var GLOSS = [["ETF", "Un fondo che si compra e si vende come un'azione e contiene tanti titoli insieme. Con un solo acquisto hai un pezzetto di centinaia di aziende."], ["PAC", "Piano di accumulo: versi la stessa cifra ogni mese, qualunque sia il prezzo. Compri di più quando costa meno e di meno quando costa di più."], ["TER", "Il costo annuo del fondo, in percentuale. Un TER dello 0,20% significa 2 € l'anno ogni 1.000 € investiti."], ["Ad accumulo", "Il fondo reinveste da solo i guadagni, senza darti dividendi da gestire."], ["Diversificazione", "Non mettere tutto nello stesso posto. Più titoli e più paesi, meno rischio che un solo problema rovini tutto."], ["Obbligazioni", "Prestiti a Stati o aziende. Di solito oscillano meno delle azioni, ma rendono meno."], ["Volatilità", "Quanto il valore sale e scende nel breve. È normale che un investimento in azioni perda anche il 20% in un anno."], ["Inflazione", "L'aumento dei prezzi. Con 100 € oggi domani comprerai meno: per questo i soldi fermi sul conto perdono valore."]];
+  function renderGloss() { var bx = $("gl-body"); if (!bx || bx.firstChild) return; bx.className = "gl"; bx.innerHTML = GLOSS.map(function (g) { return "<details><summary>" + g[0] + "</summary><p>" + g[1] + "</p></details>"; }).join(""); }
+  function invRem() {
+    if (!pnf.on || !pnf.invOn) return []; var p = plan(), m = liveMonth(), d0 = Math.min(28, Math.max(1, +pnf.invDay || 5)), out = [];
+    if (!(p.inv > 0)) return out; var dt = new Date(NOW.getFullYear(), NOW.getMonth(), d0), left = p.inv - m.invested;
+    for (var i = 0; i < 2; i++) { var k = ymd(new Date(NOW.getFullYear(), NOW.getMonth() + i, d0)); if (k < TODAY_KEY) continue; if (i === 0 && !(left > 0)) continue; out.push({ k: "inv-" + k, date: k, text: "Oggi è il giorno del versamento: prevedi circa " + eur.format(i === 0 ? left : p.inv) + "." }); }
+    return out;
+  }
+  function setupT4() {
+    ["sm-m", "sm-y"].forEach(function (id) { $(id).addEventListener("input", renderSim); });
+    $("ir-on").checked = !!pnf.invOn; $("ir-day").value = String(pnf.invDay || 5);
+    var go = function () { pnf.invOn = $("ir-on").checked; var d = Math.round(pnum($("ir-day").value)); pnf.invDay = d >= 1 && d <= 28 ? d : 5; nfSave(); $("ir-msg").textContent = pnf.invOn ? (pnf.on ? "Ti avviso il " + pnf.invDay + " di ogni mese." : "Attiva le notifiche con la campanella in alto per ricevere l'avviso.") : "Promemoria spento."; if (pnf.on) nfResync(); };
+    $("ir-on").onchange = go; $("ir-day").onchange = go; renderSim(); renderGloss();
+  }
   var CHANGELOG = [
-    { id: "2026-11-17l", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17m", date: "17 novembre · nuovo", items: [
+      ["Simulatore", "In Piano → Investire scrivi quanto metti ogni mese e per quanti anni: vedi tre scenari, prudente, medio e ottimista."],
+      ["Il tuo portafoglio", "Un quadro solo con il totale versato, la torta azioni e obbligazioni e gli ultimi mesi. Ti avvisa se sei lontano dal tuo profilo."],
+      ["Promemoria del versamento", "Scegli il giorno del mese: ti avviso solo se non hai ancora versato quanto previsto."],
+      ["Le parole dell'investire", "ETF, PAC, TER e le altre, spiegate in due righe."]
+    ] },
+    { id: "2026-11-17l", date: "17 novembre", items: [
       ["Codice di blocco", "In Profilo → Dati puoi impostare un codice a 4 numeri: l'app si apre solo con quello."],
       ["Nascondi gli importi", "L'occhio in alto trasforma le cifre in •••, utile davanti ad altri."],
       ["Copie automatiche", "Ogni giorno salvo una copia dei tuoi dati: se sbagli, torni a una versione precedente."],
@@ -5607,7 +5685,7 @@ create policy "solo i miei dati" on stipendio_pilota
   initArchivio(); $("br-save").onclick = saveBroker;
   $("td-date").onchange = function () { if (this.value) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
-  setupBackup(); setupT3();
+  setupBackup(); setupT3(); setupT4();
   setupSync();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
