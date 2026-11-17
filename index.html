@@ -661,6 +661,9 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 #v-home .hero .primary { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
 .modrow { padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
 .modrow small { display: block; color: var(--muted); font-size: 13px; font-weight: 500; }
+.otrow { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 8px 0; padding: 10px 12px; border-radius: 14px; background: var(--soft); }
+.otrow small { display: block; }
+.ots { display: flex; align-items: center; gap: 10px; } .ots button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font-size: 22px; font-weight: 800; cursor: pointer; } .ots b { min-width: 46px; text-align: center; font-size: 18px; }
 .shchips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
 .shchips button { padding: 10px 14px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
 .shchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -951,6 +954,22 @@ html, body { touch-action: pan-x pan-y; }
 
   <!-- LAVORO -->
   <main class="view" id="v-lavoro" hidden>
+    <section data-sub="inserisci" class="card" aria-labelledby="t-ins">
+      <h2 id="t-ins">Inserisci i turni</h2>
+      <p class="hint">1. Scegli un turno. 2. Tocca i giorni del calendario per segnarlo. 3. Tocca un giorno per cambiare gli orari o aggiungere lo straordinario.</p>
+      <div class="navline"><button type="button" id="ins-prev" aria-label="Mese precedente">‹</button><b id="ins-title"></b><button type="button" id="ins-next" aria-label="Mese successivo">›</button></div>
+      <p class="small muted" id="ins-bh"></p>
+      <div class="shchips" id="ins-brush" role="group" aria-label="Turno da segnare"></div>
+      <div class="cal" id="ins-grid" role="grid" aria-label="Giorni del mese"></div>
+      <div id="ins-day" class="shd"></div>
+      <div class="notice" id="ins-sum"></div>
+      <button type="button" id="ins-copyw">Copia la settimana scorsa su questa</button>
+      <details class="shp" id="ins-shp"><summary>I miei turni (nomi e orari)</summary>
+        <p class="small muted">Scrivi i turni che ti capitano, con gli orari. Quando li segni, gli orari si compilano da soli.</p>
+        <div id="ins-shl"></div>
+        <button type="button" id="ins-shadd">Aggiungi un turno</button>
+      </details>
+    </section>
     <section data-sub="turni" class="card" aria-labelledby="t-wm">
       <h2 id="t-wm">Il tuo lavoro</h2>
       <div class="skins" id="wm-seg" role="group" aria-label="Tipo di orario"></div>
@@ -2306,7 +2325,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.73";
+  var APP_VERSION = "2026-11-17.74";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4344,7 +4363,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function setShift(k, t, sub, note, h1, h2) {
     if (!t) { delete S.shifts[k]; workRoutes().forEach(function (r) { var d = S.dayo[k]; if (d) { delete d[r.id]; if (!Object.keys(d).length) delete S.dayo[k]; } }); return; }
     var old = S.shifts[k] || {}, hh = t === "L" ? { h1: h1 === undefined ? old.h1 || "" : h1, h2: h2 === undefined ? old.h2 || "" : h2 } : { h1: "", h2: "" };
-    S.shifts[k] = { t: t, s: t === "L" ? sub || "" : "", n: (note || "").slice(0, 60), h1: hh.h1, h2: hh.h2 };
+    S.shifts[k] = { t: t, s: t === "L" ? sub || "" : "", n: (note || "").slice(0, 60), h1: hh.h1, h2: hh.h2, ot: t === "L" ? old.ot || 0 : 0 };
     workRoutes().forEach(function (r) { var on = tripKind(r, k) !== "n"; if (on !== (t === "L")) setTrip(k, r, t === "L"); });
   }
   function programWorks(k) { return workRoutes().some(function (r) { return r.wd.indexOf(dOf(k).getDay()) >= 0; }); }
@@ -4372,7 +4391,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function proData(key) {
     var rows = [], cnt = { L: 0, R: 0, F: 0, M: 0, P: 0 }, mins = 0, none = 0, ot = 0, hol = 0, todo = 0, ss = shiftS(), norm = Math.round(S.normH * 60);
     cmDays(key).forEach(function (k) {
-      var sh = S.shifts[k], d = dOf(k), sb = sh ? ss.filter(function (x) { return x[0] === sh.s; })[0] : null, m = sh && sh.t === "L" ? durMin(sh.h1, sh.h2) : 0, o = m > norm ? m - norm : 0, hd = isHol(k);
+      var sh = S.shifts[k], d = dOf(k), sb = sh ? ss.filter(function (x) { return x[0] === sh.s; })[0] : null, m = sh && sh.t === "L" ? durMin(sh.h1, sh.h2) : 0, xo = sh && sh.t === "L" && sh.ot > 0 ? Math.round(sh.ot * 60) : 0, o = (m > norm ? m - norm : 0) + xo, hd = isHol(k); m += xo;
       if (sh) cnt[sh.t]++; else { none++; if (k < TODAY_KEY) todo++; }
       mins += m; ot += o; if (sh && sh.t === "L" && hd) hol++;
       rows.push({ k: k, day: WDN[d.getDay()] + " " + d.getDate(), st: sh ? (SHIFT_T.filter(function (x) { return x[0] === sh.t; })[0] || [0, ""])[1] : "—", tr: sh && sh.t === "L" && sb && sh.s ? sb[1] : "", ori: sh && sh.h1 && sh.h2 ? sh.h1 + "–" + sh.h2 : "", ore: m ? fmtH(m) : "", ot: o ? fmtH(o) : "", hol: hd, n: sh ? sh.n || "" : "" });
@@ -4456,6 +4475,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("shp-add").onclick = function () { var id = "c" + Date.now().toString(36); S.shP.push({ id: id, name: "Nuovo turno", h1: "", h2: "" }); persist(); renderAll(); };
     if (document.activeElement !== $("normH")) $("normH").value = String(S.normH).replace(".", ",");
     $("normH").onchange = function () { var v = parseFloat(this.value.replace(",", ".")); if (v > 0 && v <= 24) S.normH = v; this.value = String(S.normH).replace(".", ","); persist(); renderAll(); };
+    renderIns();
   }
 
   /* ---------- casa condivisa ---------- */
@@ -4597,7 +4617,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   var VIEWS = ["home", "spese", "lavoro", "archivio", "piano", "storico", "profilo"];
-  var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["daparte", "Da parte"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
+  var SUBS = { home: [], spese: [["spese", "Segna"], ["giorni", "Giorni"], ["fisse", "Fisse"], ["importa", "Importa"]], lavoro: [["inserisci", "Inserisci turni"], ["turni", "Mese"], ["settimana", "Settimana"], ["prospetto", "Prospetto"], ["tragitti", "Tragitti"]], archivio: [["panoramica", "Panoramica"], ["scadenze", "Scadenze"], ["documenti", "Documenti"]], piano: [["mese", "Mese"], ["daparte", "Da parte"], ["investire", "Investire"], ["consulente", "Consulente"], ["mercato", "Mercato"], ["obiettivi", "Obiettivi"]], storico: [],
     profilo: [["io", "Io"], ["comp", "Composizione"], ["casa", "Casa"], ["veicoli", "Veicoli"], ["auto", "Auto e viaggi"], ["budget", "Budget e investi"], ["condivisa", "Condivisa"], ["natale", "Natale"], ["dati", "Dati"]] };
   var lastSub = {}, curView = "";
   function showView() {
@@ -4751,8 +4771,81 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   $("scan-btn").onclick = function () { $("scan-file").click(); }; $("scan-file").onchange = function () { var f = this.files[0]; this.value = ""; scanReceipt(f); };
   window.__receiptTotal = receiptTotal;
+
+  /* ---------- inserisci i turni ---------- */
+  var insM = null, insSel = null, insBrush = null;
+  function shAbbr(sh) { if (sh.t !== "L") return sh.t; var pr = presetOf(sh.s); return pr ? pr.name.slice(0, 2) : "L"; }
+  function insApply(k, code) {
+    if (code === "X") { setShift(k, ""); return; }
+    var old = S.shifts[k] || {};
+    if (code.charAt(0) === "s") { var pr = presetOf(code.slice(1)); setShift(k, "L", code.slice(1), old.n || "", pr ? pr.h1 || "" : "", pr ? pr.h2 || "" : ""); }
+    else setShift(k, code, "", old.n || "");
+  }
+  function insFmt(h) { return String(h).replace(".", ","); }
+  function renderIns() {
+    var grid = $("ins-grid"); if (!grid) return;
+    var cur = cmOf(TODAY_KEY); if (!insM) insM = cur;
+    if (!insSel || cmOf(insSel) !== insM) insSel = insM === cur ? TODAY_KEY : insM + "-01";
+    $("ins-title").textContent = cmLabel(insM);
+    $("ins-prev").onclick = function () { insM = cmShift(insM, -1); renderIns(); };
+    $("ins-next").onclick = function () { insM = cmShift(insM, 1); renderIns(); };
+    $("ins-bh").textContent = "Le ore normali di un giorno sono " + insFmt(S.normH) + ": quello che fai in più è straordinario.";
+    // pennello
+    var bx = $("ins-brush"); bx.innerHTML = "";
+    var opts = S.shP.map(function (x) { return ["s" + x.id, x.name]; }).concat([["R", "Riposo"], ["F", "Ferie"], ["M", "Malattia"], ["P", "Permesso"], ["X", "Cancella"]]);
+    opts.forEach(function (o) { var b = document.createElement("button"); b.type = "button"; b.textContent = o[1]; b.setAttribute("aria-pressed", insBrush === o[0] ? "true" : "false"); b.onclick = function () { insBrush = insBrush === o[0] ? null : o[0]; renderIns(); }; bx.appendChild(b); });
+    // calendario
+    var days = cmDays(insM), lead = ((dOf(days[0]).getDay() || 7) - 1), h = "";
+    ["L", "M", "M", "G", "V", "S", "D"].forEach(function (x) { h += '<div class="h" aria-hidden="true">' + x + "</div>"; });
+    for (var i = 0; i < lead; i++) h += "<span></span>";
+    days.forEach(function (k) {
+      var sh = S.shifts[k];
+      h += '<button type="button" data-d="' + k + '" class="' + (k === insSel ? "sel " : "") + (k === TODAY_KEY ? "today" : "") + '" aria-label="' + dOf(k).getDate() + " " + mnameD(dOf(k)) + (sh ? ", " + shText(sh) : "") + '">' + dOf(k).getDate() + '<span class="dots">' + (sh ? '<em class="shl s' + sh.t + '">' + esc(shAbbr(sh)) + "</em>" : "") + (sh && sh.ot > 0 ? '<em class="shl sL">+</em>' : "") + "</span></button>";
+    });
+    grid.innerHTML = h;
+    grid.querySelectorAll("button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-d"); insSel = k; if (insBrush) { insApply(k, insBrush); persist(); renderAll(); } else renderIns(); }; });
+    // giorno scelto
+    var k = insSel, sh = S.shifts[k] || null, dd = $("ins-day");
+    var optH = '<option value="">Nessuna indicazione</option>' + S.shP.map(function (x) { return '<option value="s' + x.id + '">' + esc(x.name) + "</option>"; }).join("") + '<option value="R">Riposo</option><option value="F">Ferie</option><option value="M">Malattia</option><option value="P">Permesso</option>';
+    dd.innerHTML = '<h3 style="margin:12px 0 6px;font-size:16px">' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + " " + mnameD(dOf(k)) + (isHol(k) ? " ★ festivo" : "") + '</h3><label class="f">Turno<select id="ins-t">' + optH + "</select></label>"
+      + '<div id="ins-w"' + (sh && sh.t === "L" ? "" : " hidden") + '><div class="fields"><label class="f">Dalle<input id="ins-h1" type="time"></label><label class="f">Alle<input id="ins-h2" type="time"></label></div>'
+      + '<div class="otrow"><span><b>Straordinario</b><small class="muted"> ore in più oltre al turno</small></span><span class="ots"><button type="button" id="ins-om" aria-label="Meno straordinario">−</button><b id="ins-ov">0</b><button type="button" id="ins-op" aria-label="Più straordinario">+</button></span></div></div>'
+      + '<label class="f">Nota<input id="ins-n" type="text" maxlength="60" placeholder="Facoltativa"></label>'
+      + '<div class="btnrow" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="ins-cp">Copia dal giorno prima</button>' + (sh ? '<button type="button" class="link" id="ins-clr">Togli</button>' : "") + "</div>";
+    $("ins-t").value = !sh ? "" : sh.t === "L" ? "s" + (sh.s || "") : sh.t;
+    if (sh && sh.t === "L" && sh.s && !presetOf(sh.s)) $("ins-t").value = "";
+    $("ins-h1").value = sh && sh.h1 || ""; $("ins-h2").value = sh && sh.h2 || ""; $("ins-n").value = sh && sh.n || ""; $("ins-ov").textContent = insFmt(sh && sh.ot || 0) + " h";
+    function save(mod) { var o = S.shifts[k]; if (!o) return; mod(o); persist(); renderAll(); }
+    $("ins-t").onchange = function () { if (!this.value) { setShift(k, ""); } else { insApply(k, this.value); } persist(); renderAll(); };
+    ["ins-h1", "ins-h2"].forEach(function (id) { $(id).onchange = function () { save(function (o) { o.h1 = $("ins-h1").value; o.h2 = $("ins-h2").value; }); }; });
+    $("ins-n").onchange = function () { save(function (o) { o.n = $("ins-n").value.slice(0, 60); }); };
+    $("ins-om").onclick = function () { save(function (o) { o.ot = Math.max(0, Math.round(((o.ot || 0) - 0.5) * 2) / 2); }); };
+    $("ins-op").onclick = function () { save(function (o) { o.ot = Math.min(16, Math.round(((o.ot || 0) + 0.5) * 2) / 2); }); };
+    $("ins-cp").onclick = function () { var pv = S.shifts[addDays(k, -1)]; if (!pv) { toast("Il giorno prima non ha nessuna indicazione"); return; } S.shifts[k] = Object.assign({}, pv); persist(); renderAll(); toast("Copiato dal giorno prima"); };
+    if ($("ins-clr")) $("ins-clr").onclick = function () { setShift(k, ""); persist(); renderAll(); };
+    // riepilogo
+    var D = proData(insM);
+    $("ins-sum").innerHTML = "<b>" + cmLabel(insM) + "</b><br>" + D.cnt.L + (D.cnt.L === 1 ? " giorno" : " giorni") + " di lavoro · " + (D.mins ? fmtH(D.mins) : "0h") + " in tutto" + (D.ot ? " · <b>" + fmtH(D.ot) + " di straordinario</b>" : "") + "<br>" + D.cnt.R + " riposi · " + D.cnt.F + " ferie · " + D.cnt.M + " malattia · " + D.cnt.P + " permessi" + (D.none ? "<br>" + D.none + " giorni ancora senza indicazione" : "");
+    $("ins-copyw").onclick = function () { var mon = mondayOf(insSel), n = 0; for (var j = 0; j < 7; j++) { var src = S.shifts[addDays(mon, j - 7)]; if (src) { S.shifts[addDays(mon, j)] = Object.assign({}, src); n++; } } persist(); renderAll(); toast(n ? "Copiat" + (n === 1 ? "o 1 giorno" : "i " + n + " giorni") + " dalla settimana scorsa" : "La settimana scorsa è vuota"); };
+    // i miei turni
+    var pl = $("ins-shl"); pl.innerHTML = "";
+    S.shP.forEach(function (x, i) {
+      var row = document.createElement("div"); row.className = "shprow";
+      row.innerHTML = '<input type="text" maxlength="20" value="' + esc(x.name) + '" aria-label="Nome del turno"><input type="time" value="' + x.h1 + '" aria-label="Dalle"><input type="time" value="' + x.h2 + '" aria-label="Alle"><button type="button" class="x del" aria-label="Togli il turno">×</button>';
+      var ins = row.querySelectorAll("input");
+      ins[0].onchange = function () { x.name = this.value.trim().slice(0, 20) || x.name; persist(); renderAll(); };
+      ins[1].onchange = function () { x.h1 = this.value; persist(); };
+      ins[2].onchange = function () { x.h2 = this.value; persist(); };
+      row.querySelector(".del").onclick = function () { if (S.shP.length <= 1) return; S.shP.splice(i, 1); persist(); renderAll(); };
+      pl.appendChild(row);
+    });
+    $("ins-shadd").onclick = function () { var id = "c" + Date.now().toString(36); S.shP.push({ id: id, name: "Nuovo turno", h1: "", h2: "" }); persist(); renderAll(); setTimeout(function () { $("ins-shp").open = true; }, 0); };
+  }
   var CHANGELOG = [
-    { id: "2026-11-17h", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17i", date: "17 novembre · nuovo", items: [
+      ["Inserisci i turni", "In Lavoro c'è la nuova pagina “Inserisci turni”: scegli il turno, tocca i giorni sul calendario e, per ogni giorno, cambia gli orari o aggiungi lo straordinario."]
+    ] },
+    { id: "2026-11-17h", date: "17 novembre", items: [
       ["Pagina Da parte", "Le spese di ogni anno (assicurazione, bollo, tagliando) hanno una pagina tutta loro: Piano → Da parte. Ci arrivi anche dal riquadro in Home."]
     ] },
     { id: "2026-11-17g", date: "17 novembre", items: [
