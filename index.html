@@ -146,6 +146,8 @@ button.x { border: 0; background: transparent; color: var(--muted); min-width: 4
 .stat b { font-family: var(--font-head); font-size: 20px; }
 .chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .chips label { display: flex; align-items: center; gap: 8px; padding: 12px; border: 2px solid var(--line); border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.pch { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.pch button { min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); font-weight: 600; font-size: 14px; }
 .chips input { position: absolute; opacity: 0; pointer-events: none; }
 .chips label.on { border-color: var(--accent); background: var(--soft); }
 .chips label:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -1258,9 +1260,24 @@ create policy "stipendio pilota documenti" on storage.objects
       <button type="button" id="ln-add">+ Aggiungi un prestito o una rata</button>
       <p class="small" id="ln-sum"></p>
     </section>
+    <section data-sub="casa" class="card" aria-labelledby="t-bl">
+      <h2 id="t-bl">Bollette</h2>
+      <p class="hint">Luce, gas, acqua, internet, telefono, rifiuti. Tocca una voce per aggiungerla, poi metti importo e giorno. Una stima media va bene.</p>
+      <div class="pch" id="bl-chips"></div>
+      <div id="fx-bills"></div>
+      <button type="button" id="bl-add">+ Aggiungi una bolletta</button>
+    </section>
+    <section data-sub="casa" class="card" aria-labelledby="t-sb">
+      <h2 id="t-sb">Abbonamenti</h2>
+      <p class="hint">Netflix, Spotify, Prime, palestra, cloud… Tocca un servizio per aggiungerlo: il logo compare da solo.</p>
+      <div class="pch" id="sb-chips"></div>
+      <div id="fx-subs"></div>
+      <button type="button" id="sb-add">+ Aggiungi un abbonamento</button>
+      <p class="small" id="sb-sum"></p>
+    </section>
     <section data-sub="casa" class="card" aria-labelledby="t-p2">
       <h2 id="t-p2">Altre spese fisse</h2>
-      <p class="hint">Assicurazione, Netflix, telefono, palestra… Ogni voce ha importo e giorno di pagamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota in "Io".</p>
+      <p class="hint">Assicurazione, tasse, scuola… tutto ciò che si ripete ogni mese e non è una bolletta né un abbonamento. Se in coppia dividete la spesa, lascia la spunta e usa la quota in "Io".</p>
       <div id="fx-edit"></div>
       <button type="button" id="fx-add">+ Aggiungi una spesa fissa</button>
     </section>
@@ -1615,8 +1632,16 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!Array.isArray(S.contacts)) S.contacts = [];
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
-      return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "", ic: typeof f.ic === "string" ? f.ic.slice(0, 12) : "" });
+      return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" || f.kind === "bill" || f.kind === "sub" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "", ic: typeof f.ic === "string" ? f.ic.slice(0, 12) : "" });
     });
+    if (!S.fxv2) {
+      S.fixedList.forEach(function (f) {
+        if (f.kind !== "fix") return; var n = String(f.name).toLowerCase();
+        if (/bolletta|bollette|luce|\bgas\b|acqua|internet|fibra|telefon|cellulare|rifiuti|tari\b|enel|\beni\b|plenitude|edison|a2a|hera\b/.test(n)) f.kind = "bill";
+        else if (/netflix|disney|prime|dazn|sky\b|now ?tv|spotify|youtube|apple|icloud|deezer|abbonament|palestra|chatgpt|claude|google|dropbox|audible|playstation|xbox|amazon|streaming/.test(n)) f.kind = "sub";
+      });
+      S.fxv2 = 1;
+    }
   }
   migrate(typeof st !== "undefined" ? st : null);
   var pending = S.monthKey < CUR ? CUR : null; // mese nuovo da avviare
@@ -2003,7 +2028,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.51";
+  var APP_VERSION = "2026-11-17.52";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2379,11 +2404,14 @@ create policy "solo i miei dati" on stipendio_pilota
     h += '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>';
     if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
     if (kind !== "casa") h += '<div class="icpick"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(iconFor(f.name, f.ic), f.name, f.ic) + '</span><label class="f">Icona<select class="fx-ic">' + ICON_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + ((f.ic || "") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
+    if (kind === "fix" || kind === "bill" || kind === "sub") h += '<label class="f">Categoria<select class="fx-k">' + [["fix", "Altra spesa fissa"], ["bill", "Bolletta"], ["sub", "Abbonamento"]].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === kind ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
     h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     d.innerHTML = h;
     var del = d.querySelector(".fx-del");
     if (del) del.onclick = function () { var cur = readFixedEditor().filter(function (x) { return x.id !== f.id; }); renderFixedEditor(cur); };
+    var ks = d.querySelector(".fx-k");
+    if (ks) ks.onchange = function () { renderFixedEditor(readFixedEditor()); };
     var sel = d.querySelector(".hs-type");
     if (sel) sel.onchange = function () { renderFixedEditor(readFixedEditor(), this.value); };
     return d;
@@ -2391,17 +2419,19 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderFixedEditor(list, housing) {
     list = list || []; housing = housing || readHousing() || S.me.housing || "affitto";
     var casa = list.filter(function (f) { return f.kind === "casa"; })[0] || { id: "rent", name: "Affitto", amount: 0, due: 1, split: true, kind: "casa", end: "" };
-    ["fx-casa", "fx-loans", "fx-edit"].forEach(function (id) { $(id).innerHTML = ""; });
+    ["fx-casa", "fx-loans", "fx-bills", "fx-subs", "fx-edit"].forEach(function (id) { $(id).innerHTML = ""; });
     $("fx-casa").appendChild(fxBlock(casa, "casa", housing));
-    list.forEach(function (f) { if (f.kind === "loan") $("fx-loans").appendChild(fxBlock(f, "loan")); else if (f.kind !== "casa") $("fx-edit").appendChild(fxBlock(f, "fix")); });
+    list.forEach(function (f) { if (f.kind === "loan") $("fx-loans").appendChild(fxBlock(f, "loan")); else if (f.kind === "bill") $("fx-bills").appendChild(fxBlock(f, "bill")); else if (f.kind === "sub") $("fx-subs").appendChild(fxBlock(f, "sub")); else if (f.kind !== "casa") $("fx-edit").appendChild(fxBlock(f, "fix")); });
+    var sb = list.filter(function (f) { return f.kind === "sub" && f.amount > 0; }), st = 0; sb.forEach(function (f) { st += f.amount; });
+    $("sb-sum").textContent = sb.length ? "Totale abbonamenti: " + eur.format(st) + " al mese, " + eur.format(st * 12) + " all'anno." : "";
   }
   function readFixedEditor() {
     var out = [], hs = readHousing() || S.me.housing;
-    document.querySelectorAll("#fx-casa .fxe, #fx-loans .fxe, #fx-edit .fxe").forEach(function (d) {
-      var kind = d.getAttribute("data-kind"), amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
+    document.querySelectorAll("#fx-casa .fxe, #fx-loans .fxe, #fx-bills .fxe, #fx-subs .fxe, #fx-edit .fxe").forEach(function (d) {
+      var kind = d.getAttribute("data-kind"), kk = d.querySelector(".fx-k"); if (kk) kind = kk.value; amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
       var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
       var nm = d.querySelector(".fx-name");
-      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
+      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
     });
     return out;
   }
@@ -3102,7 +3132,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var p = plan(), pd = S.paid[S.monthKey] || {};
     if (S.saved && S.monthKey === CUR) p.fixed.forEach(function (f) {
       if (pd[f.id]) return; var dd = ymd(dueDate(f, S.monthKey));
-      items.push({ kind: "fix", f: f, name: f.name, cat: f.kind === "casa" ? "casa" : f.kind === "loan" ? "tasse" : "altro", amount: f.amt, date: dd });
+      items.push({ kind: "fix", f: f, name: f.name, cat: f.kind === "casa" ? "casa" : f.kind === "loan" ? "tasse" : f.kind === "bill" ? "bolletta" : f.kind === "sub" ? "abbonamento" : "altro", amount: f.amt, date: dd });
     });
     items.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
     return items;
@@ -4292,6 +4322,10 @@ create policy "solo i miei dati" on stipendio_pilota
   $("exp-note").onchange = function () { var c = NOTE_CAT[this.value.trim()]; if (c && !editId) { S.cat = c; renderChips(); } };
   $("exp-cancel").onclick = function () { resetExpForm(); renderSpese(); };
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
+  function addFx(kind, name) { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: name || "", amount: 0, due: 1, split: true, kind: kind, end: "" }); renderFixedEditor(cur); var box = document.querySelectorAll(kind === "bill" ? "#fx-bills .fxe" : "#fx-subs .fxe"), l = box[box.length - 1]; if (l) { var a = l.querySelector(name ? ".fx-amt" : ".fx-name"); l.scrollIntoView({ block: "center" }); if (a) a.focus(); } }
+  var BL_P = ["Luce", "Gas", "Acqua", "Internet", "Telefono", "Rifiuti"], SB_P = ["Netflix", "Spotify", "Prime", "Disney+", "DAZN", "YouTube", "iCloud", "Palestra"];
+  [["bl-chips", BL_P, "bill"], ["sb-chips", SB_P, "sub"]].forEach(function (c) { $(c[0]).innerHTML = c[1].map(function (n) { return '<button type="button" data-n="' + esc(n) + '">+ ' + esc(n) + "</button>"; }).join(""); $(c[0]).querySelectorAll("button").forEach(function (b) { b.onclick = function () { addFx(c[2], this.getAttribute("data-n")); }; }); });
+  $("bl-add").onclick = function () { addFx("bill", ""); }; $("sb-add").onclick = function () { addFx("sub", ""); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: newRouteId(cur), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
   document.querySelectorAll("#mk-seg button").forEach(function (b) { b.onclick = function () { MK.f = this.getAttribute("data-f"); renderMarket(); }; });
