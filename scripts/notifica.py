@@ -49,6 +49,12 @@ for r in rows:
         k, d = it.get("k"), it.get("date")
         if not k or not d or k in done or today < d:
             continue
+        qh = it.get("q")
+        if qh and len(qh) == 2:
+            # orari tranquilli: niente avvisi nella fascia indicata (es. 22-7); l'avviso parte al giro successivo
+            a_, b_ = int(qh[0]), int(qh[1])
+            if (a_ <= now.hour < b_) if a_ < b_ else (now.hour >= a_ or now.hour < b_):
+                continue
         h = it.get("h")
         if h is not None:
             # promemoria a ora fissa (es. la sera): solo nel giorno giusto e dopo quell'ora

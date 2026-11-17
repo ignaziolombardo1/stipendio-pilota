@@ -1441,6 +1441,10 @@ create policy "stipendio pilota documenti" on storage.objects
       <label class="f" for="nf-hour">A che ora<select id="nf-hour"></select></label>
       <label class="chk"><input type="checkbox" id="nf-eve"><span>Ricordami la sera di segnare le spese</span></label>
       <label class="f" for="nf-eveh" id="nf-eveh-l">A che ora la sera<select id="nf-eveh"></select></label>
+      <label class="chk"><input type="checkbox" id="nf-dead"><span>Avvisami prima delle scadenze (auto e spese fisse)</span></label>
+      <label class="chk"><input type="checkbox" id="nf-sun"><span>Riepilogo della domenica</span></label>
+      <label class="chk"><input type="checkbox" id="nf-b80"><span>Avvisami quando uso l'80% di un budget</span></label>
+      <label class="chk"><input type="checkbox" id="nf-q"><span>Niente avvisi di notte (dalle 22 alle 7)</span></label>
       <button type="button" id="nf-test">Prova una notifica adesso</button>
       <p class="small muted" id="nf-msg"></p>
     </section>
@@ -1503,6 +1507,24 @@ create policy "stipendio pilota documenti" on storage.objects
       <h2 id="t-vs">I miei veicoli</h2>
       <p class="hint">Inserisci la tua auto: calcolo il bollo e metto da parte ogni mese bollo, revisione, tagliando e assicurazione. Entrano da soli nel piano del mese.</p>
       <div id="veh-sum" class="vsum"></div>
+      <div id="veh-due"></div>
+    </section>
+    <section data-sub="veicoli" class="card" aria-labelledby="t-vr">
+      <h2 id="t-vr">Rifornimenti e interventi</h2>
+      <p class="hint">Segna il pieno: l'app calcola quanto consuma davvero l'auto. Segna anche tagliandi e riparazioni per avere lo storico.</p>
+      <label class="f" for="fl-v">Auto<select id="fl-v"></select></label>
+      <h3 style="margin:8px 0 4px;font-size:16px">Rifornimento</h3>
+      <div class="fields"><label class="f" for="fl-l">Litri<input id="fl-l" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="fl-e">Totale (€)<input id="fl-e" type="text" inputmode="decimal" autocomplete="off"></label></div>
+      <label class="f" for="fl-k">Km del contachilometri<input id="fl-k" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label class="chk"><input type="checkbox" id="fl-x" checked><span>Segna anche come spesa di carburante</span></label>
+      <button type="button" class="primary" id="fl-add">Salva rifornimento</button>
+      <p class="small" id="fl-info"></p>
+      <h3 style="margin:14px 0 4px;font-size:16px">Intervento (tagliando, gomme, riparazione…)</h3>
+      <div class="fields"><label class="f" for="sv-n">Cosa<input id="sv-n" type="text" maxlength="40" placeholder="Es. Tagliando"></label><label class="f" for="sv-e">Costo (€)<input id="sv-e" type="text" inputmode="decimal" autocomplete="off"></label></div>
+      <div class="fields"><label class="f" for="sv-d">Data<input id="sv-d" type="date"></label><label class="f" for="sv-k">Km<input id="sv-k" type="text" inputmode="numeric" autocomplete="off"></label></div>
+      <label class="chk"><input type="checkbox" id="sv-x"><span>Segna anche come spesa</span></label>
+      <button type="button" id="sv-add">Salva intervento</button>
+      <div id="sv-list"></div>
     </section>
     <section data-sub="veicoli" class="card" aria-labelledby="t-vl">
       <h2 id="t-vl">Le tue auto</h2>
@@ -2352,7 +2374,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.75";
+  var APP_VERSION = "2026-11-17.76";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3200,7 +3222,33 @@ create policy "solo i miei dati" on stipendio_pilota
     for (var i = (now.getHours() >= h ? 1 : 0); i < 7; i++) { var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i); out.push({ k: "sera-" + ymd(d), date: ymd(d), h: h, text: "Hai segnato le spese di oggi? Ci vuole un attimo." }); }
     return out;
   }
-  function remList() { return annRemList().concat(tredRem(), eveRem()); }
+  function addDaysISO(k, n) { var d = dOf(k); d.setDate(d.getDate() + n); return ymd(d); }
+  function daysBetween(a, b) { return Math.round((dOf(b) - dOf(a)) / 864e5); }
+  function deadRem() {
+    if (!pnf.on || pnf.dead === false) return [];
+    var out = [];
+    (S.annual || []).forEach(function (a) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(a.due || "") || a.due < TODAY_KEY || daysBetween(TODAY_KEY, a.due) > 45) return;
+      [30, 7].forEach(function (n) { var dt = addDaysISO(a.due, -n); if (dt < addDaysISO(TODAY_KEY, -10)) return; out.push({ k: "dl-" + a.id + "-" + a.due + "-" + n, date: dt < TODAY_KEY ? TODAY_KEY : dt, text: (n === 30 ? "Tra circa un mese scade: " : "Tra una settimana scade: ") + a.name + " (" + eur.format(a.amount) + ")." }); });
+    });
+    var pd = S.paid[CUR] || {};
+    (S.fixedList || []).forEach(function (f) {
+      if (pd[f.id] || !(f.due >= 1)) return; var d0 = dueDate({ due: f.due }, CUR), ds = ymd(d0);
+      if (ds < TODAY_KEY || daysBetween(TODAY_KEY, ds) > 10) return; var dt = addDaysISO(ds, -2); out.push({ k: "fx-" + f.id + "-" + ds, date: dt < TODAY_KEY ? TODAY_KEY : dt, text: "Il " + d0.getDate() + " scade " + f.name + " (" + eur.format(f.amount) + ")." });
+    });
+    return out.slice(0, 24);
+  }
+  function sunRem() {
+    if (!pnf.on || !pnf.sun) return []; var out = [], d = new Date(); d.setDate(d.getDate() + ((7 - d.getDay()) % 7));
+    for (var i = 0; i < 2; i++) { var k = ymd(d); out.push({ k: "sun-" + k, date: k, h: 19, text: "È domenica: apri l'app e guarda come è andata la settimana." }); d.setDate(d.getDate() + 7); }
+    return out;
+  }
+  function b80Rem() {
+    if (!pnf.on || !pnf.b80) return []; var m = liveMonth(), out = [];
+    CATS.slice(0, 3).forEach(function (c) { var b = m.bud[c.id] || 0, x = m.by[c.id] || 0; if (!(b > 0)) return; if (x / b >= 1) out.push({ k: "b100-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai superato il budget “" + c.name + "” di " + eur.format(x - b) + "." }); else if (x / b >= 0.8) out.push({ k: "b80-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai usato l'" + Math.round(x / b * 100) + "% del budget “" + c.name + "”: restano " + eur.format(b - x) + "." }); });
+    return out;
+  }
+  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -4310,6 +4358,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var hs = $("nf-hour"); if (!hs.options.length) for (var h = 6; h <= 21; h++) { var o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; hs.appendChild(o); }
     on.checked = !!pnf.on; hs.value = String(pnf.hour);
     var eh = $("nf-eveh"); if (!eh.options.length) for (var q = 19; q <= 23; q++) { var o2 = document.createElement("option"); o2.value = q; o2.textContent = q + ":00"; eh.appendChild(o2); }
+    $("nf-dead").checked = pnf.dead !== false; $("nf-sun").checked = !!pnf.sun; $("nf-b80").checked = !!pnf.b80; $("nf-q").checked = !!pnf.quiet;
     $("nf-eve").checked = !!pnf.eve; eh.value = String(pnf.eveH || 21); $("nf-eveh-l").hidden = !pnf.eve;
     if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00.");
   }
@@ -4341,6 +4390,9 @@ create policy "solo i miei dati" on stipendio_pilota
     };
     $("nf-hour").onchange = function () { pnf.hour = +this.value; nfSave(); if (pnf.on) { nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); nfResync(); } };
     $("nf-eve").onchange = function () { pnf.eve = this.checked; if (!pnf.eveH) pnf.eveH = 21; nfSave(); $("nf-eveh-l").hidden = !pnf.eve; if (pnf.eve && !pnf.on) { toast("Attiva prima “Avvisami con una notifica”"); } else if (pnf.on) { nfMsg(pnf.eve ? "Ti ricordo di segnare le spese alle " + pnf.eveH + ":00. L'app deve essere aperta almeno una volta a settimana." : "Promemoria serale spento."); nfResync(); } };
+    [["nf-dead", "dead", "Avvisi sulle scadenze"], ["nf-sun", "sun", "Riepilogo della domenica"], ["nf-b80", "b80", "Avviso all'80% del budget"], ["nf-q", "quiet", "Orari tranquilli"]].forEach(function (x) {
+      $(x[0]).onchange = function () { pnf[x[1]] = this.checked; nfSave(); if (pnf.on) { nfMsg(x[2] + (this.checked ? " attivo." : " spento.")); nfResync(); } else toast("Attiva prima “Avvisami con una notifica”"); };
+    });
     $("nf-eveh").onchange = function () { pnf.eveH = +this.value; nfSave(); if (pnf.on && pnf.eve) { nfMsg("Ti ricordo di segnare le spese alle " + pnf.eveH + ":00."); nfResync(); } };
     renderNotif();
   }
@@ -5016,8 +5068,86 @@ create policy "solo i miei dati" on stipendio_pilota
   $("fast-copy").onclick = function () { var u = $("fast-url"); u.select(); try { navigator.clipboard.writeText(u.value).then(function () { toast("Indirizzo copiato"); }, function () { document.execCommand("copy"); toast("Indirizzo copiato"); }); } catch (e) { try { document.execCommand("copy"); toast("Indirizzo copiato"); } catch (e2) {} } };
   $("exp-amount").addEventListener("input", function () { var t = this.value, el = $("exp-calc"); if (/[+*/x×÷]|.-/i.test(t.trim())) { var r = evalExpr(t.replace(/[x×]/gi, "*")); el.hidden = false; el.textContent = r > 0 ? "= " + eur2.format(r) : "Calcolo non valido"; } else el.hidden = true; renderCatSug(); });
   initVoice();
+
+  /* ---------- tappa 2: auto ---------- */
+  function costKm(v) {
+    if (!(v.kmy > 0)) return 0; var yr = vehParts(v).reduce(function (a, p) { return a + p[1]; }, 0) * 12, pr = v.fuel === "benzina" ? S.priceB : v.fuel === "diesel" ? S.priceD : 0, fk = v.kml > 0 && pr > 0 ? pr / v.kml : 0;
+    return yr / v.kmy + fk;
+  }
+  function ocrFile(file) {
+    return new Promise(function (ok, ko) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var k = Math.min(1, 1800 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+        var read = ("TextDetector" in window) ? new window.TextDetector().detect(c).then(function (bs) { return bs.map(function (b) { return b.rawValue; }).join("\n"); }) : loadTess().then(function (T) { return T.recognize(c, "ita").then(function (r) { return r.data.text; }); });
+        read.then(ok, ko);
+      };
+      img.onerror = function () { ko(new Error("img")); }; img.src = url;
+    });
+  }
+  function parseLibretto(t) {
+    t = String(t || ""); var r = { kw: 0, euro: null, reg: "", fuel: "" }, m;
+    if ((m = /(\d{2,3}(?:[.,]\d)?)\s*kw/i.exec(t))) r.kw = parseFloat(m[1].replace(",", "."));
+    if ((m = /euro\s*([0-6])/i.exec(t))) r.euro = +m[1];
+    var re = /(\d{2})[.\/\- ](\d{2})[.\/\- ](\d{4})/g; while ((m = re.exec(t))) { if (+m[3] >= 1980 && +m[3] <= 2035 && +m[2] >= 1 && +m[2] <= 12) { r.reg = m[3] + "-" + m[2]; break; } }
+    r.fuel = /gasolio|diesel/i.test(t) ? "diesel" : /benzina/i.test(t) ? "benzina" : /\bgpl\b/i.test(t) ? "gpl" : /metano/i.test(t) ? "metano" : /elettric/i.test(t) ? "elettrica" : "";
+    return r;
+  }
+  window.__plib = parseLibretto;
+  function vehDue() {
+    var out = [];
+    (S.veh || []).forEach(function (v) {
+      var L = vehLabel(v); if (bolloAmount(v) > 0) out.push([L + " · Bollo", nextEnd(v.bolloM), bolloAmount(v)]);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v.rev || "")) out.push([L + " · Revisione", v.rev, 80]);
+      if (v.ins > 0 && v.insEvery !== "mese") out.push([L + " · Assicurazione", nextEnd(v.insM), v.insEvery === "sem" ? v.ins * 2 : v.ins]);
+    });
+    return out.sort(function (a, b) { return a[1] < b[1] ? -1 : 1; });
+  }
+  function renderVehDue() {
+    var bx = $("veh-due"); if (!bx) return; var L = vehDue();
+    if (!L.length) { bx.innerHTML = ""; return; }
+    bx.innerHTML = '<h3 style="margin:14px 0 6px;font-size:16px">Prossime scadenze</h3>' + L.map(function (x) { var n = daysBetween(TODAY_KEY, x[1]), cl = n <= 7 ? "var(--bad)" : n <= 30 ? "var(--warn)" : "var(--pos)"; return '<div class="vln"><span>' + esc(x[0]) + "<small class=\"muted\" style=\"display:block\">" + dOf(x[1]).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) + " · " + eur.format(x[2]) + '</small></span><span style="color:' + cl + ';font-weight:800">' + (n <= 0 ? "oggi" : n === 1 ? "domani" : "tra " + n + " giorni") + "</span></div>"; }).join("") + (pnf.on && pnf.dead !== false ? '<p class="small muted">Ti avviso 30 e 7 giorni prima.</p>' : '<p class="small muted">Per ricevere l\'avviso prima di ogni scadenza attiva le notifiche (campanella in alto) e “Avvisami prima delle scadenze”.</p>');
+  }
+  var flV = null;
+  function renderFill() {
+    var sel = $("fl-v"); if (!sel) return; var vs = S.veh || [];
+    if (!vs.length) { sel.innerHTML = ""; $("fl-info").textContent = "Aggiungi prima un'auto qui sopra."; $("sv-list").innerHTML = ""; return; }
+    if (!flV || !vs.some(function (v) { return v.id === flV; })) flV = vs[0].id;
+    sel.innerHTML = vs.map(function (v) { return '<option value="' + v.id + '"' + (v.id === flV ? " selected" : "") + ">" + esc(vehLabel(v)) + "</option>"; }).join(""); sel.onchange = function () { flV = this.value; renderFill(); };
+    var v = vs.filter(function (x) { return x.id === flV; })[0], fl = (v.fills || []).slice().sort(function (a, b) { return a.km - b.km; }), tx = "";
+    if (fl.length) { var l = fl[fl.length - 1]; tx = "Ultimo pieno: " + dOf(l.d).toLocaleDateString("it-IT", { day: "numeric", month: "short" }) + ", " + String(l.l).replace(".", ",") + " litri a " + eur2.format(l.e / l.l) + " al litro."; }
+    var cs = [], dk = 0, dl = 0; for (var i = 1; i < fl.length; i++) { if (fl[i].km > fl[i - 1].km && fl[i].l > 0) { dk += fl[i].km - fl[i - 1].km; dl += fl[i].l; } }
+    if (dl > 0) { var kml = Math.round(dk / dl * 10) / 10; tx += " Consumo medio: <b>" + String(kml).replace(".", ",") + " km/l</b>" + (Math.abs(kml - (v.kml || 0)) >= 0.2 ? ' · <button type="button" class="link" id="fl-use">Usa questo consumo</button>' : " (come nel piano)") + "."; }
+    $("fl-info").innerHTML = tx || "Segna due rifornimenti (pieno a pieno) per calcolare il consumo.";
+    if ($("fl-use")) $("fl-use").onclick = function () { v.kml = Math.round(dk / dl * 10) / 10; syncVeh(); persist(); renderAll(); toast("Consumo aggiornato nel piano ✓"); };
+    var sv = (v.svc || []).slice().sort(function (a, b) { return a.d < b.d ? 1 : -1; });
+    $("sv-list").innerHTML = sv.length ? "<h3 style=\"margin:14px 0 4px;font-size:16px\">Storico interventi</h3>" + sv.map(function (x, i) { return '<div class="vln"><span><b>' + esc(x.n || "Intervento") + '</b><small class="muted" style="display:block">' + dOf(x.d).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) + (x.km ? " · " + Math.round(x.km).toLocaleString("it-IT") + " km" : "") + '</small></span><span>' + (x.e ? eur2.format(x.e) : "") + ' <button type="button" class="x" data-i="' + i + '" aria-label="Togli">×</button></span></div>'; }).join("") : "";
+    $("sv-list").querySelectorAll("button.x").forEach(function (b) { b.onclick = function () { var x = sv[+this.getAttribute("data-i")]; v.svc = v.svc.filter(function (y) { return y !== x; }); persist(); renderAll(); }; });
+    $("fl-add").onclick = function () {
+      var l = pnum($("fl-l").value), e = pnum($("fl-e").value), km = pnum($("fl-k").value);
+      if (!(l > 0) || !(e > 0)) { toast("Scrivi litri e totale"); return; }
+      v.fills = (v.fills || []).concat([{ d: TODAY_KEY, l: l, e: e, km: km > 0 ? km : 0 }]).filter(function (x) { return true; });
+      if ($("fl-x").checked && !pending) { var list = (S.spent[S.monthKey] || []).slice(); list.push({ id: S.nextId++, amount: e, cat: "carb", note: "Rifornimento " + vehLabel(v), date: new Date().toISOString() }); S.spent[S.monthKey] = list; }
+      ["fl-l", "fl-e", "fl-k"].forEach(function (id) { $(id).value = ""; }); persist(); renderAll(); toast("Rifornimento salvato ✓");
+    };
+    $("sv-add").onclick = function () {
+      var n = $("sv-n").value.trim().slice(0, 40), e = pnum($("sv-e").value), km = pnum($("sv-k").value), d = $("sv-d").value || TODAY_KEY;
+      if (!n) { toast("Scrivi cosa hai fatto"); return; }
+      v.svc = (v.svc || []).concat([{ d: d, n: n, e: e > 0 ? e : 0, km: km > 0 ? km : 0 }]);
+      if ($("sv-x").checked && e > 0 && !pending) { var list = (S.spent[S.monthKey] || []).slice(); list.push({ id: S.nextId++, amount: e, cat: "altro", note: n + " " + vehLabel(v), date: new Date(d + "T12:00:00").toISOString() }); S.spent[S.monthKey] = list; }
+      ["sv-n", "sv-e", "sv-k", "sv-d"].forEach(function (id) { $(id).value = ""; }); persist(); renderAll(); toast("Intervento salvato ✓");
+    };
+  }
   var CHANGELOG = [
-    { id: "2026-11-17j", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-17k", date: "17 novembre · nuovo", items: [
+      ["Scadenze delle auto", "In Altro → I miei veicoli vedi le prossime scadenze con i giorni che mancano. Con le notifiche attive ti avviso 30 e 7 giorni prima."],
+      ["Costo al chilometro", "Scrivi quanti km fai in un anno e vedi quanto ti costa ogni chilometro."],
+      ["Rifornimenti e consumo", "Segna il pieno (litri, euro, km): l'app calcola quanto consuma davvero l'auto."],
+      ["Storico interventi", "Tagliandi, gomme e riparazioni restano segnati con data, km e costo."],
+      ["Libretto con la foto", "Fotografa il libretto: l'app prova a leggere potenza, classe Euro e data. Controlla sempre i dati."],
+      ["Più notifiche", "Avviso prima delle scadenze (anche spese fisse), riepilogo della domenica, avviso all'80% del budget e orari tranquilli."]
+    ] },
+    { id: "2026-11-17j", date: "17 novembre", items: [
       ["Spesa a voce", "In Spese → Segna tocca “Parla” e di’: “dodici euro benzina”. L'app scrive importo, categoria e nota (dove il telefono lo permette)."],
       ["Calcolatrice nell'importo", "Scrivi 12+3,50 e vedi subito 15,50."],
       ["Come l'ultima volta", "Un tocco per rifare l'ultima spesa uguale."],
@@ -5135,7 +5265,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var eu = [0, 1, 2, 3, 4, 5, 6].map(function (n) { return '<option value="' + n + '"' + (+v.euro === n ? " selected" : "") + ">Euro " + n + "</option>"; }).join("");
     var mo = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
     var ms = function (cur) { return mo.map(function (m, i) { return '<option value="' + (i + 1) + '"' + (+cur === i + 1 ? " selected" : "") + ">" + m + "</option>"; }).join(""); };
-    f.innerHTML = '<label class="f">Marca<select class="v-brand">' + br + '</select></label><label class="f">Modello<input type="text" class="v-model" maxlength="30" placeholder="Es. Panda" value="' + esc(v.model || "") + '"></label>'
+    f.innerHTML = '<div class="pch"><button type="button" class="v-scan">📷 Leggi il libretto</button><input type="file" class="v-scanf" accept="image/*" capture="environment" hidden></div><label class="f">Marca<select class="v-brand">' + br + '</select></label><label class="f">Modello<input type="text" class="v-model" maxlength="30" placeholder="Es. Panda" value="' + esc(v.model || "") + '"></label>'
       + '<div class="fields"><label class="f">Alimentazione<select class="v-fuel">' + fu + '</select></label><label class="f v-euro-l">Classe Euro<select class="v-euro">' + eu + "</select></label></div>"
       + '<div class="fields"><label class="f">Potenza (kW)<input type="text" inputmode="decimal" class="v-kw" value="' + txt(v.kw || "") + '"><span class="help">Sul libretto, voce P.2</span></label><label class="f">Immatricolata a<input type="month" class="v-reg" value="' + esc(v.reg || "") + '"></label></div>'
       + '<div class="est" id="v-est"></div>'
@@ -5143,25 +5273,38 @@ create policy "solo i miei dati" on stipendio_pilota
       + "<h3>Assicurazione</h3>" + '<div class="fields"><label class="f">Importo (€)<input type="text" inputmode="decimal" class="v-ins" value="' + txt(v.ins || "") + '"></label><label class="f">Si paga<select class="v-ie"><option value="anno"' + (v.insEvery !== "mese" && v.insEvery !== "sem" ? " selected" : "") + '>Ogni anno</option><option value="sem"' + (v.insEvery === "sem" ? " selected" : "") + '>Ogni 6 mesi</option><option value="mese"' + (v.insEvery === "mese" ? " selected" : "") + ">Ogni mese</option></select></label></div>"
       + '<label class="f v-im-l">Prossima scadenza (mese)<select class="v-im">' + ms(v.insM) + "</select></label>"
       + "<h3>Revisione, tagliando e consumo</h3>" + '<label class="f">Prossima revisione<input type="date" class="v-rev" value="' + esc(v.rev || "") + '"><span class="help">Si fa ogni 2 anni. Costo ufficiale circa 80 €.</span></label>'
-      + '<div class="fields"><label class="f">Tagliando, all\'anno (€)<input type="text" inputmode="decimal" class="v-tag" value="' + txt(v.tag || "") + '"></label><label class="f">Consumo (km/l)<input type="text" inputmode="decimal" class="v-kml" value="' + txt(v.kml || "") + '"></label></div>';
+      + '<div class="fields"><label class="f">Tagliando, all\'anno (€)<input type="text" inputmode="decimal" class="v-tag" value="' + txt(v.tag || "") + '"></label><label class="f">Consumo (km/l)<input type="text" inputmode="decimal" class="v-kml" value="' + txt(v.kml || "") + '"></label></div>'
+      + '<label class="f">Km che fai in un anno<input type="text" inputmode="decimal" class="v-kmy" value="' + txt(v.kmy || "") + '"><span class="help">Serve per calcolare il costo di ogni chilometro.</span></label>';
     return f;
   }
   function vehRead(f, id) {
     var g = function (c) { return f.querySelector(c).value; }, n = function (c) { var x = pnum(g(c)); return isNaN(x) || x < 0 ? 0 : x; };
     var reg = g(".v-reg"), bm = +g(".v-bm") || 1;
-    return { id: id, brand: g(".v-brand"), model: g(".v-model").trim().slice(0, 30), fuel: g(".v-fuel"), euro: +g(".v-euro"), kw: Math.min(1000, n(".v-kw")), reg: /^\d{4}-\d{2}$/.test(reg) ? reg : "", bolloMan: n(".v-bman"), bolloM: bm, ins: n(".v-ins"), insEvery: g(".v-ie"), insM: +g(".v-im") || 1, rev: g(".v-rev"), tag: n(".v-tag"), kml: Math.min(60, n(".v-kml")) };
+    return { id: id, brand: g(".v-brand"), model: g(".v-model").trim().slice(0, 30), fuel: g(".v-fuel"), euro: +g(".v-euro"), kw: Math.min(1000, n(".v-kw")), reg: /^\d{4}-\d{2}$/.test(reg) ? reg : "", bolloMan: n(".v-bman"), bolloM: bm, ins: n(".v-ins"), insEvery: g(".v-ie"), insM: +g(".v-im") || 1, rev: g(".v-rev"), tag: n(".v-tag"), kml: Math.min(60, n(".v-kml")), kmy: Math.min(200000, n(".v-kmy")) };
   }
   function vehWire(f, id) {
     function upd() {
       var v = vehRead(f, id); f.querySelector(".v-euro-l").hidden = v.fuel === "elettrica"; f.querySelector(".v-im-l").hidden = v.insEvery === "mese";
       var c = bolloCalc(v), est = f.querySelector("#v-est");
-      est.innerHTML = v.kw > 0 ? "Bollo stimato: <b>" + eur2.format(c) + "</b> all'anno" + (v.bolloMan > 0 ? " · uso i tuoi <b>" + eur2.format(v.bolloMan) + "</b>" : "") + ". Da parte ogni mese: <b>" + eur2.format(vehParts(v).reduce(function (a, p) { return a + p[1]; }, 0)) + "</b>." : "Scrivi i kW per calcolare il bollo.";
+      est.innerHTML = v.kw > 0 ? "Bollo stimato: <b>" + eur2.format(c) + "</b> all'anno" + (v.bolloMan > 0 ? " · uso i tuoi <b>" + eur2.format(v.bolloMan) + "</b>" : "") + ". Da parte ogni mese: <b>" + eur2.format(vehParts(v).reduce(function (a, p) { return a + p[1]; }, 0)) + "</b>." + (costKm(v) ? " Costo al km: <b>" + eur2.format(costKm(v)) + "</b>." : "") : "Scrivi i kW per calcolare il bollo.";
     }
     f.addEventListener("input", upd); f.addEventListener("change", function () {
       var r = f.querySelector(".v-reg").value, bm = f.querySelector(".v-bm"); if (r && !f._bm) { var m = +r.split("-")[1] % 12 + 1; bm.value = String(m); }
       upd();
     });
     f.querySelector(".v-bm").addEventListener("change", function () { f._bm = 1; });
+    f.querySelector(".v-scan").onclick = function () { f.querySelector(".v-scanf").click(); };
+    f.querySelector(".v-scanf").onchange = function () {
+      var file = this.files[0]; this.value = ""; if (!file) return; toast("Leggo il libretto… può volerci qualche secondo");
+      ocrFile(file).then(function (t) {
+        var r = parseLibretto(t), got = [];
+        if (r.kw) { f.querySelector(".v-kw").value = String(r.kw).replace(".", ","); got.push("potenza"); }
+        if (r.euro !== null) { f.querySelector(".v-euro").value = String(r.euro); got.push("classe Euro"); }
+        if (r.reg) { f.querySelector(".v-reg").value = r.reg; got.push("data di immatricolazione"); }
+        if (r.fuel) { f.querySelector(".v-fuel").value = r.fuel; got.push("alimentazione"); }
+        upd(); toast(got.length ? "Ho letto: " + got.join(", ") + ". Controlla che sia tutto giusto." : "Non riesco a leggere i dati: compilali tu");
+      }).catch(function () { toast("Lettura non riuscita (serve internet la prima volta)"); });
+    };
     upd();
   }
   function openVeh(row, v, isNew) {
@@ -5174,7 +5317,7 @@ create policy "solo i miei dati" on stipendio_pilota
     f.appendChild(b);
     b.querySelector(".vc").onclick = function () { f.remove(); };
     b.querySelector(".vs").onclick = function () {
-      var o = vehRead(f, v.id); if (!o.brand && !o.model) { toast("Scegli la marca o scrivi il modello"); return; }
+      var o = Object.assign({}, v, vehRead(f, v.id)); if (!o.brand && !o.model) { toast("Scegli la marca o scrivi il modello"); return; }
       if (isNew) S.veh = S.veh.concat([o]); else S.veh = S.veh.map(function (x) { return x.id === v.id ? o : x; });
       syncVeh(); persist(); renderAll(); renderVeh(); toast("Salvato ✓ Entra nel piano del mese");
     };
@@ -5188,11 +5331,12 @@ create policy "solo i miei dati" on stipendio_pilota
       ps.forEach(function (p) { var l = lines.filter(function (x) { return x[0] === p[0]; })[0]; if (l) l[1] += p[1]; else lines.push([p[0], p[1]]); });
       var row = document.createElement("button"); row.type = "button"; row.className = "vrow";
       var fl = { benzina: "Benzina", diesel: "Diesel", gpl: "GPL", metano: "Metano", ibrida: "Ibrida", elettrica: "Elettrica" }[v.fuel] || "";
-      row.innerHTML = vehLogo(v) + "<span><b>" + esc(vehLabel(v)) + "</b><small>" + [fl, v.kw > 0 ? v.kw + " kW" : "", v.fuel !== "elettrica" ? "Euro " + v.euro : ""].filter(Boolean).join(" · ") + (bolloAmount(v) > 0 ? " · bollo " + eur.format(bolloAmount(v)) : "") + '</small></span><span class="num">' + eur.format(Math.round(m)) + "/mese</span>";
+      row.innerHTML = vehLogo(v) + "<span><b>" + esc(vehLabel(v)) + "</b><small>" + [fl, v.kw > 0 ? v.kw + " kW" : "", v.fuel !== "elettrica" ? "Euro " + v.euro : ""].filter(Boolean).join(" · ") + (costKm(v) > 0 ? " · " + eur2.format(costKm(v)) + " al km" : "") + (bolloAmount(v) > 0 ? " · bollo " + eur.format(bolloAmount(v)) : "") + '</small></span><span class="num">' + eur.format(Math.round(m)) + "/mese</span>";
       row.onclick = function () { openVeh(row, v, false); };
       box.appendChild(row);
     });
     if (!(S.veh || []).length) box.innerHTML = '<p class="empty">Nessun veicolo. Aggiungi la tua auto per avere bollo e costi calcolati.</p>';
+    renderVehDue(); renderFill();
     var sm = $("veh-sum"); sm.innerHTML = tot > 0 ? '<span class="small muted">Da mettere da parte ogni mese</span><span class="vtot">' + eur2.format(tot) + "</span>" + lines.map(function (l) { return '<div class="vln"><span>' + esc(l[0]) + '</span><span class="num">' + eur2.format(l[1]) + "</span></div>"; }).join("") : '<span class="small muted">Ancora nessun costo calcolato.</span>';
   }
   $("veh-add").onclick = function () { openVeh(null, { id: "v" + (S.nextId++), brand: "", model: "", fuel: "benzina", euro: 6, kw: 0, reg: "", bolloM: 1, ins: 0, insEvery: "anno", insM: 1, rev: "", tag: 0, kml: 0, bolloMan: 0 }, true); };
