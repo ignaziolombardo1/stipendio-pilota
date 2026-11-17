@@ -548,6 +548,9 @@ details.shp summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
 .pctchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pctchips button { padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
 .pctchips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.icpick { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: end; }
+.icpick .ico { margin-bottom: 8px; }
+.entry.wi { grid-template-columns: 30px minmax(0, 1fr) auto auto auto; }
 .wkshift { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; padding: 4px 0; }
 .wkshift span { font-weight: 700; font-size: 14px; }
 .wkshift select { padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; }
@@ -1605,7 +1608,7 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!Array.isArray(S.contacts)) S.contacts = [];
     if (!S.conf || typeof S.conf !== "object") S.conf = {};
     S.fixedList = S.fixedList.filter(function (f) { return f && typeof f === "object"; }).map(function (f) {
-      return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "" });
+      return Object.assign({}, f, { kind: f.kind === "loan" || f.kind === "casa" ? f.kind : (f.id === "rent" ? "casa" : "fix"), end: /^\d{4}-\d{2}$/.test(f.end || "") ? f.end : "", ic: typeof f.ic === "string" ? f.ic.slice(0, 12) : "" });
     });
   }
   migrate(typeof st !== "undefined" ? st : null);
@@ -1631,12 +1634,32 @@ create policy "solo i miei dati" on stipendio_pilota
     road: '<path d="M7 21L9.5 3M17 21L14.5 3M12 6v3M12 12v3M12 18v3"/>', fuel: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/><path d="M6 8h6"/>',
     cart: '<path d="M3 4h2l2.4 11h9.2L19 7H6.2"/><circle cx="9" cy="20" r="1"/><circle cx="17" cy="20" r="1"/>', smile: '<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.5 2.300 2 4 2s3-.5 4-2M9 9.500v.5M15 9.500v.5"/>',
     lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', trend: '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>', cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-    tag: '<path d="M3 12V4h8l10 10-8 8z"/><path d="M7.500 7.500h.01"/>'
+    tag: '<path d="M3 12V4h8l10 10-8 8z"/><path d="M7.500 7.500h.01"/>',
+    tv: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>', phone: '<rect x="7" y="2.500" width="10" height="19" rx="2"/><path d="M11 18h2"/>',
+    wifi: '<path d="M2.500 9a15 15 0 0 1 19 0M5.500 12.500a10.500 10.500 0 0 1 13 0M8.500 16a6 6 0 0 1 7 0"/><path d="M12 19.500h.01"/>', bulb: '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.500 10.900c.700.600 1 1.300 1 2.100h5c0-.800.300-1.500 1-2.100A6 6 0 0 0 12 3z"/>',
+    drop: '<path d="M12 3c3.500 4.500 6 7.500 6 11a6 6 0 0 1-12 0c0-3.500 2.500-6.500 6-11z"/>', flame: '<path d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3.500 2.500-4.500 0 1.500.500 2.500 1.500 3 0-3 .500-5.500 1-8.500z"/>',
+    car: '<path d="M5 16l1.500-5.500A2 2 0 0 1 8.400 9h7.200a2 2 0 0 1 1.900 1.500L19 16"/><rect x="3" y="16" width="18" height="4" rx="1.500"/><path d="M7 18h.01M17 18h.01"/>',
+    gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.900 4.900l2.100 2.100M17 17l2.100 2.100M4.900 19.100L7 17M17 7l2.100-2.100"/>', cross: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
+    gym: '<path d="M6.500 6.500v11M17.500 6.500v11M3.500 9v6M20.500 9v6M6.500 12h11"/>', book: '<path d="M4 5.500A2.500 2.500 0 0 1 6.500 3H20v16H6.500A2.500 2.500 0 0 0 4 21.500z"/><path d="M4 19h16"/>',
+    gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8c-2-3.500-6-3-5 0 .600 1.500 3 1 5 0zM12 8c2-3.500 6-3 5 0-.600 1.500-3 1-5 0z"/>',
+    plane: '<path d="M21 3L3 10l7 3 3 7z"/><path d="M10 13l11-10"/>', paw: '<circle cx="7" cy="10" r="1.800"/><circle cx="17" cy="10" r="1.800"/><circle cx="10.500" cy="6" r="1.800"/><circle cx="13.500" cy="6" r="1.800"/><path d="M12 12c-3 0-5 3-5 5 0 1.500 1.500 2 3 1.500 1-.300 1.500-.500 2-.500s1 .200 2 .500c1.500.500 3 0 3-1.500 0-2-2-5-5-5z"/>',
+    coffee: '<path d="M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.500a2.500 2.500 0 0 1 0 5H17M7 3v2M11 3v2M15 3v2"/>', shirt: '<path d="M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z"/>',
+    card: '<rect x="2.500" y="5" width="19" height="14" rx="2"/><path d="M2.500 10h19M6 15h4"/>', bank: '<path d="M3 9l9-5 9 5M5 9v9M10 9v9M14 9v9M19 9v9M3 20h18"/>',
+    music: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', bus: '<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 21v-4M16 21v-4M8 14h.01M16 14h.01"/>'
   };
+  var ICON_OPTS = [["", "Automatica"], ["home", "Casa"], ["bolt", "Energia"], ["bulb", "Luce"], ["flame", "Gas"], ["drop", "Acqua"], ["wifi", "Internet"], ["phone", "Telefono"], ["tv", "Streaming e TV"], ["music", "Musica"], ["gym", "Palestra e sport"], ["shield", "Assicurazione"], ["car", "Auto"], ["fuel", "Carburante"], ["gear", "Manutenzione"], ["bus", "Trasporti"], ["cross", "Salute"], ["book", "Scuola e corsi"], ["gift", "Regali"], ["plane", "Viaggi"], ["paw", "Animali"], ["coffee", "Bar e ristoranti"], ["shirt", "Vestiti"], ["card", "Rate e carte"], ["bank", "Tasse"], ["cart", "Spesa"], ["smile", "Svago"], ["tag", "Altro"]];
   function iconKey(n) {
     n = String(n).toLowerCase();
-    return /affitto|mutuo|casa/.test(n) ? "home" : /bollett|abbon|netflix|telefon|luce|gas|internet/.test(n) ? "bolt" : /assicur/.test(n) ? "shield" : /pedaggio|casello|biglietto/.test(n) ? "road" : /benzina|diesel|carburante/.test(n) ? "fuel"
-      : /spesa alimentare|spesa/.test(n) ? "cart" : /tempo libero|svago/.test(n) ? "smile" : /da parte|risparmio/.test(n) ? "lock" : /investiment/.test(n) ? "trend" : /annual/.test(n) ? "cal" : "tag";
+    var R = [[/affitto|mutuo|condomini|casa\b/, "home"], [/netflix|disney|prime|dazn|sky|streaming|tv\b|televis|canone rai|youtube|now tv/, "tv"], [/spotify|musica|apple music|deezer/, "music"], [/internet|fibra|wifi|adsl/, "wifi"], [/telefon|cellulare|sim\b|ricaric|tim\b|vodafone|iliad|windtre|ho\.? mobile/, "phone"], [/luce|elettric|enel|energia/, "bulb"], [/\bgas\b|metano|caldaia/, "flame"], [/acqua|idric/, "drop"], [/bolletta|bollette|abbon/, "bolt"], [/assicur|polizza|unipol|generali/, "shield"], [/palestra|fitness|piscina|sport|yoga|crossfit/, "gym"], [/pedaggio|casello|autostrad|telepass/, "road"], [/benzina|diesel|carburante|gpl|rifornimento/, "fuel"], [/bollo|revisione|meccanic|tagliando|gomme|officina|manutenz/, "gear"], [/auto\b|macchina|parcheggio|garage|rca/, "car"], [/bus\b|treno|metro|trasporti|biglietto|autobus|taxi/, "bus"], [/farmaci|medic|dentist|salute|visita|ticket|oculist|psicolog|analisi/, "cross"], [/scuola|corso|universit|libri|tasse univ|retta/, "book"], [/regal|natale|compleann/, "gift"], [/viagg|vacanz|volo|hotel|booking|airbnb|ferie/, "plane"], [/cane|gatto|animal|veterin|crocchett/, "paw"], [/ristorant|pizz|bar\b|caff|aperitiv|sushi|cena|pranzo|mcdonald|colazione/, "coffee"], [/vestit|abbigliament|scarpe|zara|h&m|shopping/, "shirt"], [/rata|finanziament|prestito|carta|paypal|klarna|scalapay/, "card"], [/tass|imu|tari|irpef|f24|commercialista|730/, "bank"], [/spesa alimentare|spesa|supermerc|coop|conad|lidl|esselunga|carrefour|eurospin|mercato/, "cart"], [/tempo libero|svago|cinema|giochi|hobby|uscit/, "smile"], [/da parte|risparmio|fondo/, "lock"], [/investiment|etf|azioni/, "trend"], [/annual/, "cal"]];
+    for (var i = 0; i < R.length; i++) if (R[i][0].test(n)) return R[i][1];
+    return "tag";
+  }
+  function iconFor(name, ic) {
+    if (ic && ICONS[ic]) return ic;
+    var q = String(name).trim().toLowerCase(), f = S.fixedList.filter(function (x) { return x.name.trim().toLowerCase() === q; })[0];
+    if (f && f.ic && ICONS[f.ic]) return f.ic;
+    var a = S.annual.filter(function (x) { return x.name.trim().toLowerCase() === q; })[0];
+    return a && a.ic && ICONS[a.ic] ? a.ic : iconKey(name);
   }
   function iconSvg(k) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[k] || ICONS.tag) + "</svg>"; }
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
@@ -1801,7 +1824,7 @@ create policy "solo i miei dati" on stipendio_pilota
     meta.forEach(function (g) {
       html += '<div class="group"><div class="group-title">' + g[0] + "</div>";
       g[1].forEach(function (r, i) {
-        html += '<div class="row"><span class="ico" style="--c:' + g[2][i] + '">' + iconSvg(iconKey(r[0])) + '</span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
+        html += '<div class="row"><span class="ico" style="--c:' + g[2][i] + '">' + iconSvg(iconFor(r[0])) + '</span><div class="rtxt"><b>' + esc(r[0]) + "</b><small>" + esc(r[1]) + '</small></div><div class="ramt"><b class="num">' + eur.format(r[2]) + '</b><small class="num">' + pc(r[2]) + "</small></div></div>";
         segs.push([r[2], g[2][i]]);
       });
       html += "</div>";
@@ -1949,8 +1972,8 @@ create policy "solo i miei dati" on stipendio_pilota
     list.forEach(function (e) {
       var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3];
       var d = new Date(e.date);
-      var row = document.createElement("div"); row.className = "entry e4";
-      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x ed" aria-label="Modifica spesa">✎</button><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      var row = document.createElement("div"); row.className = "entry e4 wi";
+      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note ? iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name) : iconKey(cat.name)) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + " · " + dfDay.format(d) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><button type="button" class="x ed" aria-label="Modifica spesa">✎</button><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
       row.querySelector(".del").onclick = function () {
         S.spent[S.monthKey] = (S.spent[S.monthKey] || []).filter(function (x) { return x.id !== e.id; });
         if (editId === e.id) resetExpForm();
@@ -1967,7 +1990,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.45";
+  var APP_VERSION = "2026-11-17.46";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2342,6 +2365,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     h += '<label class="f">Giorno del mese<input type="text" class="fx-due" inputmode="numeric" autocomplete="off" value="' + f.due + '"></label></div>';
     if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
+    if (kind !== "casa") h += '<div class="icpick"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(iconFor(f.name, f.ic)) + '</span><label class="f">Icona<select class="fx-ic">' + ICON_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + ((f.ic || "") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
     h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     d.innerHTML = h;
@@ -2364,7 +2388,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var kind = d.getAttribute("data-kind"), amt = pnum(d.querySelector(".fx-amt").value), due = pnum(d.querySelector(".fx-due").value);
       var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
       var nm = d.querySelector(".fx-name");
-      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked });
+      out.push({ id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
     });
     return out;
   }
@@ -2777,7 +2801,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var pct = a.amount > 0 ? Math.min(100, a.saved / a.amount * 100) : 0, base = a.amount / 12, ml = annMonthsLeft(a), left = Math.max(0, a.amount - a.saved), dep = annDep(a, CUR);
       var line2 = "Linea base " + eur.format(Math.round(base)) + " al mese" + (a.due && left > 0 ? " · per arrivare in tempo " + eur.format(Math.ceil(left / ml)) + " al mese" : "");
       var row = document.createElement("div"); row.className = "ann";
-      row.innerHTML = '<div class="line"><b>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
+      row.innerHTML = '<div class="line"><b style="display:flex;align-items:center;gap:8px"><span class="ico sm" style="--c:var(--c-save)">' + iconSvg(iconFor(a.name, a.ic)) + '</span>' + esc(a.name) + '</b><span class="num">' + eur.format(a.amount) + '</span></div>' +
         '<p class="small muted">' + (a.due ? "Scade il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", year: "numeric" }).format(dOf(a.due)) + " · " + (ml <= 1 ? "entro un mese" : "tra " + ml + " mesi") : "Nessuna scadenza indicata") + "</p>" +
         '<div class="meter blue" role="progressbar" aria-label="' + esc(a.name) + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(pct) + '"><div style="width:' + pct + '%"></div></div>' +
         '<p class="small">Messi da parte ' + eur.format(a.saved) + " su " + eur.format(a.amount) + (left > 0 ? " · mancano " + eur.format(left) : " · pronti ✓") + "</p>" +
@@ -3788,8 +3812,8 @@ create policy "solo i miei dati" on stipendio_pilota
     box.innerHTML = '<h3 style="margin:0 0 6px;font-size:15px">' + WDN[dobj.getDay()] + " " + dobj.getDate() + " " + mnameD(dobj) + (tot > 0 ? " · " + eur2.format(tot) : "") + "</h3>";
     if (!dl.length) box.insertAdjacentHTML("beforeend", '<p class="empty">Nessuna spesa in questo giorno.</p>');
     dl.forEach(function (e) {
-      var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3], row = document.createElement("div"); row.className = "entry e4";
-      row.innerHTML = '<div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><span></span><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
+      var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3], row = document.createElement("div"); row.className = "entry e4 wi";
+      row.innerHTML = '<span class="ico sm" style="--c:' + cat.color + '">' + iconSvg(e.note && iconKey(e.note) !== "tag" ? iconKey(e.note) : iconKey(cat.name)) + '</span><div class="t">' + esc(e.note || cat.name) + "<small>" + esc(cat.name) + '</small></div><b class="num">' + eur2.format(e.amount) + '</b><span></span><button type="button" class="x del" aria-label="Elimina spesa">×</button>';
       row.querySelector(".del").onclick = function () {
         var mk = S.monthKey; S.spent[mk] = (S.spent[mk] || []).filter(function (x) { return x.id !== e.id; }); persist(); renderAll();
         toast("Spesa eliminata", "Annulla", function () { S.spent[mk] = (S.spent[mk] || []).concat([e]); persist(); renderAll(); });
