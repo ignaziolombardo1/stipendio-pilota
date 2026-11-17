@@ -384,6 +384,13 @@ html[data-simple="1"] #xmas, html[data-simple="1"] #howgo, html[data-simple="1"]
 .newsov[hidden] { display: none; }
 .newsbox { width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto; background: var(--surface); border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom, 0px)); }
 .newsbox h2 { margin: 0 0 12px; }
+@media (max-width: 440px) { .page .top { gap: 8px; } .page .top .name { font-size: 16px; } .page .top .month { font-size: 12px; } .page .top .newsbtn { margin-left: 0; width: 36px; height: 36px; } }
+.srchres { margin-top: 10px; }
+.srchres h3 { margin: 14px 0 4px; font-size: 14px; color: var(--muted); }
+.srchres button.sr { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; width: 100%; text-align: left; padding: 11px 4px; border: 0; border-bottom: 1px solid var(--line, #0001); background: none; color: inherit; font: inherit; cursor: pointer; }
+.srchres small { color: var(--muted); display: block; }
+.todaybig { margin: 2px 0 6px; font-size: 15px; } .todaybig b { display: block; font-size: 36px; line-height: 1.1; letter-spacing: -.5px; }
+.todaybig.bad b { color: var(--bad, #c0392b); }
 .nw { padding: 10px 0; border-bottom: 1px solid var(--line); }
 .nw b { display: block; font-size: 15px; }
 .nw span { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
@@ -700,9 +707,11 @@ html, body { touch-action: pan-x pan-y; }
     <svg class="mark" viewBox="0 0 512 512" aria-hidden="true"><defs><linearGradient id="gm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12443f"/><stop offset="1" stop-color="#071a18"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#gm)"/><g fill="none" stroke-width="48" stroke-linecap="round" transform="rotate(-90 256 256)"><circle cx="256" cy="256" r="140" stroke="#7d8ca6" stroke-dasharray="202.4 677.25" stroke-dashoffset="-31"/><circle cx="256" cy="256" r="140" stroke="#e3a336" stroke-dasharray="157.9 721.75" stroke-dashoffset="-295"/><circle cx="256" cy="256" r="140" stroke="#d4608f" stroke-dasharray="25.96 853.69" stroke-dashoffset="-514.9"/><circle cx="256" cy="256" r="140" stroke="#4a82e0" stroke-dasharray="25.96 853.69" stroke-dashoffset="-602.9"/><circle cx="256" cy="256" r="140" stroke="#2fd4bb" stroke-dasharray="157.9 721.75" stroke-dashoffset="-690.9"/></g><g fill="none" stroke="#f1fbf8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><path d="M196 300 L238 258 L266 286 L322 226"/><path d="M290 226 H322 V258"/></g></svg>
     <span class="name">Stipendio Pilota</span>
     <span class="month" id="month"></span>
+    <button type="button" class="newsbtn" id="srch-btn" aria-label="Cerca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button type="button" class="newsbtn" id="news-btn" aria-label="Novità dell'app"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.6L18.5 10.5 12.9 12.4 11 18l-1.9-5.6L3.5 10.5 9.1 8.6z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><i class="ndot" id="news-dot" hidden></i></button>
   </div>
 
+    <div class="newsov" id="srch" hidden role="dialog" aria-modal="true" aria-label="Cerca"><div class="newsbox"><div class="line"><input id="srch-q" type="search" placeholder="Cerca una spesa, una voce, un veicolo…" autocomplete="off" style="flex:1"><button type="button" class="primary" id="srch-ok">Chiudi</button></div><div id="srch-res" class="srchres"></div></div></div>
   <div class="subtabs" id="subtabs" hidden></div>
   <button type="button" class="fab" id="fab" aria-label="Segna una spesa" hidden>+</button>
   <div class="qs" id="qs" hidden>
@@ -2286,7 +2295,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.65";
+  var APP_VERSION = "2026-11-17.67";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3080,7 +3089,7 @@ create policy "solo i miei dati" on stipendio_pilota
       if (left > 0 && tot && el > 0) { var st2 = document.createElement("p"); st2.className = "small"; st2.innerHTML = g.saved + 1 >= exp ? "<b>In pari</b> con il programma." : "<b>Sei indietro di " + eur.format(Math.ceil(exp - g.saved)) + "</b> rispetto a dove dovresti essere oggi."; d.insertBefore(st2, d.querySelector(".addrow")); }
       if (left > 0) { var qb = document.createElement("button"); qb.type = "button"; qb.textContent = "Versa la quota del mese (" + eur.format(Math.ceil(per)) + ")"; qb.style.marginTop = "8px"; qb.onclick = function () { g.saved += Math.ceil(per); persist(); renderAll(); toast("Quota versata ✓"); }; d.appendChild(qb); }
       d.querySelector(".g-ic").onclick = function () { pickIcon(d, g.ic, g.name, function (v) { g.ic = v || ""; persist(); renderAll(); }); };
-      d.querySelector(".x").onclick = function () { S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); persist(); renderAll(); toast("Obiettivo eliminato"); };
+      d.querySelector(".x").onclick = function () { var old = S.goals.slice(); S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); persist(); renderAll(); toast("Obiettivo eliminato", "Annulla", function () { S.goals = old; persist(); renderAll(); }); };
       var inp = d.querySelector("input");
       d.querySelector(".addrow button").onclick = function () {
         var n = pnum(inp.value); if (!(n > 0)) { toast("Scrivi quanto versi"); inp.focus(); return; }
@@ -4611,7 +4620,36 @@ create policy "solo i miei dati" on stipendio_pilota
   var asT; function autoSave() { clearTimeout(asT); asT = setTimeout(function () { if (S.saved && !$("savebar").hidden) saveForm(true); }, 900); }
   var vp = $("v-profilo"); vp.addEventListener("input", autoSave); vp.addEventListener("change", autoSave); vp.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".fx-del,#fx-add,#ln-add,#bl-add,#sb-add,#bl-chips button,#bl-ops button,#sb-chips button,#rt-add,.rt-del")) autoSave(); });
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
+
+  function openSrch() { $("srch").hidden = false; $("srch-q").value = ""; doSrch(); setTimeout(function () { $("srch-q").focus(); }, 30); }
+  function closeSrch() { $("srch").hidden = true; }
+  function doSrch() {
+    var q = $("srch-q").value.trim().toLowerCase(), box = $("srch-res"); box.innerHTML = "";
+    if (q.length < 2) { box.innerHTML = '<p class="small muted">Scrivi almeno 2 lettere: cerco tra spese, spese fisse, veicoli, obiettivi e voci annuali.</p>'; return; }
+    var groups = [], qn = q.replace(",", ".");
+    function add(title, items) { if (items.length) groups.push([title, items.slice(0, 12)]); }
+    var sp = [];
+    Object.keys(S.spent).sort().reverse().forEach(function (k) { (S.spent[k] || []).forEach(function (e) {
+      var cat = CATS.filter(function (c) { return c.id === e.cat; })[0] || CATS[3], hay = ((e.note || "") + " " + cat.name).toLowerCase();
+      if (hay.indexOf(q) >= 0 || String(e.amount) === qn) sp.push([e.note || cat.name, new Date(e.date).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "numeric" }), eur2.format(e.amount), "#spese/giorni"]);
+    }); });
+    add("Spese", sp);
+    add("Spese fisse", (S.fixedList || []).filter(function (f) { return (f.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (f) { return [f.name, "Scade il " + f.due, eur2.format(f.amount), "#spese/fisse"]; }));
+    add("Voci annuali", (S.annual || []).filter(function (a) { return (a.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (a) { return [a.name, a.due || "", eur2.format(a.amount), "#spese/fisse"]; }));
+    add("Veicoli", (S.veh || []).filter(function (v) { return ((v.brand || "") + " " + (v.model || "") + " " + (v.reg || "")).toLowerCase().indexOf(q) >= 0; }).map(function (v) { return [(v.brand || "") + " " + (v.model || ""), v.reg || "", "", "#profilo/veicoli"]; }));
+    add("Obiettivi", (S.goals || []).filter(function (g) { return (g.name || "").toLowerCase().indexOf(q) >= 0; }).map(function (g) { return [g.name, "", eur2.format(g.saved || 0), "#piano/obiettivi"]; }));
+    if (!groups.length) { box.innerHTML = '<p class="small muted">Nessun risultato per “' + esc(q) + '”.</p>'; return; }
+    groups.forEach(function (g) {
+      var h = document.createElement("h3"); h.textContent = g[0]; box.appendChild(h);
+      g[1].forEach(function (r) { var b = document.createElement("button"); b.type = "button"; b.className = "sr"; b.innerHTML = "<span>" + esc(r[0]) + "<small>" + esc(r[1]) + "</small></span><b>" + esc(r[2]) + "</b>"; b.onclick = function () { closeSrch(); location.hash = r[3]; }; box.appendChild(b); });
+    });
+  }
+  $("srch-btn").onclick = openSrch; $("srch-ok").onclick = closeSrch; $("srch-q").oninput = doSrch; $("srch").onclick = function (e) { if (e.target === this) closeSrch(); };
   var CHANGELOG = [
+    { id: "2026-11-17d", date: "17 novembre · nuovo", items: [
+      ["Cerca", "Tocca la lente in alto per trovare una spesa, una voce fissa, un veicolo o un obiettivo."],
+      ["Annulla anche sugli obiettivi", "Se elimini un obiettivo per sbaglio, tocca Annulla."]
+    ] },
     { id: "2026-11-17c", date: "17 novembre · nuovo", items: [
       ["Home trascinabile", "Su Home tocca \"Modifica questa pagina\": trascini i blocchi per spostarli e li mostri o nascondi con un interruttore."],
       ["Logo a tua scelta", "Tocca l'icona di una voce: cerca il logo dal sito, carica un'immagine tua o togli il logo."],
