@@ -588,6 +588,17 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .menu a b { font-family: var(--font-head); font-size: 16px; }
 .menu a small { color: var(--muted); font-size: 13px; }
 .menu a::after { content: "›"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%); font-size: 26px; color: var(--muted); }
+.ico:has(svg[data-k="work"]) { --c: #0ea5e9 !important; }
+.ico:has(svg[data-k="pie"]) { --c: #8b5cf6 !important; }
+.ico:has(svg[data-k="wallet"]) { --c: #f97316 !important; }
+.ico:has(svg[data-k="user"]) { --c: #4f7cff !important; }
+.ico:has(svg[data-k="users"]) { --c: #ec4899 !important; }
+.ico:has(svg[data-k="sliders"]) { --c: #64748b !important; }
+.ico:has(svg[data-k="folder"]) { --c: #f59e0b !important; }
+.ico:has(svg[data-k="clock"]) { --c: #14b8a6 !important; }
+.menu a.mi { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 14px; row-gap: 0; align-items: center; padding-left: 14px; }
+.menu a.mi .ico { grid-row: 1 / span 2; width: 44px; height: 44px; border-radius: 14px; }
+.menu a.mi .ico svg { width: 22px; height: 22px; }
 .menu a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Home essenziale: il cerchio e due tasti, il resto sta nelle schede sotto */
 .hero .chips2, .hero #hm-day, .hero #hm-due, .hero #hm-ev, .hero #hm-fix { display: none !important; }
@@ -1791,6 +1802,7 @@ create policy "solo i miei dati" on stipendio_pilota
 
   /* ---------- calcolo ---------- */
   var ICONS = {
+    work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>', pie: '<path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/>', wallet: '<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>', user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>', sliders: '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>', folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
     game: '<path d="M7 6h10a4 4 0 0 1 4 4v4a3 3 0 0 1-5.2 2L14 14h-4l-1.8 2A3 3 0 0 1 3 14v-4a4 4 0 0 1 4-4z"/><path d="M7 10v4M5 12h4M16 11h.01M18.5 13h.01"/>', play: '<rect x="3" y="5" width="18" height="14" rx="3.5"/><path d="M10.2 9.4v5.2l4.4-2.6z"/>', spark: '<path d="M11 3l1.9 5.6L18.5 10.5 12.9 12.4 11 18l-1.9-5.6L3.5 10.5 9.1 8.6z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/>', cloud: '<path d="M7.5 18.5a4.5 4.5 0 0 1-.7-8.95A6 6 0 0 1 18 10.5a4 4 0 0 1-.5 8z"/>', bag: '<path d="M5 8h14l-1.1 12.2a1 1 0 0 1-1 .8H7.1a1 1 0 0 1-1-.8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
     home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>', bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>', shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',
     road: '<path d="M7 21L9.5 3M17 21L14.5 3M12 6v3M12 12v3M12 18v3"/>', fuel: '<path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3"/><path d="M6 8h6"/>',
@@ -2217,7 +2229,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.60";
+  var APP_VERSION = "2026-11-17.61";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4524,7 +4536,9 @@ create policy "solo i miei dati" on stipendio_pilota
   document.querySelectorAll("#fix-addrow button").forEach(function (b) { b.onclick = function () { var k = this.getAttribute("data-k"); openFxEdit(null, { id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: k, end: "", ic: "" }, true); }; });
   var CHANGELOG = [
     { id: "2026-11-17b", date: "17 novembre · nuovo", items: [
-      ["Loghi dei gestori", "TIM, Vodafone, WindTre, Iliad, Fastweb, Poste Mobile e altri hanno il loro logo. Li trovi come tasti rapidi nelle Bollette."],
+      ["Assicurazione ogni 6 mesi", "Nei veicoli puoi scegliere se la paghi ogni mese, ogni 6 mesi o ogni anno."],
+      ["Icone nel menu Altro", "Ogni voce ha la sua icona colorata."],
+      ["Loghi dei gestori", "TIM, Vodafone, WindTre, Iliad, Fastweb, Poste Mobile, 1Mobile e altri hanno il loro logo. Li trovi come tasti rapidi nelle Bollette."],
       ["I miei veicoli", "In Altro → I miei veicoli inserisci la tua auto con marca e logo. Calcolo il bollo da kW e classe Euro."],
       ["Costi dell'auto nel piano", "Bollo, assicurazione, revisione e tagliando vengono messi da parte ogni mese, da soli. Il consumo che scrivi aggiorna il carburante."]
     ] },
@@ -4570,7 +4584,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function nextEnd(m) { m = Math.min(12, Math.max(1, Math.round(+m) || 1)); var y = NOW.getFullYear(), d = new Date(y, m, 0); if (d < new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate())) d = new Date(y + 1, m, 0); return ymd(d); }
   function vehParts(v) {
     var out = [], b = bolloAmount(v); if (b > 0) out.push(["Bollo", b / 12]);
-    if (v.ins > 0) out.push(["Assicurazione", v.insEvery === "mese" ? v.ins : v.ins / 12]);
+    if (v.ins > 0) out.push(["Assicurazione", v.insEvery === "mese" ? v.ins : v.insEvery === "sem" ? v.ins / 6 : v.ins / 12]);
     if (/^\d{4}-\d{2}-\d{2}$/.test(v.rev || "")) out.push(["Revisione", 80 / 2 / 12]);
     if (v.tag > 0) out.push(["Tagliando e manutenzione", v.tag / 12]);
     return out;
@@ -4586,7 +4600,7 @@ create policy "solo i miei dati" on stipendio_pilota
       ann("bollo", "Bollo " + L, bolloAmount(v), nextEnd(v.bolloM), "m" + v.bolloM, "bank");
       if (/^\d{4}-\d{2}-\d{2}$/.test(v.rev || "")) ann("rev", "Revisione " + L, 80 / 2, v.rev, v.rev, "gear");
       ann("tag", "Tagliando " + L, v.tag, "", "", "gear");
-      if (v.insEvery === "anno") ann("ins", "Assicurazione " + L, v.ins, nextEnd(v.insM), "m" + v.insM, "shield");
+      if (v.insEvery === "anno" || v.insEvery === "sem") ann("ins", "Assicurazione " + L + (v.insEvery === "sem" ? " (ogni 6 mesi)" : ""), v.insEvery === "sem" ? v.ins * 2 : v.ins, nextEnd(v.insM), "m" + v.insM, "shield");
       else if (v.ins > 0) { var o = oldF.filter(function (f) { return f.veh === v.id; })[0]; newF.push({ id: o ? o.id : "f" + (S.nextId++), name: "Assicurazione " + L, amount: v.ins, due: 1, split: false, kind: "fix", end: "", ic: "shield", veh: v.id, vk: "ins" }); }
       if (v.kml > 0) { if (v.fuel === "benzina") S.kmlB = v.kml; else if (v.fuel === "diesel") S.kmlD = v.kml; }
     });
@@ -4605,8 +4619,8 @@ create policy "solo i miei dati" on stipendio_pilota
       + '<div class="fields"><label class="f">Potenza (kW)<input type="text" inputmode="decimal" class="v-kw" value="' + txt(v.kw || "") + '"><span class="help">Sul libretto, voce P.2</span></label><label class="f">Immatricolata a<input type="month" class="v-reg" value="' + esc(v.reg || "") + '"></label></div>'
       + '<div class="est" id="v-est"></div>'
       + '<label class="f">Importo bollo preciso (facoltativo)<input type="text" inputmode="decimal" class="v-bman" value="' + txt(v.bolloMan || "") + '" placeholder="Lascia vuoto per la stima"></label><label class="f">Mese di scadenza del bollo<select class="v-bm">' + ms(v.bolloM) + "</select></label>"
-      + "<h3>Assicurazione</h3>" + '<div class="fields"><label class="f">Importo (€)<input type="text" inputmode="decimal" class="v-ins" value="' + txt(v.ins || "") + '"></label><label class="f">Si paga<select class="v-ie"><option value="anno"' + (v.insEvery !== "mese" ? " selected" : "") + '>Ogni anno</option><option value="mese"' + (v.insEvery === "mese" ? " selected" : "") + ">Ogni mese</option></select></label></div>"
-      + '<label class="f v-im-l">Mese di scadenza<select class="v-im">' + ms(v.insM) + "</select></label>"
+      + "<h3>Assicurazione</h3>" + '<div class="fields"><label class="f">Importo (€)<input type="text" inputmode="decimal" class="v-ins" value="' + txt(v.ins || "") + '"></label><label class="f">Si paga<select class="v-ie"><option value="anno"' + (v.insEvery !== "mese" && v.insEvery !== "sem" ? " selected" : "") + '>Ogni anno</option><option value="sem"' + (v.insEvery === "sem" ? " selected" : "") + '>Ogni 6 mesi</option><option value="mese"' + (v.insEvery === "mese" ? " selected" : "") + ">Ogni mese</option></select></label></div>"
+      + '<label class="f v-im-l">Prossima scadenza (mese)<select class="v-im">' + ms(v.insM) + "</select></label>"
       + "<h3>Revisione, tagliando e consumo</h3>" + '<label class="f">Prossima revisione<input type="date" class="v-rev" value="' + esc(v.rev || "") + '"><span class="help">Si fa ogni 2 anni. Costo ufficiale circa 80 €.</span></label>'
       + '<div class="fields"><label class="f">Tagliando, all\'anno (€)<input type="text" inputmode="decimal" class="v-tag" value="' + txt(v.tag || "") + '"></label><label class="f">Consumo (km/l)<input type="text" inputmode="decimal" class="v-kml" value="' + txt(v.kml || "") + '"></label></div>';
     return f;
@@ -4661,6 +4675,13 @@ create policy "solo i miei dati" on stipendio_pilota
     var sm = $("veh-sum"); sm.innerHTML = tot > 0 ? '<span class="small muted">Da mettere da parte ogni mese</span><span class="vtot">' + eur2.format(tot) + "</span>" + lines.map(function (l) { return '<div class="vln"><span>' + esc(l[0]) + '</span><span class="num">' + eur2.format(l[1]) + "</span></div>"; }).join("") : '<span class="small muted">Ancora nessun costo calcolato.</span>';
   }
   $("veh-add").onclick = function () { openVeh(null, { id: "v" + (S.nextId++), brand: "", model: "", fuel: "benzina", euro: 6, kw: 0, reg: "", bolloM: 1, ins: 0, insEvery: "anno", insM: 1, rev: "", tag: 0, kml: 0, bolloMan: 0 }, true); };
+  (function menuIcons() {
+    var M = { "#archivio": "folder", "#storico": "clock", "#lavoro": "work", "#piano": "pie", "#spese": "wallet", "#profilo/comp": "sliders", "#profilo/io": "user", "#profilo/casa": "home", "#profilo/veicoli": "car", "#profilo/auto": "road", "#profilo/budget": "trend", "#profilo/natale": "gift", "#profilo/condivisa": "users", "#profilo/dati": "cloud" };
+    document.querySelectorAll(".menu a").forEach(function (a) {
+      var k = a.id === "menu-news" ? "spark" : M[a.getAttribute("href")]; if (!k || a.querySelector(".ico")) return;
+      var s = document.createElement("span"); s.className = "ico"; s.innerHTML = iconSvg(k); a.classList.add("mi"); a.insertBefore(s, a.firstChild);
+    });
+  })();
   function setSimple(on) { S.simple = !!on; persist(); tabsNorm(); renderAll(); showView(); toast(on ? "Modalità semplice attiva" : "Ora vedi tutte le funzioni"); }
   $("simple-on").onchange = function () { setSimple(this.checked); };
   $("simple-toggle").onclick = function () { setSimple(S.simple === false); };
@@ -4680,7 +4701,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("fx-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "fix", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-edit .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   function addFx(kind, name) { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: name || "", amount: 0, due: 1, split: true, kind: kind, end: "" }); renderFixedEditor(cur); var box = document.querySelectorAll(kind === "bill" ? "#fx-bills .fxe" : "#fx-subs .fxe"), l = box[box.length - 1]; if (l) { var a = l.querySelector(name ? ".fx-amt" : ".fx-name"); l.scrollIntoView({ block: "center" }); if (a) a.focus(); } }
   var BL_P = ["Luce", "Gas", "Acqua", "Internet", "Telefono", "Rifiuti"], SB_P = ["Netflix", "Amazon Prime", "Disney+", "DAZN", "YouTube", "Spotify", "PlayStation", "Claude", "ChatGPT", "iCloud", "Palestra"];
-  [["bl-chips", BL_P, "bill"], ["bl-ops", ["TIM", "Vodafone", "WindTre", "Iliad", "Fastweb", "Ho. Mobile", "Poste Mobile", "Kena", "Very Mobile", "CoopVoce", "Tiscali", "Eolo"], "bill"], ["sb-chips", SB_P, "sub"]].forEach(function (c) { $(c[0]).innerHTML = c[1].map(function (n) { return '<button type="button" data-n="' + esc(n) + '">+ ' + esc(n) + "</button>"; }).join(""); $(c[0]).querySelectorAll("button").forEach(function (b) { b.onclick = function () { addFx(c[2], this.getAttribute("data-n")); }; }); });
+  [["bl-chips", BL_P, "bill"], ["bl-ops", ["TIM", "Vodafone", "WindTre", "Iliad", "Fastweb", "Ho. Mobile", "Poste Mobile", "Kena", "Very Mobile", "CoopVoce", "1Mobile", "Digi", "Tiscali", "Eolo", "Optima"], "bill"], ["sb-chips", SB_P, "sub"]].forEach(function (c) { $(c[0]).innerHTML = c[1].map(function (n) { return '<button type="button" data-n="' + esc(n) + '">+ ' + esc(n) + "</button>"; }).join(""); $(c[0]).querySelectorAll("button").forEach(function (b) { b.onclick = function () { addFx(c[2], this.getAttribute("data-n")); }; }); });
   $("bl-add").onclick = function () { addFx("bill", ""); }; $("sb-add").onclick = function () { addFx("sub", ""); };
   $("ln-add").onclick = function () { var cur = readFixedEditor(); cur.push({ id: "f" + (S.nextId++), name: "", amount: 0, due: 1, split: true, kind: "loan", end: "" }); renderFixedEditor(cur); var ins = document.querySelectorAll("#fx-loans .fx-name"); if (ins.length) ins[ins.length - 1].focus(); };
   $("rt-add").onclick = function () { var cur = readRoutes(); cur.push({ id: newRouteId(cur), name: "", km: 0, toll: 0, car: "diesel", wd: [1, 2, 3, 4, 5], work: false }); renderRoutes(cur); var ins = document.querySelectorAll("#rt-edit .rt-name"); if (ins.length) ins[ins.length - 1].focus(); };
