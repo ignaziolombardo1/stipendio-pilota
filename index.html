@@ -805,7 +805,7 @@ html, body { touch-action: pan-x pan-y; }
       <button type="button" class="link" id="hg-sal">Inserisci o cambia lo stipendio di questo mese</button>
     </section>
     <a class="tile t-mese" id="tile-mese" href="#spese"><small class="tl">Mese</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
-    <a class="tile t-acc" id="tile-acc" href="#piano/obiettivi"><small class="tl">Da parte</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
+    <a class="tile t-acc" id="tile-acc" href="#piano/mese"><small class="tl">Da parte</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
     <a class="tile t-pay" id="tile-pay" href="#profilo/io"><small class="tl">Stipendio</small><b class="tv num"></b><span class="ts"></span></a>
     <a class="tile t-day" id="tile-day" href="#spese/giorni"><small class="tl">Oggi</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
     <a class="tile t-inv" id="tile-inv" href="#piano/investire"><small class="tl">Investimento</small><b class="tv num"></b><span class="ts"></span><div class="tb"><i></i></div></a>
@@ -2306,7 +2306,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.71";
+  var APP_VERSION = "2026-11-17.72";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4714,6 +4714,7 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     bx.innerHTML = h; $("recap").hidden = false;
   }
+  $("tile-acc").addEventListener("click", function () { setTimeout(function () { var t = $("t-a"); if (t && t.offsetParent) t.scrollIntoView({ block: "start" }); }, 150); });
   $("recap-btn").onclick = openRecap; $("recap-ok").onclick = function () { $("recap").hidden = true; }; $("recap").onclick = function (e) { if (e.target === this) this.hidden = true; };
 
   /* ---------- lettura scontrino ---------- */
