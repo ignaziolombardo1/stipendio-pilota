@@ -3193,7 +3193,10 @@ create policy "solo i miei dati" on stipendio_pilota
   function itemRow(it) {
     var c = dlCat(it.cat), n = daysTo(it.date), row = document.createElement("div");
     row.className = "dl" + (n < 0 ? " late" : "");
-    row.innerHTML = catIco(c) + '<div class="t"><b>' + esc(it.name) + "</b><small>" + dlDueText(it.date) + (it.kind === "fix" ? " · spesa fissa" : "") + '</small></div><b class="num">' + (it.amount > 0 ? eur2.format(it.amount) : "") + '</b><button type="button" class="tick" aria-label="Segna come pagata: ' + esc(it.name) + '">✓</button>';
+    var ico = catIco(c);
+    if (it.kind === "fix" && it.f) { var sf = S.fixedList.filter(function (x) { return x.id === it.f.id; })[0] || {}; ico = '<span class="ico" style="--c:' + c.color + '">' + iconSvg(it.f.kind === "casa" ? "home" : iconFor(it.name, sf.ic), it.f.kind === "casa" ? "" : it.name, sf.ic) + "</span>"; }
+    else if (it.kind === "dl") ico = '<span class="ico" style="--c:' + c.color + '">' + iconSvg(iconKey(it.name) !== "tag" ? iconKey(it.name) : "cal", it.name) + "</span>";
+    row.innerHTML = ico + '<div class="t"><b>' + esc(it.name) + "</b><small>" + dlDueText(it.date) + (it.kind === "fix" ? " · spesa fissa" : "") + '</small></div><b class="num">' + (it.amount > 0 ? eur2.format(it.amount) : "") + '</b><button type="button" class="tick" aria-label="Segna come pagata: ' + esc(it.name) + '">✓</button>';
     row.querySelector("button").onclick = function () { markDone(it, true); toast(it.name + " pagata ✓", "Annulla", function () { markDone(it, false); }); };
     return row;
   }
