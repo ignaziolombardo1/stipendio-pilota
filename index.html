@@ -1051,8 +1051,13 @@ html, body { touch-action: pan-x pan-y; }
       <h3 style="margin:12px 0 4px;font-size:15px">Viaggi del mese</h3>
       <div id="pro-trips"></div>
       <details class="shp"><summary>Confronta con la busta paga</summary>
-        <div class="fields"><label class="f" for="slip-d">Giorni lavorati in busta<input id="slip-d" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="slip-h">Ore in busta<input id="slip-h" type="text" inputmode="decimal" autocomplete="off"></label></div>
+        <div class="fields"><label class="f" for="slip-d">Giorni lavorati in busta<input id="slip-d" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="slip-h">Ore in busta<input id="slip-h" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="slip-n">Netto in busta (€)<input id="slip-n" type="text" inputmode="decimal" autocomplete="off"></label></div>
         <p class="small" id="slip-res"></p>
+      </details>
+      <details class="shp"><summary>Straordinari e maggiorazioni</summary>
+        <p class="small muted">Scrivi la tua paga oraria lorda e le percentuali del tuo contratto: stimo quanto valgono straordinari, festivi e notti di questo mese.</p>
+        <div class="fields"><label class="f" for="pay-rate">Paga oraria lorda (€)<input id="pay-rate" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-ot">Straordinario (+%)<input id="pay-ot" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-hol">Festivo (+%)<input id="pay-hol" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-night">Notte 22-6 (+%)<input id="pay-night" type="text" inputmode="decimal" autocomplete="off"></label></div>
+        <div id="pay-res" class="small"></div>
       </details>
       <div class="btnrow"><button type="button" id="pro-csv">Scarica per Excel</button><button type="button" id="pro-copy">Copia il riepilogo</button></div>
     </section>
@@ -1404,6 +1409,11 @@ create policy "stipendio pilota documenti" on storage.objects
       <h1>Storico</h1>
       <p class="hint" id="st-sub"></p>
     </div>
+    <section class="card" id="st-cmp-card" aria-labelledby="t-cmp" hidden>
+      <h2 id="t-cmp">Rispetto al mese scorso</h2>
+      <p id="cmp-sum" style="font-weight:700"></p>
+      <div id="cmp-rows"></div>
+    </section>
     <section class="card" id="st-year-card" aria-labelledby="t-yr" hidden>
       <div class="line"><h2 id="t-yr">Il tuo anno</h2><select id="st-year" aria-label="Anno" style="width:auto"></select></div>
       <div class="stat3" id="st-year-stats"></div>
@@ -1546,6 +1556,7 @@ create policy "stipendio pilota documenti" on storage.objects
       <div id="fx-subs"></div>
       <button type="button" id="sb-add">+ Aggiungi un abbonamento</button>
       <p class="small" id="sb-sum"></p>
+      <div id="sb-rev"></div>
     </section>
     <section data-sub="casa" class="card" aria-labelledby="t-p2">
       <h2 id="t-p2">Altre spese fisse</h2>
@@ -2447,7 +2458,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-17.78";
+  var APP_VERSION = "2026-11-18.79";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2541,7 +2552,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("st-sub").textContent = closed.length
       ? "Mesi chiusi: " + closed.length + ". Bilancio ok in " + okN + " su " + evaluated.length + (evaluated.length ? ", risparmiato in tutto " + eur.format(tot) + " (" + Math.round(tot / Math.max(1, evaluated.reduce(function (a, m) { return a + m.salary + (m.extra || 0); }, 0)) * 100) + "% delle entrate)." : ".")
       : "Quando finisce il mese, qui trovi com'è andato. Per ora vedi quello in corso.";
-    renderYear();
+    renderYear(); renderCmp();
     var html = monthCard(liveMonth(), true);
     closed.forEach(function (m) { html += monthCard(m, false); });
     $("st-list").innerHTML = html;
@@ -2872,7 +2883,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("fx-casa").appendChild(fxBlock(casa, "casa", housing));
     list.forEach(function (f) { if (f.kind === "loan") $("fx-loans").appendChild(fxBlock(f, "loan")); else if (f.kind === "bill") $("fx-bills").appendChild(fxBlock(f, "bill")); else if (f.kind === "sub") $("fx-subs").appendChild(fxBlock(f, "sub")); else if (f.kind !== "casa") $("fx-edit").appendChild(fxBlock(f, "fix")); });
     var sb = list.filter(function (f) { return f.kind === "sub" && f.amount > 0; }), st = 0; sb.forEach(function (f) { st += f.amount; });
-    $("sb-sum").textContent = sb.length ? "Totale abbonamenti: " + eur.format(st) + " al mese, " + eur.format(st * 12) + " all'anno." : "";
+    renderSubRev(); $("sb-sum").textContent = sb.length ? "Totale abbonamenti: " + eur.format(st) + " al mese, " + eur.format(st * 12) + " all'anno." : "";
   }
   function readFxBlock(d, hs) {
     var amt, due;
@@ -4582,12 +4593,13 @@ create policy "solo i miei dati" on stipendio_pilota
     var sl = S.slip[proKey] || {}, di = $("slip-d"), hi = $("slip-h");
     if (document.activeElement !== di) di.value = sl.d === undefined ? "" : String(sl.d).replace(".", ",");
     if (document.activeElement !== hi) hi.value = sl.h === undefined ? "" : String(sl.h).replace(".", ",");
-    var slipSave = function () { var d = parseFloat(di.value.replace(",", ".")), h = parseFloat(hi.value.replace(",", ".")); S.slip[proKey] = {}; if (d >= 0) S.slip[proKey].d = d; if (h >= 0) S.slip[proKey].h = h; if (!Object.keys(S.slip[proKey]).length) delete S.slip[proKey]; persist(); renderProspetto(); };
-    di.onchange = slipSave; hi.onchange = slipSave;
+    var slipSave = function () { var d = parseFloat(di.value.replace(",", ".")), h = parseFloat(hi.value.replace(",", ".")), n = parseFloat($("slip-n").value.replace(",", ".")); S.slip[proKey] = {}; if (d >= 0) S.slip[proKey].d = d; if (h >= 0) S.slip[proKey].h = h; if (n >= 0) S.slip[proKey].n = n; if (!Object.keys(S.slip[proKey]).length) delete S.slip[proKey]; persist(); renderProspetto(); };
+    di.onchange = slipSave; hi.onchange = slipSave; $("slip-n").onchange = slipSave;
     var res = [];
     if (sl.d !== undefined) res.push(sl.d === D.cnt.L ? "Giorni: combaciano ✓ (" + D.cnt.L + ")" : "Giorni: tu " + D.cnt.L + ", busta " + String(sl.d).replace(".", ",") + " (differenza " + String(Math.round((sl.d - D.cnt.L) * 10) / 10).replace(".", ",") + ")");
     if (sl.h !== undefined) { var th = D.mins / 60, df = Math.round((sl.h - th) * 100) / 100; res.push(Math.abs(df) < 0.01 ? "Ore: combaciano ✓" : "Ore: tu " + String(Math.round(th * 100) / 100).replace(".", ",") + ", busta " + String(sl.h).replace(".", ",") + " (differenza " + String(df).replace(".", ",") + ")"); }
     $("slip-res").innerHTML = res.length ? res.join("<br>") : "Metti i numeri che leggi in busta e ti dico se coincidono con il tuo registro.";
+    renderPay(D, sl);
     $("pro-prev").onclick = function () { proKey = cmShift(proKey, -1); renderProspetto(); };
     $("pro-next").onclick = function () { if (proKey < curCM) { proKey = cmShift(proKey, 1); renderProspetto(); } };
     $("pro-csv").onclick = function () {
@@ -5387,8 +5399,48 @@ create policy "solo i miei dati" on stipendio_pilota
     var go = function () { pnf.invOn = $("ir-on").checked; var d = Math.round(pnum($("ir-day").value)); pnf.invDay = d >= 1 && d <= 28 ? d : 5; nfSave(); $("ir-msg").textContent = pnf.invOn ? (pnf.on ? "Ti avviso il " + pnf.invDay + " di ogni mese." : "Attiva le notifiche con la campanella in alto per ricevere l'avviso.") : "Promemoria spento."; if (pnf.on) nfResync(); };
     $("ir-on").onchange = go; $("ir-day").onchange = go; renderSim(); renderGloss();
   }
+
+  /* ---------- confronto, abbonamenti, maggiorazioni ---------- */
+  function renderCmp() {
+    var card = $("st-cmp-card"); if (!card) return; var pk = prevKey(S.monthKey), cur = S.spent[S.monthKey] || [], old = S.spent[pk] || [];
+    if (!cur.length || !old.length) { card.hidden = true; return; }
+    var st = startOf(S.monthKey), pst = startOf(pk), nd = S.monthKey === CUR ? Math.max(1, Math.floor((new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()) - st) / 864e5) + 1) : 99;
+    var cut = new Date(pst.getTime() + nd * 864e5), oldP = old.filter(function (e) { return new Date(e.date) < cut; });
+    var sum = function (L, c) { return L.filter(function (e) { return !c || e.cat === c; }).reduce(function (a, e) { return a + e.amount; }, 0); };
+    var tc = sum(cur), to = sum(oldP), d = tc - to; card.hidden = false;
+    $("cmp-sum").textContent = Math.abs(d) < 1 ? "Stai spendendo come il mese scorso." : d > 0 ? "Finora hai speso " + eur.format(d) + " in più dello stesso periodo del mese scorso." : "Finora hai speso " + eur.format(-d) + " in meno dello stesso periodo del mese scorso.";
+    $("cmp-rows").innerHTML = CATS.map(function (c) { var a = sum(cur, c.id), b = sum(oldP, c.id), x = a - b; if (!a && !b) return ""; return '<div class="smrow"><span>' + esc(c.name) + '<small class="muted" style="display:block">ora ' + eur.format(a) + " · prima " + eur.format(b) + '</small></span><b style="color:' + (Math.abs(x) < 1 ? "inherit" : x > 0 ? "var(--bad)" : "var(--pos)") + '">' + (Math.abs(x) < 1 ? "uguale" : (x > 0 ? "+" : "−") + eur.format(Math.abs(x))) + "</b></div>"; }).join("");
+  }
+  function renderSubRev() {
+    var bx = $("sb-rev"); if (!bx) return; S.subRev = S.subRev && typeof S.subRev === "object" ? S.subRev : {};
+    var sb = (S.fixedList || []).filter(function (f) { return f.kind === "sub" && f.amount > 0; }).sort(function (a, b) { return b.amount - a.amount; });
+    if (!sb.length) { bx.innerHTML = ""; return; }
+    bx.innerHTML = '<h3 style="margin:10px 0 4px;font-size:16px">Da rivedere</h3><p class="small muted">Segna quelli che usi poco: ti dico quanto risparmieresti.</p>' + sb.map(function (f) { return '<label class="chk"><input type="checkbox" data-id="' + f.id + '"' + (S.subRev[f.id] ? " checked" : "") + "><span>" + esc(f.name) + " · " + eur2.format(f.amount) + " al mese (" + eur.format(f.amount * 12) + " l'anno)</span></label>"; }).join("") + '<p class="small" id="sb-rev-sum"></p>';
+    var upd = function () { var t = sb.filter(function (f) { return S.subRev[f.id]; }).reduce(function (a, f) { return a + f.amount; }, 0); $("sb-rev-sum").innerHTML = t > 0 ? "Se li disdici risparmi <b>" + eur2.format(t) + "</b> al mese, <b>" + eur.format(t * 12) + "</b> all'anno." : ""; }; upd();
+    [].forEach.call(bx.querySelectorAll("input"), function (i) { i.onchange = function () { var id = i.getAttribute("data-id"); if (i.checked) S.subRev[id] = true; else delete S.subRev[id]; persist(); upd(); }; });
+  }
+  function nightMin(h1, h2) {
+    if (!h1 || !h2) return 0; var a = h1.split(":"), m1 = +a[0] * 60 + +a[1], d = durMin(h1, h2), n = 0;
+    for (var i = 0; i < d; i += 5) { var t = (m1 + i) % 1440; if (t >= 1320 || t < 360) n += 5; } return n;
+  }
+  function renderPay(D, sl) {
+    var pay = S.pay = Object.assign({ rate: 0, ot: 25, hol: 50, night: 30 }, S.pay || {}), key = proKey, nm = 0, hm = 0;
+    cmDays(key).forEach(function (k) { var sh = S.shifts[k]; if (!sh || sh.t !== "L") return; var m = durMin(sh.h1, sh.h2) + (sh.ot > 0 ? Math.round(sh.ot * 60) : 0); nm += nightMin(sh.h1, sh.h2); if (isHol(k)) hm += m; });
+    [["pay-rate", "rate"], ["pay-ot", "ot"], ["pay-hol", "hol"], ["pay-night", "night"]].forEach(function (x) { var el = $(x[0]); if (document.activeElement !== el) el.value = pay[x[1]] ? String(pay[x[1]]).replace(".", ",") : (x[1] === "rate" ? "" : "0"); el.onchange = function () { var v = pnum(this.value); pay[x[1]] = v >= 0 && v <= 1000 ? v : 0; persist(); renderProspetto(); }; });
+    var r = pay.rate, h = function (m) { return m / 60; }, eo = h(D.ot) * r * pay.ot / 100, eh = h(hm) * r * pay.hol / 100, en = h(nm) * r * pay.night / 100, tot = eo + eh + en, k = 0.75;
+    var rows = [["Straordinari", D.ot, eo], ["Festivi lavorati", hm, eh], ["Notti", nm, en]];
+    $("pay-res").innerHTML = r > 0 ? rows.map(function (x) { return '<div class="smrow"><span>' + x[0] + " · " + (x[1] ? fmtH(x[1]) : "0h") + "</span><b>" + eur2.format(x[2]) + "</b></div>"; }).join("") + '<div class="smrow"><span><b>Maggiorazioni stimate (lorde)</b></span><b>' + eur2.format(tot) + '</b></div><p class="small muted">Circa ' + eur2.format(tot * k) + " al netto, ipotizzando circa il 25% di trattenute. È una stima: contano le regole del tuo contratto.</p>" : '<p class="small muted">Scrivi la paga oraria per vedere la stima.</p>';
+    var sn = $("slip-n"); if (document.activeElement !== sn) sn.value = sl.n === undefined ? "" : String(sl.n).replace(".", ",");
+    if (sl.n !== undefined && S.salary > 0) { var att = S.salary + tot * k, df = sl.n - att; var base = $("slip-res").innerHTML; if (base.indexOf("Metti i numeri") === 0) base = ""; $("slip-res").innerHTML = base + (base ? "<br>" : "") + "Netto: atteso circa " + eur.format(att) + ", in busta " + eur.format(sl.n) + (Math.abs(df) < 5 ? " ✓ combaciano" : df > 0 ? " (" + eur.format(df) + " in più)" : " (" + eur.format(-df) + " in meno: controlla straordinari, trattenute o conguagli)"); }
+  }
   var CHANGELOG = [
-    { id: "2026-11-17m", date: "17 novembre · nuovo", items: [
+    { id: "2026-11-18a", date: "18 novembre · nuovo", items: [
+      ["Rispetto al mese scorso", "In Storico vedi se stai spendendo più o meno dello stesso periodo del mese scorso, categoria per categoria."],
+      ["Abbonamenti da rivedere", "Segna quelli che usi poco: l'app ti dice quanto risparmieresti ogni mese e ogni anno."],
+      ["Straordinari e maggiorazioni", "In Lavoro → Prospetto scrivi paga oraria e percentuali: stimo quanto valgono straordinari, festivi e notti."],
+      ["Busta paga: atteso o ricevuto", "Scrivi il netto in busta: lo confronto con quello che dovevi ricevere."]
+    ] },
+    { id: "2026-11-17m", date: "17 novembre", items: [
       ["Simulatore", "In Piano → Investire scrivi quanto metti ogni mese e per quanti anni: vedi tre scenari, prudente, medio e ottimista."],
       ["Il tuo portafoglio", "Un quadro solo con il totale versato, la torta azioni e obbligazioni e gli ultimi mesi. Ti avvisa se sei lontano dal tuo profilo."],
       ["Promemoria del versamento", "Scegli il giorno del mese: ti avviso solo se non hai ancora versato quanto previsto."],
