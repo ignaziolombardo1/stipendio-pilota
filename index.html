@@ -3031,9 +3031,9 @@ create policy "solo i miei dati" on stipendio_pilota
     $("wk-grid").innerHTML = days.map(function (k) {
       var inm = true;
       var sh = S.shifts[k];
-      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + SHIFT_T.map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") + "</select>" + S.routes.map(function (r, ri) { return tripSel(r, k, !inm, '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name)); }).join("") + "</div></div>";
+      return '<div class="wkrow' + (inm ? "" : " dis") + '"><b>' + WDN[dOf(k).getDay()] + " " + dOf(k).getDate() + '</b><div><select class="wk-sh" data-d="' + k + '" aria-label="Giorno ' + dOf(k).getDate() + '"' + (inm ? "" : " disabled") + '><option value="">Non segnato</option>' + (S.shP.length ? S.shP.map(function (x) { return '<option value="s:' + esc(x.id) + '"' + (sh && sh.t === "L" && sh.s === x.id ? " selected" : "") + ">" + esc(x.name) + "</option>"; }).concat(['<option value="L"' + (sh && sh.t === "L" && !sh.s ? " selected" : "") + ">Giornata</option>"]) : ['<option value="L"' + (sh && sh.t === "L" ? " selected" : "") + ">Lavoro</option>"]).concat(SHIFT_T.slice(1).map(function (t) { return '<option value="' + t[0] + '"' + (sh && sh.t === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; })).join("") + "</select>" + S.routes.map(function (r, ri) { return tripSel(r, k, !inm, '<i style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:' + ROUTE_COL[ri % 5] + '"></i>' + esc(r.name)); }).join("") + "</div></div>";
     }).join("");
-    $("wk-grid").querySelectorAll("select.wk-sh").forEach(function (se) { se.onchange = function () { var k = this.getAttribute("data-d"), o = S.shifts[k]; setShift(k, this.value, o ? o.s : "", o ? o.n : ""); persist(); renderAll(); }; });
+    $("wk-grid").querySelectorAll("select.wk-sh").forEach(function (se) { se.onchange = function () { var k = this.getAttribute("data-d"), o = S.shifts[k], v = this.value; if (v.indexOf("s:") === 0) { var pr = presetOf(v.slice(2)); setShift(k, "L", v.slice(2), o ? o.n : "", pr && pr.h1 ? pr.h1 : undefined, pr && pr.h2 ? pr.h2 : undefined); } else setShift(k, v, o ? o.s : "", o ? o.n : ""); persist(); renderAll(); }; });
     bindTrips($("wk-grid"));
     $("wk-quick").innerHTML = S.routes.map(function (r) { return '<div class="qrow"><span>' + esc(r.name) + '</span><div class="btnrow"><button type="button" data-q="none" data-r="' + esc(r.id) + '">Nessun viaggio</button><button type="button" data-q="plan" data-r="' + esc(r.id) + '">Come da programma</button></div></div>'; }).join("");
     $("wk-quick").querySelectorAll("button").forEach(function (b) {
@@ -4534,7 +4534,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function renderDayShift(k) {
     var cd = $("cal-day"); if (!cd) return;
     var sh = S.shifts[k] || null, wrap = document.createElement("div"); wrap.className = "shd";
-    wrap.innerHTML = '<p class="small muted">Com\'è andata questo giorno? ' + (workRoutes().length ? "Dal programma: " + (programWorks(k) ? "lavoro." : "riposo.") : "") + '</p><div class="shchips">' + SHIFT_T.map(function (t) { return '<button type="button" data-t="' + t[0] + '" aria-pressed="' + !!(sh && sh.t === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>"
+    wrap.innerHTML = '<p class="small muted">Com\'è andata questo giorno? ' + (workRoutes().length ? "Dal programma: " + (programWorks(k) ? "lavoro." : "riposo.") : "") + '</p><div class="shchips">' + (S.shP.length ? S.shP.map(function (x) { return '<button type="button" data-t="L" data-s="' + esc(x.id) + '" aria-pressed="' + !!(sh && sh.t === "L" && sh.s === x.id) + '">' + esc(x.name) + (x.h1 && x.h2 ? "<small style='display:block;font-weight:400'>" + x.h1 + "–" + x.h2 + "</small>" : "") + "</button>"; }).join("") + '<button type="button" data-t="L" data-s="" aria-pressed="' + !!(sh && sh.t === "L" && !sh.s) + '">Giornata</button>' : '<button type="button" data-t="L" data-s="" aria-pressed="' + !!(sh && sh.t === "L") + '">Lavoro</button>') + SHIFT_T.slice(1).map(function (t) { return '<button type="button" data-t="' + t[0] + '" aria-pressed="' + !!(sh && sh.t === t[0]) + '">' + t[1] + "</button>"; }).join("") + "</div>"
       + '<div class="fields" id="sh-x"' + (sh && sh.t === "L" ? "" : " hidden") + '><label class="f">Turno<select id="sh-s">' + shiftS().map(function (x) { return '<option value="' + x[0] + '">' + x[1] + "</option>"; }).join("") + '</select></label><label class="f">Dalle<input id="sh-h1" type="time"></label><label class="f">Alle<input id="sh-h2" type="time"></label><label class="f">Nota<input id="sh-n" type="text" maxlength="60" autocomplete="off"></label></div>'
       + (sh ? '<button type="button" class="link" id="sh-clr">Togli l\'indicazione</button>' : "");
     cd.insertBefore(wrap, cd.children[1] || null);
@@ -4544,7 +4544,10 @@ create policy "solo i miei dati" on stipendio_pilota
       var pr = presetOf(sub); if (fill && pr && pr.h1 && pr.h2 && !(sh && sh.h1)) { h1 = pr.h1; h2 = pr.h2; }
       setShift(k, t, sub, $("sh-n") ? $("sh-n").value : "", h1, h2); persist(); renderAll();
     };
-    wrap.querySelectorAll("button[data-t]").forEach(function (b) { b.onclick = function () { save(this.getAttribute("data-t"), true); }; });
+    wrap.querySelectorAll("button[data-t]").forEach(function (b) { b.onclick = function () {
+      var t = this.getAttribute("data-t"), ds = this.getAttribute("data-s");
+      if (t === "L" && ds !== null) { var pr = presetOf(ds), o = S.shifts[k]; setShift(k, "L", ds, $("sh-n") ? $("sh-n").value : (o ? o.n : ""), pr && pr.h1 ? pr.h1 : undefined, pr && pr.h2 ? pr.h2 : undefined); persist(); renderAll(); return; }
+      save(t, true); }; });
     if ($("sh-s")) { $("sh-s").onchange = function () { var pr = presetOf(this.value); $("sh-h1").value = pr ? pr.h1 : ""; $("sh-h2").value = pr ? pr.h2 : ""; save("L", false); }; ["sh-n", "sh-h1", "sh-h2"].forEach(function (id) { $(id).onchange = function () { save(S.shifts[k] ? S.shifts[k].t : "L"); }; }); }
     if ($("sh-clr")) $("sh-clr").onclick = function () { setShift(k, "", "", ""); persist(); renderAll(); };
   }
