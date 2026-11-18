@@ -1015,6 +1015,7 @@ html, body { touch-action: pan-x pan-y; }
         <div id="shp-list"></div>
         <button type="button" id="shp-add">Aggiungi un turno</button>
         <label class="f" for="normH">Ore normali in un giorno di lavoro<input id="normH" type="text" inputmode="decimal" autocomplete="off"></label>
+        <p class="small muted">Per 6 ore e mezza scrivi 6,5 oppure 6:30. Oltre queste ore, quello che fai in più è straordinario.</p>
         <p class="small muted">Quello che supera queste ore viene contato come straordinario nel prospetto.</p>
         <h3 style="margin:10px 0 4px;font-size:15px">Ferie e permessi dell'anno</h3>
         <div class="fields"><label class="f" for="lv-f">Giorni di ferie spettanti<input id="lv-f" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-p">Giorni di permesso spettanti<input id="lv-p" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-f0">Ferie già usate (non segnate qui)<input id="lv-f0" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="lv-p0">Permessi già usati (non segnati qui)<input id="lv-p0" type="text" inputmode="decimal" autocomplete="off"></label></div>
@@ -2458,7 +2459,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-18.80";
+  var APP_VERSION = "2026-11-18.81";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4643,7 +4644,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
     $("shp-add").onclick = function () { var id = "c" + Date.now().toString(36); S.shP.push({ id: id, name: "Nuovo turno", h1: "", h2: "" }); persist(); renderAll(); };
     if (document.activeElement !== $("normH")) $("normH").value = String(S.normH).replace(".", ",");
-    $("normH").onchange = function () { var v = parseFloat(this.value.replace(",", ".")); if (v > 0 && v <= 24) S.normH = v; this.value = String(S.normH).replace(".", ","); persist(); renderAll(); };
+    $("normH").onchange = function () { var raw = this.value.trim(), mm = /^(\d{1,2}):(\d{2})$/.exec(raw), v = mm ? +mm[1] + +mm[2] / 60 : parseFloat(raw.replace(",", ".")); if (v > 0 && v <= 24) S.normH = v; this.value = String(S.normH).replace(".", ","); persist(); renderAll(); };
     renderIns();
   }
 
