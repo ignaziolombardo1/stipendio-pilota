@@ -1059,7 +1059,7 @@ html, body { touch-action: pan-x pan-y; }
         <div class="fields"><label class="f" for="pay-rate">Paga oraria lorda (€)<input id="pay-rate" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-ot">Straordinario (+%)<input id="pay-ot" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-hol">Festivo (+%)<input id="pay-hol" type="text" inputmode="decimal" autocomplete="off"></label><label class="f" for="pay-night">Notte 22-6 (+%)<input id="pay-night" type="text" inputmode="decimal" autocomplete="off"></label></div>
         <div id="pay-res" class="small"></div>
       </details>
-      <div class="btnrow"><button type="button" id="pro-csv">Scarica per Excel</button><button type="button" id="pro-copy">Copia il riepilogo</button></div>
+      <div class="btnrow"><button type="button" id="pro-csv">Scarica per Excel</button><button type="button" id="pro-copy">Copia il riepilogo</button><button type="button" class="primary" id="pro-pdf">PDF del mese</button></div>
     </section>
     <section data-sub="tragitti" class="card" aria-labelledby="t-rp">
       <h2 id="t-rp">Stima e reale dei tragitti</h2>
@@ -2458,7 +2458,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-18.79";
+  var APP_VERSION = "2026-11-18.80";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4613,6 +4613,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var csv = "\ufeff" + L.map(function (r) { return r.map(function (c) { c = String(c); return /[;"\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(";"); }).join("\r\n");
       try { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "lavoro-" + proKey + ".csv"; document.body.appendChild(a); a.click(); a.remove(); toast("File scaricato ✓"); } catch (e) { toast("Download non riuscito"); }
     };
+    $("pro-pdf").onclick = function () { var w = window.open("", "_blank"); if (!w) { toast("Il telefono ha bloccato la finestra: consenti i popup"); return; } w.document.write(monthPrintHtml(proKey)); w.document.close(); };
     $("pro-copy").onclick = function () {
       var t = "Lavoro " + cmLabel(proKey) + "\n" + SHIFT_T.map(function (x) { return x[1] + ": " + D.cnt[x[0]]; }).join(" · ") + "\nOre totali: " + fmtH(D.mins) + (D.ot ? " (straordinari " + fmtH(D.ot) + ")" : "") + (D.hol ? "\nFestivi lavorati: " + D.hol : "") + "\n" + D.rows.filter(function (r) { return r.st !== "—"; }).map(function (r) { return r.day + " " + r.st + (r.tr ? " " + r.tr : "") + (r.ori ? " " + r.ori : ""); }).join("\n");
       try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Copia non riuscita"); }); } catch (e) { toast("Copia non riuscita"); }
@@ -5436,8 +5437,40 @@ create policy "solo i miei dati" on stipendio_pilota
     var sn = $("slip-n"); if (document.activeElement !== sn) sn.value = sl.n === undefined ? "" : String(sl.n).replace(".", ",");
     if (sl.n !== undefined && S.salary > 0) { var att = S.salary + tot * k, df = sl.n - att; var base = $("slip-res").innerHTML; if (base.indexOf("Metti i numeri") === 0) base = ""; $("slip-res").innerHTML = base + (base ? "<br>" : "") + "Netto: atteso circa " + eur.format(att) + ", in busta " + eur.format(sl.n) + (Math.abs(df) < 5 ? " ✓ combaciano" : df > 0 ? " (" + eur.format(df) + " in più)" : " (" + eur.format(-df) + " in meno: controlla straordinari, trattenute o conguagli)"); }
   }
+
+  /* ---------- PDF del mese (stampa curata) ---------- */
+  function monthPrintHtml(key) {
+    var D = proData(key), T = tripCosts(cmDays(key)), pay = Object.assign({ rate: 0, ot: 25, hol: 50, night: 30 }, S.pay || {}), nm = 0, hm = 0, F = _eur2;
+    cmDays(key).forEach(function (k) { var sh = S.shifts[k]; if (!sh || sh.t !== "L") return; var m = durMin(sh.h1, sh.h2) + (sh.ot > 0 ? Math.round(sh.ot * 60) : 0); nm += nightMin(sh.h1, sh.h2); if (isHol(k)) hm += m; });
+    var r = pay.rate, eo = D.ot / 60 * r * pay.ot / 100, eh = hm / 60 * r * pay.hol / 100, en = nm / 60 * r * pay.night / 100, tot = eo + eh + en;
+    var PAL = ["#f4b942", "#5b6cff", "#2bb39a", "#e2503a", "#a76bd6"], col = {}; S.shP.forEach(function (x, i) { col[x.name] = PAL[i % 5]; });
+    var cls = function (st, tr) { return tr ? col[tr] || "#888" : st === "Riposo" ? "#9aa3ad" : st === "Ferie" ? "#2bb39a" : st === "Malattia" ? "#e2503a" : st === "Permesso" ? "#a76bd6" : "#d0d5db"; };
+    var tile = function (v, l) { return '<div class="tl"><b>' + v + "</b><span>" + l + "</span></div>"; };
+    var rows = D.rows.map(function (x) {
+      var wk = /^(Sab|Dom)/.test(x.day), lab = x.tr || (x.st === "—" ? "" : x.st);
+      return '<tr class="' + (wk ? "wk " : "") + (x.hol ? "hl" : "") + '"><td class="d">' + esc(x.day) + (x.hol ? " ★" : "") + '</td><td>' + (lab ? '<span class="pl" style="background:' + cls(x.st, x.tr) + (cls(x.st, x.tr) === "#f4b942" || cls(x.st, x.tr) === "#d0d5db" ? ";color:#1d232b" : "") + '">' + esc(lab) + "</span>" : '<span class="mu">—</span>') + "</td><td>" + esc(x.ori) + '</td><td class="n">' + esc(x.ore) + '</td><td class="n">' + (x.ot ? "+" + esc(x.ot) : "") + "</td><td>" + esc(x.n) + "</td></tr>";
+    }).join("");
+    var css = "@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1d232b;margin:0;font-size:11px}"
+      + ".hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #e2503a;padding-bottom:10px;margin-bottom:14px}.hd h1{margin:0;font-size:24px;letter-spacing:-.3px}.hd small{color:#6b7480;font-size:12px}.hd .br{font-weight:800;color:#e2503a;font-size:13px}"
+      + ".tls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}.tl{background:#f5f6f8;border-radius:10px;padding:10px 12px}.tl b{display:block;font-size:20px}.tl span{color:#6b7480;font-size:10px}"
+      + "table{width:100%;border-collapse:collapse}th{text-align:left;font-size:9.5px;color:#6b7480;border-bottom:1.5px solid #1d232b;padding:5px 6px}td{padding:3.5px 6px;border-bottom:1px solid #e6e9ee}td.n,th.n{text-align:right}td.d{font-weight:700;white-space:nowrap}tr.wk td{background:#f7f8fa}tr.hl td.d{color:#e2503a}tr{page-break-inside:avoid}"
+      + ".pl{display:inline-block;padding:1px 9px;border-radius:99px;color:#fff;font-weight:700;font-size:10px}.mu{color:#b4bbc4}"
+      + ".sum{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.bx{border:1px solid #e6e9ee;border-radius:10px;padding:10px 12px;page-break-inside:avoid}.bx h3{margin:0 0 6px;font-size:12px}.ln{display:flex;justify-content:space-between;padding:2px 0}.ft{margin-top:14px;color:#8a929c;font-size:9px;text-align:center}";
+    var lav = '<div class="bx"><h3>Il mese in numeri</h3>' + SHIFT_T.map(function (t) { return '<div class="ln"><span>' + t[1] + "</span><b>" + D.cnt[t[0]] + "</b></div>"; }).join("") + '<div class="ln"><span>Giorni senza indicazione</span><b>' + D.none + "</b></div></div>";
+    var mon = '<div class="bx"><h3>Maggiorazioni e viaggi</h3>' + (r > 0 ? '<div class="ln"><span>Straordinari ' + (D.ot ? fmtH(D.ot) : "0h") + "</span><b>" + F.format(eo) + '</b></div><div class="ln"><span>Festivi ' + (hm ? fmtH(hm) : "0h") + "</span><b>" + F.format(eh) + '</b></div><div class="ln"><span>Notti ' + (nm ? fmtH(nm) : "0h") + "</span><b>" + F.format(en) + '</b></div><div class="ln"><span><b>Maggiorazioni lorde stimate</b></span><b>' + F.format(tot) + "</b></div>" : '<div class="ln"><span class="mu">Paga oraria non indicata</span></div>')
+      + (T.rows.length ? '<div class="ln" style="margin-top:6px"><span>Viaggi · ' + Math.round(T.tk) + " km</span><b>" + F.format(T.tt + T.tf) + "</b></div>" : "") + "</div>";
+    return "<!doctype html><html lang='it'><head><meta charset='utf-8'><title>Lavoro " + esc(cmLabel(key)) + "</title><style>" + css + "</style></head><body>"
+      + '<div class="hd"><div><small>Prospetto del mese</small><h1>' + esc(cmLabel(key)) + '</h1></div><div class="br">Stipendio Pilota</div></div>'
+      + '<div class="tls">' + tile(D.cnt.L, "giorni di lavoro") + tile(D.mins ? fmtH(D.mins) : "0h", "ore totali") + tile(D.ot ? fmtH(D.ot) : "0h", "straordinari") + tile(D.hol, "festivi lavorati") + "</div>"
+      + "<table><thead><tr><th>Giorno</th><th>Turno</th><th>Orario</th><th class='n'>Ore</th><th class='n'>Straord.</th><th>Nota</th></tr></thead><tbody>" + rows + "</tbody></table>"
+      + '<div class="sum">' + lav + mon + "</div><p class=\"ft\">Creato con Stipendio Pilota · le maggiorazioni sono una stima, contano le regole del tuo contratto.</p><script>window.onload=function(){setTimeout(function(){try{window.print()}catch(e){}},300)}<\/script></body></html>";
+  }
+  window.__mp = function (k) { return monthPrintHtml(k || proKey || cmOf(TODAY_KEY)); };
   var CHANGELOG = [
-    { id: "2026-11-18a", date: "18 novembre · nuovo", items: [
+    { id: "2026-11-18b", date: "18 novembre · nuovo", items: [
+      ["PDF del mese", "In Lavoro → Prospetto trovi il pulsante PDF del mese: una pagina ordinata con riquadri, turni colorati, totali e maggiorazioni."]
+    ] },
+    { id: "2026-11-18a", date: "18 novembre", items: [
       ["Rispetto al mese scorso", "In Storico vedi se stai spendendo più o meno dello stesso periodo del mese scorso, categoria per categoria."],
       ["Abbonamenti da rivedere", "Segna quelli che usi poco: l'app ti dice quanto risparmieresti ogni mese e ogni anno."],
       ["Straordinari e maggiorazioni", "In Lavoro → Prospetto scrivi paga oraria e percentuali: stimo quanto valgono straordinari, festivi e notti."],
