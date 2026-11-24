@@ -1,0 +1,24 @@
+name: Aggiorna mercati
+on:
+  schedule:
+    - cron: "23 6-21/3 * * 1-5"
+    - cron: "23 9 * * 0,6"
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/mercato.py"
+      - ".github/workflows/mercato.yml"
+permissions:
+  contents: write
+jobs:
+  aggiorna:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/mercato.py
+      - name: Salva se è cambiato
+        run: |
+          git config user.name "dati-bot"
+          git config user.email "dati-bot@users.noreply.github.com"
+          git add mercato.json
+          git diff --cached --quiet || (git commit -m "Aggiorna mercati" && git pull --rebase -q && git push)
