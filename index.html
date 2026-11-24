@@ -833,6 +833,11 @@ html, body { touch-action: pan-x pan-y; }
       <div id="xh-ask" hidden><label class="f" for="xh-amt">Importo arrivato (€)<input id="xh-amt" type="text" inputmode="decimal" autocomplete="off"></label><button type="button" class="primary" id="xh-got">È arrivata</button></div>
       <a class="link" href="#profilo/natale">Apri Natale e tredicesima</a>
     </section>
+    <section class="card" id="hm-mk" data-sub="home" hidden aria-labelledby="t-hmk">
+      <h2 id="t-hmk">I mercati oggi</h2>
+      <p id="hmk-t" style="margin:0 0 10px"></p>
+      <button type="button" class="primary" id="hmk-go">Apri i mercati</button>
+    </section>
     <section class="card" id="home-ctx" data-sub="home" hidden aria-labelledby="t-hx"><h2 id="t-hx"></h2><div id="hx-body"></div></section>
     <section class="card" id="howgo" data-sub="home" aria-labelledby="t-hg">
       <h2 id="t-hg">Come stai andando</h2>
@@ -2479,7 +2484,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-24.83";
+  var APP_VERSION = "2026-11-24.84";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -5528,6 +5533,7 @@ create policy "solo i miei dati" on stipendio_pilota
       return '<div class="mmc"><button type="button" class="mmh" data-id="' + esc(a.id) + '" aria-expanded="' + op + '"><span><b>' + esc(a.name) + '</b><small><span class="mmp" style="background:' + RC[a.rl] + '">Rischio ' + a.rl + "</span></small></span><span class=\"pr\">" + mmPrice(a) + '<small style="color:' + mmCol(a.w1) + '">' + mmPct(a.w1) + " in 7 giorni</small></span>" + mmSpark(a) + "</button>" + body + "</div>";
     }).join("");
     [].forEach.call(bx.querySelectorAll(".mmh"), function (b) { b.onclick = function () { var id = this.getAttribute("data-id"); MM.open = MM.open === id ? "" : id; renderMM(); }; });
+    var hk = $("hm-mk"); if (hk) { hk.hidden = false; var tp = sorted[0], bt = sorted[sorted.length - 1]; $("hmk-t").textContent = $("mm-sum").textContent + (tp && bt ? " Più su: " + tp.name + " " + mmPct(tp.w1) + ". Più giù: " + bt.name + " " + mmPct(bt.w1) + "." : ""); }
     var dt = d.updated ? new Date(d.updated) : null;
     $("mm-note").textContent = "Dati di Yahoo Finance, aggiornati" + (dt && !isNaN(dt) ? " il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(dt) : "") + ". Possono avere qualche ora di ritardo. Strumento educativo: non è una consulenza finanziaria e gli scenari non sono previsioni.";
   }
@@ -5544,13 +5550,22 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function mmAlertSave() { nfSave(); if (pnf.on) nfResync(); mmAlertUi(); }
   window.__rem = remList;
+  function mkOpen() {
+    var was = !modOn("mercato");
+    if (was) { S.mods = S.mods || {}; S.mods.mercato = true; if (S.simple !== false) S.simple = false; persist(); applyHome(); renderAll(); toast("Ho attivato la sezione Mercato"); }
+    location.hash = "#piano/mercato";
+  }
   function setupT5() {
+    $("hmk-go").onclick = mkOpen;
     $("mm-al-on").onchange = function () { pnf.mk = this.checked; if (pnf.mk && !(pnf.mkIds && pnf.mkIds.length) && MM.data) pnf.mkIds = MM.data.assets.filter(function (a) { return a.group === "Indici e ETF"; }).map(function (a) { return a.id; }); $("mm-al-list").setAttribute("data-n", ""); mmAlertSave(); };
     $("mm-al-th").onchange = function () { pnf.mkTh = +this.value; mmAlertSave(); };
     mmAlertUi();
   }
   var CHANGELOG = [
-    { id: "2026-11-24b", date: "24 novembre · nuovo", items: [
+    { id: "2026-11-24c", date: "24 novembre · nuovo", items: [
+      ["I mercati in Home", "Nella Home trovi un riquadro con il clima della settimana e un tasto per aprire i mercati. Se la sezione era spenta, il tasto la accende."]
+    ] },
+    { id: "2026-11-24b", date: "24 novembre", items: [
       ["Avvisi sui mercati", "In Piano → Mercato puoi farti avvisare quando un mercato si muove molto in un giorno: scegli la soglia e quali mercati controllare."]
     ] },
     { id: "2026-11-24a", date: "24 novembre", items: [
