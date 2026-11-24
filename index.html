@@ -390,6 +390,9 @@ html[data-lh="1"] .fab { right: auto; left: max(16px, env(safe-area-inset-left, 
 .smrow { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
 .donutw { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; } .donutw svg { width: 130px; height: 130px; flex: none; } .lg { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .lg i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+.mmtop { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; } .mmtop > div { background: var(--surface2, var(--surface)); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; min-width: 0; } .mmtop h3 { margin: 0 0 6px; font-size: 13px; } .mmtop .r { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; padding: 2px 0; } .mmtop .r span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mmc { border: 1px solid var(--line); border-radius: 16px; margin: 10px 0; overflow: hidden; background: var(--surface); } .mmh { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; text-align: left; padding: 12px 14px; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; } .mmh b { font-size: 15px; } .mmh small { color: var(--muted); display: block; font-weight: 400; } .mmh .pr { text-align: right; font-weight: 800; } .mmh svg { width: 100%; height: 34px; grid-column: 1 / -1; }
+.mmp { display: inline-block; padding: 2px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; color: #fff; } .mmb { padding: 0 14px 14px; } .mmb .smrow small { color: var(--muted); } .mmb ul { margin: 6px 0; padding-left: 18px; } .mmb li { margin: 6px 0; }
 .snaprow { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .top .newsbtn { position: relative; margin-left: 8px; width: 38px; height: 38px; border-radius: 50%; border: 0; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); display: grid; place-items: center; cursor: pointer; flex: none; }
 .newsbtn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1227,6 +1230,15 @@ html, body { touch-action: pan-x pan-y; }
       </div>
     </section>
     <p data-sub="consulente" class="disclaimer">Strumento educativo: non è consulenza finanziaria personalizzata e non sostituisce un consulente abilitato. I rendimenti sono ipotesi costanti, non garanzie, e possono anche essere negativi. Le tasse e i costi sono stime.</p>
+    <section data-sub="mercato" class="card" aria-labelledby="t-mkt">
+      <h2 id="t-mkt">I mercati oggi</h2>
+      <p class="hint">Cosa sale, cosa scende, quanto è rischioso ognuno e cosa potrebbe succedere. Sono scenari, non previsioni e non consigli: nessuno sa cosa farà un mercato.</p>
+      <p id="mm-sum" style="font-weight:700"></p>
+      <div id="mm-top"></div>
+      <div class="tchips" id="mm-chips" role="group" aria-label="Tipo di mercato"></div>
+      <div id="mm-list"></div>
+      <p class="small muted" id="mm-note"></p>
+    </section>
     <section data-sub="mercato" class="card" aria-labelledby="t-mk">
       <h2 id="t-mk">Come sono andati i fondi</h2>
       <p class="hint">Prezzi veri degli ETF del Consulente. Serve a capire quanto si muovono, non a indovinare cosa farà il mercato.</p>
@@ -2459,7 +2471,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-18.81";
+  var APP_VERSION = "2026-11-24.82";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4831,7 +4843,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderPf === "function") { renderPf(); renderSim(); } if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderPf === "function") { renderPf(); renderSim(); } if (typeof renderMM === "function") renderMM(); if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -5467,8 +5479,51 @@ create policy "solo i miei dati" on stipendio_pilota
       + '<div class="sum">' + lav + mon + "</div><p class=\"ft\">Creato con Stipendio Pilota · le maggiorazioni sono una stima, contano le regole del tuo contratto.</p><script>window.onload=function(){setTimeout(function(){try{window.print()}catch(e){}},300)}<\/script></body></html>";
   }
   window.__mp = function (k) { return monthPrintHtml(k || proKey || cmOf(TODAY_KEY)); };
+
+  /* ---------- I mercati oggi ---------- */
+  var MM = { data: null, g: "", open: "" };
+  try { MM.data = JSON.parse(localStorage.getItem("sp-mm-v1") || "null"); } catch (e) {}
+  function loadMarkets() {
+    try { fetch("mercato.json", { cache: "no-store" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (d) { if (d && d.assets && d.assets.length) { MM.data = d; try { localStorage.setItem("sp-mm-v1", JSON.stringify(d)); } catch (e) {} renderMM(); } }).catch(function () {}); } catch (e) {}
+  }
+  function mmPct(v) { if (v === null || v === undefined) return "–"; var t = Math.abs(v).toFixed(1); return (+t === 0 ? "" : v > 0 ? "+" : "−") + t.replace(".", ",") + "%"; }
+  function mmCol(v) { return v > 0.05 ? "var(--pos)" : v < -0.05 ? "var(--bad)" : "inherit"; }
+  function mmPrice(a) { var d = a.last >= 1000 ? 0 : a.last >= 10 ? 2 : 4; return new Intl.NumberFormat("it-IT", { minimumFractionDigits: d === 0 ? 0 : Math.min(2, d), maximumFractionDigits: d }).format(a.last) + (a.cur === "EUR" ? " €" : a.cur === "USD" ? " $" : ""); }
+  function mmSpark(a) {
+    var v = a.spark || [], mn = Math.min.apply(null, v), mx = Math.max.apply(null, v), W = 200, H = 30; if (v.length < 2 || mx === mn) return "";
+    var pts = v.map(function (y, i) { return (i / (v.length - 1) * W).toFixed(1) + "," + (H - (y - mn) / (mx - mn) * (H - 2) - 1).toFixed(1); }).join(" ");
+    return '<svg viewBox="0 0 ' + W + " " + H + '" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="' + (v[v.length - 1] >= v[0] ? "var(--pos)" : "var(--bad)") + '" stroke-width="2" vector-effect="non-scaling-stroke" points="' + pts + '"/></svg>';
+  }
+  function renderMM() {
+    var bx = $("mm-list"); if (!bx) return; var d = MM.data;
+    if (!d || !d.assets) { $("mm-sum").textContent = ""; $("mm-top").innerHTML = ""; $("mm-chips").hidden = true; bx.innerHTML = '<p class="empty">I dati dei mercati arrivano dopo il prossimo aggiornamento automatico.</p>'; $("mm-note").textContent = ""; return; }
+    var A = d.assets, up = A.filter(function (a) { return a.w1 > 0; }).length, sorted = A.filter(function (a) { return a.w1 !== null; }).slice().sort(function (a, b) { return b.w1 - a.w1; });
+    $("mm-sum").textContent = "Questa settimana " + up + " mercati su " + A.length + " sono in salita" + (up >= A.length * 0.7 ? ": clima positivo." : up <= A.length * 0.3 ? ": clima negativo." : ": clima misto.");
+    var row = function (a) { return '<div class="r"><span>' + esc(a.name) + '</span><b style="color:' + mmCol(a.w1) + '">' + mmPct(a.w1) + "</b></div>"; };
+    $("mm-top").innerHTML = '<div class="mmtop"><div><h3>Salgono di più (7 giorni)</h3>' + (sorted.filter(function (a) { return a.w1 > 0; }).slice(0, 3).map(row).join("") || '<p class="small muted" style="margin:0">Nessuno</p>') + "</div><div><h3>Scendono di più (7 giorni)</h3>" + (sorted.filter(function (a) { return a.w1 < 0; }).slice(-3).reverse().map(row).join("") || '<p class="small muted" style="margin:0">Nessuno</p>') + "</div></div>";
+    var groups = []; A.forEach(function (a) { if (groups.indexOf(a.group) < 0) groups.push(a.group); });
+    $("mm-chips").hidden = false; $("mm-chips").innerHTML = '<button type="button" data-g="" class="' + (!MM.g ? "on" : "") + '">Tutti</button>' + groups.map(function (g) { return '<button type="button" data-g="' + esc(g) + '" class="' + (MM.g === g ? "on" : "") + '">' + esc(g) + "</button>"; }).join("");
+    [].forEach.call($("mm-chips").querySelectorAll("button"), function (b) { b.onclick = function () { MM.g = this.getAttribute("data-g"); renderMM(); }; });
+    var RC = { basso: "var(--pos)", medio: "var(--warn)", alto: "var(--bad)" };
+    bx.innerHTML = A.filter(function (a) { return !MM.g || a.group === MM.g; }).map(function (a) {
+      var op = MM.open === a.id;
+      var body = op ? '<div class="mmb"><p class="small muted" style="margin:0 0 8px">' + esc(a.name) + ": " + esc(a.what || "") + ".</p>"
+        + [["Oggi", a.d1], ["7 giorni", a.w1], ["1 mese", a.m1], ["3 mesi", a.m3], ["1 anno", a.y1]].map(function (x) { return '<div class="smrow"><span>' + x[0] + '</span><b style="color:' + mmCol(x[1]) + '">' + mmPct(x[1]) + "</b></div>"; }).join("")
+        + '<div class="smrow"><span>Quanto oscilla<small>in un anno, di solito</small></span><b>± ' + String(a.vol).replace(".", ",") + "%</b></div>"
+        + '<div class="smrow"><span>Distanza dal massimo<small>dell\'ultimo anno</small></span><b>' + mmPct(a.dd) + "</b></div>"
+        + '<h3 style="margin:12px 0 4px;font-size:15px">Cosa potrebbe succedere</h3><ul>' + (a.scen || []).map(function (x) { return "<li><b>" + esc(x[0]) + ":</b> " + esc(x[1]) + "</li>"; }).join("") + "</ul>"
+        + '<p class="small muted">Il voto di rischio (' + a.risk + " su 100) tiene conto di quanto il prezzo oscilla e di quanto è sceso dal massimo. Non dice cosa succederà.</p></div>" : "";
+      return '<div class="mmc"><button type="button" class="mmh" data-id="' + esc(a.id) + '" aria-expanded="' + op + '"><span><b>' + esc(a.name) + '</b><small><span class="mmp" style="background:' + RC[a.rl] + '">Rischio ' + a.rl + "</span></small></span><span class=\"pr\">" + mmPrice(a) + '<small style="color:' + mmCol(a.w1) + '">' + mmPct(a.w1) + " in 7 giorni</small></span>" + mmSpark(a) + "</button>" + body + "</div>";
+    }).join("");
+    [].forEach.call(bx.querySelectorAll(".mmh"), function (b) { b.onclick = function () { var id = this.getAttribute("data-id"); MM.open = MM.open === id ? "" : id; renderMM(); }; });
+    var dt = d.updated ? new Date(d.updated) : null;
+    $("mm-note").textContent = "Dati di Yahoo Finance, aggiornati" + (dt && !isNaN(dt) ? " il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(dt) : "") + ". Possono avere qualche ora di ritardo. Strumento educativo: non è una consulenza finanziaria e gli scenari non sono previsioni.";
+  }
   var CHANGELOG = [
-    { id: "2026-11-18b", date: "18 novembre · nuovo", items: [
+    { id: "2026-11-24a", date: "24 novembre · nuovo", items: [
+      ["I mercati oggi", "In Piano → Mercato trovi indici, azioni famose, Bitcoin, oro e petrolio: chi sale e chi scende, un voto di rischio con il semaforo e gli scenari possibili. Sono spiegazioni, non previsioni."]
+    ] },
+    { id: "2026-11-18b", date: "18 novembre", items: [
       ["PDF del mese", "In Lavoro → Prospetto trovi il pulsante PDF del mese: una pagina ordinata con riquadri, turni colorati, totali e maggiorazioni."]
     ] },
     { id: "2026-11-18a", date: "18 novembre", items: [
@@ -5797,7 +5852,7 @@ create policy "solo i miei dati" on stipendio_pilota
   $("he-reset").onclick = function () { S.home = null; homeNorm(); persist(); applyHome(); renderHomeEditor(); renderAll(); toast("Home ripristinata"); };
   $("home-custom").onclick = function () { openHE(); };
   $("hi-go").onclick = function () { location.hash = "#piano/investire"; }; $("hg-go").onclick = function () { location.hash = "#piano/obiettivi"; };
-  initWizard(); applyHome(); renderAll(); showView(); loadMarket(); syInit(); autoWork();
+  initWizard(); applyHome(); renderAll(); showView(); loadMarket(); loadMarkets(); syInit(); autoWork();
   if (/[?&]nuova=1/.test(location.search)) { location.hash = "#spese/spese"; setTimeout(function () { try { $("exp-amount").focus(); } catch (e) {} }, 400); }
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") autoWork(); });
 })();
