@@ -1235,6 +1235,14 @@ html, body { touch-action: pan-x pan-y; }
       <p class="hint">Cosa sale, cosa scende, quanto è rischioso ognuno e cosa potrebbe succedere. Sono scenari, non previsioni e non consigli: nessuno sa cosa farà un mercato.</p>
       <p id="mm-sum" style="font-weight:700"></p>
       <div id="mm-top"></div>
+      <div id="mm-al" style="margin:12px 0">
+        <label class="chk"><input type="checkbox" id="mm-al-on"><span>Avvisami quando un mercato si muove molto in un giorno</span></label>
+        <div id="mm-al-box" hidden>
+          <label class="f" for="mm-al-th">Soglia<select id="mm-al-th"><option value="3">3% in un giorno</option><option value="5">5% in un giorno</option><option value="8">8% in un giorno</option></select><span class="help">Per le criptovalute la soglia è una volta e mezza più alta, perché si muovono di più.</span></label>
+          <details><summary style="font-weight:700;cursor:pointer">Quali mercati controllo</summary><div id="mm-al-list"></div></details>
+          <p class="small muted" id="mm-al-msg"></p>
+        </div>
+      </div>
       <div class="tchips" id="mm-chips" role="group" aria-label="Tipo di mercato"></div>
       <div id="mm-list"></div>
       <p class="small muted" id="mm-note"></p>
@@ -2471,7 +2479,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-24.82";
+  var APP_VERSION = "2026-11-24.83";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3345,7 +3353,11 @@ create policy "solo i miei dati" on stipendio_pilota
     CATS.slice(0, 3).forEach(function (c) { var b = m.bud[c.id] || 0, x = m.by[c.id] || 0; if (!(b > 0)) return; if (x / b >= 1) out.push({ k: "b100-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai superato il budget “" + c.name + "” di " + eur.format(x - b) + "." }); else if (x / b >= 0.8) out.push({ k: "b80-" + c.id + "-" + CUR, date: TODAY_KEY, text: "Hai usato l'" + Math.round(x / b * 100) + "% del budget “" + c.name + "”: restano " + eur.format(b - x) + "." }); });
     return out;
   }
-  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem(), invRem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
+  function mkRem() {
+    if (!pnf.on || !pnf.mk || !(pnf.mkIds && pnf.mkIds.length)) return [];
+    return [{ k: "mkw", date: "2000-01-01", text: "", mk: { ids: pnf.mkIds.slice(0, 20), th: pnf.mkTh || 5 } }];
+  }
+  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem(), invRem(), mkRem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -4843,7 +4855,7 @@ create policy "solo i miei dati" on stipendio_pilota
     window.scrollTo(0, 0);
     var onT = st.querySelector("a.on"); if (onT) try { onT.scrollIntoView({ inline: "center", block: "nearest" }); } catch (e) {}
   }
-  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderPf === "function") { renderPf(); renderSim(); } if (typeof renderMM === "function") renderMM(); if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
+  function renderAll() { if (typeof renderVeh === "function" && S.veh && S.veh.length && !$("v-profilo").hidden) renderVeh(); if (typeof newsDot === "function") newsDot(); document.documentElement.setAttribute("data-simple", S.simple !== false ? "1" : "0"); if ($("simple-on")) $("simple-on").checked = S.simple !== false; if ($("simple-toggle")) $("simple-toggle").textContent = S.simple !== false ? "Modalità semplice attiva · Mostra tutto" : "Torna alla modalità semplice"; document.documentElement.setAttribute("data-couple", S.couple ? "1" : "0"); document.documentElement.setAttribute("data-saved", S.saved ? "1" : "0"); $("month").textContent = mlabel(CUR); renderPending(); renderHome(); renderChips(); renderSpese(); renderStorico(); renderGoals(); renderFuel(); renderExtra(); applyHome(); renderInvested(); renderBroker(); renderArchivio(); renderHomeExtra(); renderAdvisor(); renderToday(); renderCalendar(); renderWork(); renderProspetto(); renderXmas(); renderSpeseDays(); renderContacts(); renderMods(); renderWeekReminder(); renderComplete(); renderDebts(); renderMarket(); renderHomeEvent(); renderAlerts(); if (typeof renderCtx === "function") renderCtx(); if (typeof renderPf === "function") { renderPf(); renderSim(); } if (typeof renderMM === "function") { renderMM(); mmAlertUi(); } if (typeof renderSnaps === "function") renderSnaps(); $("fab").hidden = curView === "profilo" || curView === "archivio" || (curView === "spese" && (lastSub.spese === "spese" || lastSub.spese === "importa")) || !S.saved; }
   window.addEventListener("hashchange", showView);
   $("edit-sal").onclick = function () { location.hash = "#profilo/io"; setTimeout(function () { var s = $("salary"); s.focus(); s.select(); }, 60); };
   $("hm-exp").onclick = function () { location.hash = "#spese/spese"; setTimeout(function () { $("exp-amount").focus(); }, 60); };
@@ -5519,8 +5531,29 @@ create policy "solo i miei dati" on stipendio_pilota
     var dt = d.updated ? new Date(d.updated) : null;
     $("mm-note").textContent = "Dati di Yahoo Finance, aggiornati" + (dt && !isNaN(dt) ? " il " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(dt) : "") + ". Possono avere qualche ora di ritardo. Strumento educativo: non è una consulenza finanziaria e gli scenari non sono previsioni.";
   }
+
+  function mmAlertUi() {
+    var on = $("mm-al-on"); if (!on) return; var d = MM.data, ids = pnf.mkIds || [];
+    on.checked = !!pnf.mk; $("mm-al-box").hidden = !pnf.mk; $("mm-al-th").value = String(pnf.mkTh || 5);
+    var L = $("mm-al-list"); if (d && d.assets && L.getAttribute("data-n") !== String(d.assets.length) + ids.join()) {
+      L.setAttribute("data-n", String(d.assets.length) + ids.join());
+      L.innerHTML = d.assets.map(function (a) { return '<label class="chk"><input type="checkbox" data-id="' + esc(a.id) + '"' + (ids.indexOf(a.id) >= 0 ? " checked" : "") + "><span>" + esc(a.name) + "</span></label>"; }).join("");
+      [].forEach.call(L.querySelectorAll("input"), function (i) { i.onchange = function () { var id = i.getAttribute("data-id"), c = (pnf.mkIds || []).filter(function (x) { return x !== id; }); if (i.checked) c.push(id); pnf.mkIds = c; mmAlertSave(); }; });
+    }
+    $("mm-al-msg").textContent = !pnf.on ? "Per ricevere l'avviso attiva le notifiche con la campanella in alto." : !(ids.length) ? "Scegli almeno un mercato." : "Ti avviso su " + ids.length + (ids.length === 1 ? " mercato" : " mercati") + ", al massimo una notifica per volta. Non sono consigli.";
+  }
+  function mmAlertSave() { nfSave(); if (pnf.on) nfResync(); mmAlertUi(); }
+  window.__rem = remList;
+  function setupT5() {
+    $("mm-al-on").onchange = function () { pnf.mk = this.checked; if (pnf.mk && !(pnf.mkIds && pnf.mkIds.length) && MM.data) pnf.mkIds = MM.data.assets.filter(function (a) { return a.group === "Indici e ETF"; }).map(function (a) { return a.id; }); $("mm-al-list").setAttribute("data-n", ""); mmAlertSave(); };
+    $("mm-al-th").onchange = function () { pnf.mkTh = +this.value; mmAlertSave(); };
+    mmAlertUi();
+  }
   var CHANGELOG = [
-    { id: "2026-11-24a", date: "24 novembre · nuovo", items: [
+    { id: "2026-11-24b", date: "24 novembre · nuovo", items: [
+      ["Avvisi sui mercati", "In Piano → Mercato puoi farti avvisare quando un mercato si muove molto in un giorno: scegli la soglia e quali mercati controllare."]
+    ] },
+    { id: "2026-11-24a", date: "24 novembre", items: [
       ["I mercati oggi", "In Piano → Mercato trovi indici, azioni famose, Bitcoin, oro e petrolio: chi sale e chi scende, un voto di rischio con il semaforo e gli scenari possibili. Sono spiegazioni, non previsioni."]
     ] },
     { id: "2026-11-18b", date: "18 novembre", items: [
@@ -5829,7 +5862,7 @@ create policy "solo i miei dati" on stipendio_pilota
   initArchivio(); $("br-save").onclick = saveBroker;
   $("td-date").onchange = function () { if (this.value) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
-  setupBackup(); setupT3(); setupT4();
+  setupBackup(); setupT3(); setupT4(); setupT5();
   setupSync();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };

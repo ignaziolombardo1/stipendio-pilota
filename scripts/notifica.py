@@ -5,6 +5,8 @@ import json, os, sys, urllib.request, datetime, calendar
 from zoneinfo import ZoneInfo
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import mkalert
 
 URL = os.environ["SUPABASE_URL"].rstrip("/")
 KEY = os.environ["SUPABASE_KEY"]
@@ -18,6 +20,7 @@ def rpc(name, body):
         t = r.read().decode()
         return json.loads(t) if t else None
 
+MARKET = mkalert.load()
 rows = rpc("sp_push_due", {"p_token": TOKEN}) or []
 sent = 0
 
@@ -46,6 +49,8 @@ for r in rows:
             sent += 1
     done = set(r.get("sent") or [])
     for it in (r.get("rem") or []):
+        if it.get("mk"):
+            continue
         k, d = it.get("k"), it.get("date")
         if not k or not d or k in done or today < d:
             continue
@@ -70,5 +75,23 @@ for r in rows:
                 rpc("sp_push_sent", {"p_token": TOKEN, "p_user": r["user_id"], "p_key": k})
             except Exception as e:
                 print("segno-inviato non riuscito:", e, file=sys.stderr)
+            sent += 1
+    for it in (r.get("rem") or []):
+        if not it.get("mk") or not MARKET:
+            continue
+        qh = it.get("q")
+        if qh and len(qh) == 2:
+            a_, b_ = int(qh[0]), int(qh[1])
+            if (a_ <= now.hour < b_) if a_ < b_ else (now.hour >= a_ or now.hour < b_):
+                continue
+        if now.hour < int(r["hour"]):
+            continue
+        found, text = mkalert.hits(it, MARKET, done)
+        if found and send(r, "Stipendio Pilota", text):
+            for a, key in found:
+                try:
+                    rpc("sp_push_sent", {"p_token": TOKEN, "p_user": r["user_id"], "p_key": key})
+                except Exception as e:
+                    print("segno-inviato non riuscito:", e, file=sys.stderr)
             sent += 1
 print("sottoscrizioni:", len(rows), "inviate:", sent)
