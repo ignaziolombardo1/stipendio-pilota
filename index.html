@@ -839,6 +839,7 @@ html, body { touch-action: pan-x pan-y; }
       <div id="xh-ask" hidden><label class="f" for="xh-amt">Importo arrivato (€)<input id="xh-amt" type="text" inputmode="decimal" autocomplete="off"></label><button type="button" class="primary" id="xh-got">È arrivata</button></div>
       <a class="link" href="#profilo/natale">Apri Natale e tredicesima</a>
     </section>
+    <section data-sub="home" class="card small" id="hg-sw" hidden></section>
     <section class="card" id="hm-mk" data-sub="home" hidden aria-labelledby="t-hmk">
       <h2 id="t-hmk">I mercati oggi</h2>
       <p id="hmk-t" style="margin:0 0 10px"></p>
@@ -1308,6 +1309,11 @@ html, body { touch-action: pan-x pan-y; }
         <label class="f" for="g-when">Entro quando<select id="g-when"></select></label>
         <button class="primary" type="submit">Aggiungi obiettivo</button>
       </form>
+    </section>
+    <section data-sub="obiettivi" class="card" aria-labelledby="t-sw">
+      <h2 id="t-sw">Risparmio automatico</h2>
+      <label class="chk"><input type="checkbox" id="sw-on"><span>Quando il mese si chiude, proponimi di mettere da parte quello che è avanzato davvero</span></label>
+      <div id="sw-box"></div>
     </section>
     <section data-sub="obiettivi" class="card" aria-labelledby="t-ch">
       <h2 id="t-ch">Sfide del mese</h2>
@@ -1974,7 +1980,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { payRule: null, payDates: {}, tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { sweep: {}, saveMode: "", payRule: null, payDates: {}, tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -2142,11 +2148,16 @@ create policy "solo i miei dati" on stipendio_pilota
     }
     return n;
   }
+  var FXEV = [[1, "Ogni mese"], [2, "Ogni 2 mesi"], [3, "Ogni 3 mesi"], [6, "Ogni 6 mesi"], [12, "Una volta l'anno"]];
+  function fxEvery(f) { var e = Math.round(+f.every); return e === 2 || e === 3 || e === 6 || e === 12 ? e : 1; }
+  function fxHistAvg(f, key) { var h = f.hist || {}, ks = Object.keys(h).filter(function (k) { return k < key && h[k] > 0; }).sort().slice(-3); return ks.length ? ks.reduce(function (a, k) { return a + h[k]; }, 0) / ks.length : 0; }
+  function fxBase(f, key) { if (!f.var) return f.amount; var h = f.hist || {}; if (h[key] > 0) return h[key]; return fxHistAvg(f, key) || f.amount; }
+  function fxAmount(f, key) { return fxBase(f, key) / fxEvery(f); }
   function plan() {
     var sal = S.salary;
     var sh = S.couple ? Math.min(100, Math.max(1, S.share)) / 100 : 1;
     var E = (S.extra[S.monthKey] || []).reduce(function (a, x) { return a + x.amount; }, 0) + (endOf(S.monthKey).getMonth() === 11 ? S.m13 || 0 : 0) + (endOf(S.monthKey).getMonth() === 6 ? S.m14 || 0 : 0);
-    var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(f.amount * (f.split ? sh : 1)), due: f.due, full: f.amount, split: !!f.split, end: f.end || "", kind: f.kind }; });
+    var fixed = S.fixedList.filter(function (f) { return f.amount > 0 && (!f.end || f.end >= S.monthKey); }).map(function (f) { return { id: f.id, name: f.name, amt: Math.round(fxAmount(f, S.monthKey) * (f.split ? sh : 1)), due: f.due, full: fxAmount(f, S.monthKey), split: !!f.split, end: f.end || "", kind: f.kind }; });
     var fixedTot = fixed.reduce(function (a, f) { return a + f.amt; }, 0);
     var spesa = Math.round(sal * S.spesaPct / 100);
     var rts = S.routes.map(function (r) {
@@ -2536,7 +2547,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-25.87";
+  var APP_VERSION = "2026-11-25.88";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2939,15 +2950,22 @@ create policy "solo i miei dati" on stipendio_pilota
     if (kind === "loan" || (kind === "casa" && housing === "mutuo")) h += '<label class="f">Mese dell\'ultima rata<input type="month" class="fx-end" value="' + esc(f.end || "") + '"><span class="help">Dopo questa data la voce sparisce dal piano</span></label>';
     if (kind !== "casa") h += '<div class="icpick"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(iconFor(f.name, f.ic), f.name, f.ic) + '</span><label class="f">Icona<select class="fx-ic">' + ICON_OPTS.map(function (o) { return '<option value="' + o[0] + '"' + ((f.ic || "") === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>";
     if (kind === "fix" || kind === "bill" || kind === "sub") h += '<label class="f">Categoria<select class="fx-k">' + [["fix", "Altra spesa fissa"], ["bill", "Bolletta"], ["sub", "Abbonamento"]].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === kind ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+    if (kind === "fix" || kind === "bill" || kind === "sub") {
+      h += '<label class="f">Quando la paghi<select class="fx-ev">' + FXEV.map(function (o) { return '<option value="' + o[0] + '"' + (fxEvery(f) === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + '</select><span class="help">Se non è ogni mese, scrivi sopra l\'importo di ogni volta: ogni mese l\'app ne mette da parte una quota.</span></label>';
+      h += '<label class="chk"><input type="checkbox" class="fx-var"' + (f.var ? " checked" : "") + '> <span>L\'importo cambia ogni volta</span></label>';
+      var av = fxHistAvg(f, S.monthKey), cur = (f.hist || {})[S.monthKey];
+      h += '<label class="f fx-actl"' + (f.var ? "" : " hidden") + '>Ultima arrivata (€)<input type="text" class="fx-act" inputmode="decimal" autocomplete="off" value="' + (cur > 0 ? txt(cur) : "") + '"><span class="help">' + (av > 0 ? "Dalle ultime volte la media è " + eur.format(av) + ": la uso finché non scrivi quella vera. " : "Scrivi l'importo vero quando arriva: da lì uso la media delle ultime volte. ") + "Se scrivi quella vera, correggo il mese.</span></label>";
+    }
     h += '<label class="chk fx-split-l"><input type="checkbox" class="fx-split"' + (f.split ? " checked" : "") + '> Diviso in coppia</label>';
     if (kind !== "casa") h += '<button type="button" class="link fx-del">Elimina questa voce</button>';
     var ho = kind === "casa" ? "home" : iconFor(f.name, f.ic);
-    d.innerHTML = '<button type="button" class="fxh" aria-expanded="false"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(ho, kind === "casa" ? "" : f.name, f.ic, f.logo) + '</span><span class="fxt"><b>' + esc(kind === "casa" ? HOUSING[housing][0] : (f.name || "Nuova voce")) + "</b><small>" + (f.amount > 0 ? eur.format(f.amount) + " · il " + f.due + " del mese" : "Tocca per compilare") + '</small></span><span class="fxc" aria-hidden="true">›</span></button><div class="fxb">' + h + "</div>";
+    d.innerHTML = '<button type="button" class="fxh" aria-expanded="false"><span class="ico sm" style="--c:var(--accent)">' + iconSvg(ho, kind === "casa" ? "" : f.name, f.ic, f.logo) + '</span><span class="fxt"><b>' + esc(kind === "casa" ? HOUSING[housing][0] : (f.name || "Nuova voce")) + "</b><small>" + (f.amount > 0 ? eur.format(f.amount) + " · il " + f.due + " del mese" + (fxEvery(f) > 1 ? " · " + FXEV.filter(function (o) { return o[0] === fxEvery(f); })[0][1].toLowerCase() + ", da parte " + eur.format(f.amount / fxEvery(f)) + " al mese" : "") + (f.var ? " · cambia ogni volta" : "") : "Tocca per compilare") + '</small></span><span class="fxc" aria-hidden="true">›</span></button><div class="fxb">' + h + "</div>";
     var hb = d.querySelector(".fxh");
     hb.onclick = function () { var o = d.classList.toggle("open"); hb.setAttribute("aria-expanded", o ? "true" : "false"); };
     if (!(f.amount > 0) && kind !== "casa") { d.classList.add("open"); hb.setAttribute("aria-expanded", "true"); }
     var del = d.querySelector(".fx-del");
     if (del) del.onclick = function () { var cur = readFixedEditor().filter(function (x) { return x.id !== f.id; }); renderFixedEditor(cur); };
+    var fv = d.querySelector(".fx-var"); if (fv) fv.onchange = function () { d.querySelector(".fx-actl").hidden = !this.checked; };
     var ks = d.querySelector(".fx-k");
     if (ks) ks.onchange = function () { renderFixedEditor(readFixedEditor()); };
     var sel = d.querySelector(".hs-type");
@@ -2969,7 +2987,13 @@ create policy "solo i miei dati" on stipendio_pilota
       var en = d.querySelector(".fx-end"), end = en ? en.value : (kind === "casa" ? "" : d.getAttribute("data-end") || "");
       var nm = d.querySelector(".fx-name");
       var prev = S.fixedList.filter(function (x) { return x.id === d.getAttribute("data-id"); })[0] || {};
-      return Object.assign({}, prev, { id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" });
+      return Object.assign({}, prev, { id: d.getAttribute("data-id"), kind: kind, end: /^\d{4}-\d{2}$/.test(end) ? end : "", name: kind === "casa" ? HOUSING[hs][0] : (nm.value.trim().slice(0, 40) || (kind === "loan" ? "Prestito" : kind === "bill" ? "Bolletta" : kind === "sub" ? "Abbonamento" : "Spesa fissa")), amount: isNaN(amt) ? 0 : Math.max(0, amt), due: isNaN(due) ? 1 : Math.min(31, Math.max(1, Math.round(due))), split: d.querySelector(".fx-split").checked, ic: d.querySelector(".fx-ic") ? d.querySelector(".fx-ic").value : "" }, fxRead(d, prev));
+  }
+  function fxRead(d, prev) {
+    var ev = d.querySelector(".fx-ev"); if (!ev) return {};
+    var v = d.querySelector(".fx-var").checked, h = Object.assign({}, prev.hist || {}), a = pnum(d.querySelector(".fx-act").value);
+    if (v && a > 0) h[S.monthKey] = a; else if (v && !d.querySelector(".fx-act").value.trim()) delete h[S.monthKey];
+    return { every: +ev.value || 1, var: v, hist: h };
   }
   function readFixedEditor() {
     var out = [], hs = readHousing() || S.me.housing;
@@ -3340,8 +3364,30 @@ create policy "solo i miei dati" on stipendio_pilota
       box.appendChild(d);
     });
     $("goals-sum").textContent = !S.goals.length ? "Ancora nessun obiettivo. Aggiungine uno qui sotto."
-      : "Per tutti gli obiettivi servono circa " + eur.format(Math.ceil(need)) + " al mese. Dal tuo piano ne metti da parte " + eur.format(p.toSave) + (need <= p.toSave ? ": ci stai dentro." : ": non bastano, aumenta la quota da parte nel Profilo o allunga le scadenze.");
-    renderAnnual(); renderTr1();
+      : "Per tutti gli obiettivi servono circa " + eur.format(Math.ceil(need)) + " al mese. Dal tuo piano ne metti da parte " + eur.format(p.toSave) + (need <= p.toSave ? ": ci stai dentro." : ": non bastano, aumenta la quota da parte nel Profilo o allunga le scadenze.") + " In tutto hai già messo da parte " + eur.format(S.goals.reduce(function (a, g) { return a + g.saved; }, 0)) + ".";
+    renderAnnual(); renderTr1(); renderSweep();
+  }
+  function sweepPick() {
+    var h = S.history || {}, ks = Object.keys(h).filter(function (k) { return k < S.monthKey && !(S.sweep || {})[k] && h[k] && h[k].n > 0 && Math.floor(h[k].realSaved) >= 1; }).sort();
+    return ks.length ? { key: ks[ks.length - 1], amt: Math.floor(h[ks[ks.length - 1]].realSaved) } : null;
+  }
+  function sweepGive(pk, gs) {
+    var each = Math.floor(pk.amt / (gs.length || 1)), rest = pk.amt - each * gs.length;
+    gs.forEach(function (g, i) { var a = each + (i === 0 ? rest : 0); if (a > 0) { g.saved += a; g.hist = (g.hist || []).concat([{ d: TODAY_KEY, a: a }]); } });
+    S.sweep = S.sweep || {}; S.sweep[pk.key] = gs.length ? pk.amt : -1; persist(); renderAll(); toast(gs.length ? "Messi da parte " + eur.format(pk.amt) + " ✓" : "Va bene, li tieni tu");
+  }
+  function renderSweep() {
+    var on = $("sw-on"); if (!on) return;
+    on.checked = S.saveMode === "resto"; on.onchange = function () { S.saveMode = this.checked ? "resto" : ""; persist(); renderAll(); };
+    var box = $("sw-box"), hg = $("hg-sw"), pk = S.saveMode === "resto" ? sweepPick() : null; box.innerHTML = ""; hg.hidden = !pk;
+    if (!pk) { box.innerHTML = S.saveMode === "resto" ? '<p class="small muted">Quando un mese si chiude e ti avanza qualcosa, te lo propongo qui.</p>' : ""; return; }
+    var msg = "Da " + mlabel(pk.key) + " ti sono avanzati " + eur.format(pk.amt) + ".";
+    hg.innerHTML = esc(msg) + ' <a href="#piano/obiettivi">Mettili da parte</a>';
+    var open = S.goals.filter(function (g) { return g.saved < g.target; }), p = document.createElement("p"); p.className = "small"; p.textContent = msg + (open.length ? " Dove li metto?" : " Crea un obiettivo per poterli mettere da parte."); box.appendChild(p);
+    var row = document.createElement("div"); row.className = "btnrow"; row.style.flexWrap = "wrap";
+    open.forEach(function (g) { var b = document.createElement("button"); b.type = "button"; b.textContent = g.name; b.onclick = function () { sweepGive(pk, [g]); }; row.appendChild(b); });
+    if (open.length > 1) { var all = document.createElement("button"); all.type = "button"; all.textContent = "Divisi tra tutti"; all.onclick = function () { sweepGive(pk, open); }; row.appendChild(all); }
+    var no = document.createElement("button"); no.type = "button"; no.className = "link"; no.textContent = "Li tengo io"; no.onclick = function () { sweepGive(pk, []); }; row.appendChild(no); box.appendChild(row);
   }
   function addGoal(ev) {
     ev.preventDefault();
@@ -4269,11 +4315,11 @@ create policy "solo i miei dati" on stipendio_pilota
     S.mods = Object.assign({}, W.mods); S.home = null; S.workMode = W.wm === "turni" ? "turni" : "fisso";
     S.salary = n(W.salary); S.payDay = W.pm === "fixed" || W.pm === "manual" ? dd(W.payDay, 1) : 1; S.payDates = {};
     S.payRule = W.pm === "before" ? { m: "before", n: Math.min(20, Math.max(1, Math.round(pnum(W.pn)) || 3)) } : W.pm === "w4" && W.pref ? { m: "w4", ref: W.pref } : W.pm === "last" || W.pm === "lastwd" || W.pm === "manual" ? { m: W.pm } : null;
-    S.job = W.job; S.billsMode = W.bm; S.saveMode = W.sm; applyPay(); S.monthKey = CUR; pending = null;
+    S.job = W.job; S.billsMode = W.bm; S.saveMode = W.sm === "resto" ? "resto" : ""; if (W.sm === "resto") S.mods.obiett = true; applyPay(); S.monthKey = CUR; pending = null;
     S.me = { name: W.name, live: W.live, work: W.work, home: W.home, housing: W.hs };
     var fl = [
       { id: "rent", name: HOUSING[W.hs][0], amount: n(W.rent), due: dd(W.dueRent, 5), split: true, kind: "casa", end: "" },
-      { id: "bills", name: "Bollette e abbonamenti", amount: n(W.bills), due: dd("", 10), split: true, kind: "fix", end: "" },
+      { id: "bills", name: "Bollette e abbonamenti", amount: n(W.bills), due: dd("", 10), split: true, kind: "fix", end: "", var: W.bm === "var", hist: {} },
       { id: "ins", name: "Assicurazione", amount: n(W.ins), due: dd(W.dueIns, 20), split: true, kind: "fix", end: "" }
     ];
     if (W.loanOn && n(W.loanAmt) > 0) fl.push({ id: "f" + (S.nextId++), name: (W.loanName || "Prestito").slice(0, 40), amount: n(W.loanAmt), due: dd(W.loanDue, 1), split: false, kind: "loan", end: /^\d{4}-\d{2}$/.test(W.loanEnd) ? W.loanEnd : "" });
@@ -4325,7 +4371,7 @@ create policy "solo i miei dati" on stipendio_pilota
   var WMOD = { "home-dl": ["scad"], "wk-remind": ["viaggi"], "today": ["viaggi"], "tile-acc": ["annuali"], "tile-inv": ["invest"], "tile-goals": ["obiett"] };
   var SUBMOD = { turni: ["viaggi"], settimana: ["viaggi"], prospetto: ["viaggi"], tragitti: ["viaggi"], auto: ["viaggi"], panoramica: ["scad", "doc"], scadenze: ["scad"], documenti: ["doc"], daparte: ["annuali"], investire: ["invest"], consulente: ["invest"], mercato: ["mercato"], obiettivi: ["obiett"] };
   function modRaw(k) { return !S.mods || S.mods[k] !== false; }
-  function modOn(k) { return modRaw(k) && !(S.simple !== false && ["invest", "obiett", "annuali", "mercato"].indexOf(k) >= 0); }
+  function modOn(k) { return modRaw(k) && !(S.simple !== false && !(k === "obiett" && S.saveMode === "resto") && ["invest", "obiett", "annuali", "mercato"].indexOf(k) >= 0); }
   function anyMod(list) { return !list || list.some(modOn); }
   function tabsNorm() {
     var ids = TABS.map(function (t) { return t[0]; }), t = S.tabsC && Array.isArray(S.tabs) ? S.tabs.filter(function (x) { return ids.indexOf(x) >= 0; }) : ["home", "spese"].concat(modOn("viaggi") ? ["lavoro"] : [], ["piano", "profilo"]);
@@ -5752,6 +5798,11 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   window.__cy = function () { return cyBuild(); };
   var CHANGELOG = [
+    { id: "2026-11-25d", date: "25 novembre · nuovo", items: [
+      ["Bollette che cambiano", "In Casa → Bollette puoi dire «l'importo cambia ogni volta»: finché non scrivi quella vera uso la media delle ultime 3, poi correggo il mese con l'importo reale."],
+      ["Bollette ogni 2, 3, 6 mesi o all'anno", "Scrivi l'importo di ogni volta e ogni mese l'app mette da parte la quota giusta."],
+      ["Risparmio automatico", "In Obiettivi, quando il mese si chiude e ti avanza qualcosa, te lo propongo in Home: lo metti in un obiettivo, lo dividi tra tutti o lo tieni tu. In Obiettivi vedi anche quanto hai già messo da parte in tutto."]
+    ] },
     { id: "2026-11-25c", date: "25 novembre · nuovo", items: [
       ["Domande del primo avvio su misura", "Ora l'app ti chiede che lavoro fai (orario fisso, turni, partita IVA, altro) e adatta le domande. Se lavori a turni puoi dire «3 giorni sì, 3 no» con orario e ti riempie i prossimi 3 mesi. Per lo stipendio scegli se arriva sempre lo stesso giorno, a fine mese, qualche giorno prima, ogni 4 settimane o se lo segni tu."],
       ["Bollette e risparmio", "Dici se le bollette arrivano ogni mese, con importo che cambia o ogni 2-3 mesi, e se preferisci risparmiare una cifra fissa o quello che resta a fine mese."]
