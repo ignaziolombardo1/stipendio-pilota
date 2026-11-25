@@ -592,6 +592,8 @@ input[type="text"], input[type="date"], input[type="month"], select, textarea { 
 .wnav { display: flex; gap: 10px; margin-top: auto; position: sticky; bottom: 0; padding: 12px 0; background: var(--bg); }
 .wnav button { flex: 1; }
 .wnav .primary { flex: 2; padding-block: 15px; font-size: 17px; }
+.row2 { display: flex; gap: 8px; }
+.row2 input { flex: 1; min-width: 0; }
 .dchips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .dchip input { position: absolute; opacity: 0; pointer-events: none; }
 .dchip span { display: inline-block; padding: 10px 12px; border-radius: 14px; background: var(--soft); font-weight: 700; font-size: 14px; border: 2px solid transparent; cursor: pointer; }
@@ -2534,7 +2536,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-25.86";
+  var APP_VERSION = "2026-11-25.87";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4159,7 +4161,7 @@ create policy "solo i miei dati" on stipendio_pilota
   /* ---------- configurazione guidata (primo avvio) ---------- */
   var W = null, wStep = 0, wDismissed = false, WD = [["1", "Lun"], ["2", "Mar"], ["3", "Mer"], ["4", "Gio"], ["5", "Ven"], ["6", "Sab"], ["0", "Dom"]];
   function wNew() {
-    return { mods: { scad: true, doc: false, viaggi: true, annuali: true, invest: false, obiett: false, mercato: false }, name: "", salary: "", payDay: "", hs: "affitto", rent: "", dueRent: "", bills: "", live: "", work: "", home: "", car: "diesel", km: "", toll: "", wd: [1, 2, 3, 4, 5], hkm: "", htoll: "", hwd: [6, 0], ins: "", dueIns: "", loanOn: false, loanName: "", loanAmt: "", loanDue: "", loanEnd: "", savedNow: "", pac: "", pacDay: "", brName: "", brUrl: "" };
+    return { mods: { scad: true, doc: false, viaggi: true, annuali: true, invest: false, obiett: false, mercato: false }, name: "", salary: "", payDay: "", hs: "affitto", rent: "", dueRent: "", bills: "", live: "", work: "", home: "", car: "diesel", km: "", toll: "", wd: [1, 2, 3, 4, 5], hkm: "", htoll: "", hwd: [6, 0], ins: "", dueIns: "", loanOn: false, loanName: "", loanAmt: "", loanDue: "", loanEnd: "", savedNow: "", pac: "", pacDay: "", brName: "", brUrl: "", job: "dip_fisso", pm: "fixed", pn: "3", pref: "", rot: "nn", ra: "3", rb: "3", rd: "", rh1: "", rh2: "", bm: "mese", sm: "fisso" };
   }
   function wv(id) { var e = $("w-" + id); return e ? e.value.trim() : ""; }
   function wnum(id) { var n = pnum(wv(id)); return isNaN(n) ? 0 : Math.max(0, n); }
@@ -4173,14 +4175,27 @@ create policy "solo i miei dati" on stipendio_pilota
       return '<p class="wl">Parto da zero, solo con i tuoi numeri. Prima dimmi cosa ti serve: il budget del mese c\'è sempre, il resto lo scegli tu e puoi cambiarlo quando vuoi in Profilo.</p>' + MODS.map(function (m) { return '<label class="chk modrow"><input type="checkbox" data-mod="' + m[0] + '"' + (W.mods[m[0]] ? " checked" : "") + "><span><b>" + m[1] + "</b><small>" + m[2] + "</small></span></label>"; }).join("");
     }
     if (wStep === 1) {
-      h += wf("name", "Come ti chiami?", "t", W.name) + wf("salary", "Stipendio percepito questo mese (€)", "num", W.salary, "Ogni mese, nel giorno che scegli qui sotto, ti invieremo una notifica per inserire il nuovo stipendio e fare la nuova suddivisione.") + wf("payDay", "Che giorno del mese lo ricevi? (1–31)", "num", W.payDay, "Ogni mese, in quel giorno, l'app ti chiede quanto hai preso davvero e apre il nuovo periodo. Il tuo mese va da una paga alla successiva.");
+      h += wf("name", "Come ti chiami?", "t", W.name);
+      h += '<label class="f" for="w-job">Che lavoro fai?<select id="w-job">' + [["dip_fisso", "Dipendente, orario fisso"], ["dip_turni", "Dipendente, a turni"], ["autonomo", "Partita IVA o lavoro autonomo"], ["altro", "Studente, altro o senza lavoro fisso"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.job === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+      h += wf("salary", W.job === "autonomo" || W.job === "altro" ? "Quanto entra in un mese tipico (€)" : "Stipendio percepito questo mese (€)", "num", W.salary, "Una cifra media va bene: la correggi ogni mese quando sai quanto hai preso davvero.");
+      h += '<label class="f" for="w-pm">Quando ti arriva?<select id="w-pm">' + [["fixed", "Sempre lo stesso giorno del mese"], ["last", "L'ultimo giorno del mese"], ["lastwd", "L'ultimo giorno lavorativo"], ["before", "Qualche giorno prima della fine del mese"], ["w4", "Ogni 4 settimane"], ["manual", "Cambia ogni mese: lo segno io"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.pm === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+      h += '<div id="w-pm-fixed">' + wf("payDay", "Che giorno del mese? (1–31)", "num", W.payDay, "In quel giorno l'app ti chiede quanto hai preso davvero e apre il mese nuovo. Se cambia, scegli «lo segno io» e la data la metti quando arriva.") + '</div>';
+      h += '<div id="w-pm-before">' + wf("pn", "Quanti giorni prima della fine del mese?", "num", W.pn, "Per esempio 3: nei mesi da 30 giorni arriva il 27.") + '</div>';
+      h += '<div id="w-pm-w4"><label class="f" for="w-pref">Data dell\'ultimo stipendio ricevuto<input id="w-pref" type="date" value="' + esc(W.pref) + '"><span class="help">Da quella data conto 4 settimane per volta.</span></label></div>';
+      h += '<p class="hint" id="w-pm-prev"></p>';
     } else if (wStep === 2) {
       h += '<label class="f" for="w-hs">Come abiti<select id="w-hs">' + Object.keys(HOUSING).map(function (k) { return '<option value="' + k + '"' + (k === W.hs ? " selected" : "") + ">" + { affitto: "In affitto", mutuo: "Con un mutuo", proprieta: "Casa di proprietà, senza mutuo", famiglia: "Con la famiglia" }[k] + "</option>"; }).join("") + "</select></label>";
       h += '<div id="w-rentbox">' + wf("rent", HOUSING[W.hs][1], "num", W.rent, "Se la dividi con qualcuno, scrivi solo la tua parte.") + wf("dueRent", "Giorno del mese in cui lo paghi", "num", W.dueRent) + "</div>";
       h += wf("bills", "Bollette e abbonamenti al mese (€)", "num", W.bills, "Luce, gas, acqua, internet, telefono, abbonamenti. Una stima va bene.");
+      h += '<label class="f" for="w-bm">Come ti arrivano le bollette?<select id="w-bm">' + [["mese", "Ogni mese, più o meno uguali"], ["var", "Ogni mese, ma l'importo cambia"], ["bim", "Ogni 2 o 3 mesi"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.bm === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + '</select><span class="help">Così l\'app mette da parte ogni mese una quota e non ti trovi la bolletta grossa tutta insieme.</span></label>';
     } else if (wStep === 3) {
       h += wf("live", "Dove vivi?", "t", W.live) + wf("work", "Dove lavori?", "t", W.work);
-      h += '<label class="f" for="w-wm">Che orario fai?<select id="w-wm"><option value="fisso"' + (W.wm !== "turni" ? " selected" : "") + '>Fisso, stessi giorni ogni settimana</option><option value="turni"' + (W.wm === "turni" ? " selected" : "") + '>Su turni, cambia di settimana in settimana</option></select></label><p class="hint">Poi nel calendario segni i giorni in cui lavori davvero e ti tieni un registro tuo.</p>';
+      if (W.job === "dip_turni") {
+        h += '<label class="f" for="w-rot">Come girano i tuoi turni?<select id="w-rot">' + [["nn", "Un numero di giorni sì e uno no (3 e 3, 5 e 2…)"], ["giro", "Un giro che ruota (mattina, pomeriggio, notte, riposo)"], ["var", "Cambia ogni settimana: li inserisco io"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.rot === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+        h += '<div id="w-rot-nn">' + wf("ra", "Giorni di lavoro di fila", "num", W.ra) + wf("rb", "Giorni di riposo di fila", "num", W.rb) + '<label class="f" for="w-rd">Primo giorno di lavoro del giro in corso<input id="w-rd" type="date" value="' + esc(W.rd || TODAY_KEY) + '"></label>' + '<label class="f" for="w-rh1">Orario del turno (facoltativo)<span class="row2"><input id="w-rh1" type="time" value="' + esc(W.rh1) + '"><input id="w-rh2" type="time" value="' + esc(W.rh2) + '"></span><span class="help">Ti riempio i prossimi 3 mesi: li correggi dal calendario quando serve.</span></label></div>';
+        h += '<p class="hint" id="w-rot-hint"></p>';
+      } else if (W.job === "dip_fisso") h += '<p class="hint">Scegli sotto in che giorni vai al lavoro: nel calendario poi segni i giorni in cui lavori davvero.</p>';
+      else h += '<p class="hint">Nel calendario segni i giorni in cui lavori davvero e ti tieni un registro tuo.</p>';
       h += '<label class="f" for="w-car">Come vai al lavoro?<select id="w-car"><option value="diesel"' + (W.car === "diesel" ? " selected" : "") + '>In auto a diesel</option><option value="benzina"' + (W.car === "benzina" ? " selected" : "") + '>In auto a benzina</option><option value="none"' + (W.car === "none" ? " selected" : "") + ">Mezzi pubblici, a piedi o in bici</option></select></label>";
       h += '<div id="w-carbox">' + wf("km", "Km per ogni tragitto casa-lavoro (solo andata)", "num", W.km) + wf("toll", "Pedaggio per ogni tragitto (€)", "num", W.toll, "Metti 0 se non c'è autostrada.") + '<div class="f"><span>In quali giorni ci vai di solito?</span>' + wDays("w-wd", W.wd) + "</div></div>";
       h += wf("home", "Torni ogni tanto altrove? (famiglia, partner)", "t", W.home, "Lascia vuoto se non serve.");
@@ -4191,6 +4206,7 @@ create policy "solo i miei dati" on stipendio_pilota
       h += '<div id="w-loanbox">' + wf("loanName", "Cos'è? (per esempio auto, telefono)", "t", W.loanName) + wf("loanAmt", "Rata al mese (€)", "num", W.loanAmt) + wf("loanDue", "Giorno del mese", "num", W.loanDue) + '<label class="f" for="w-loanEnd">Mese dell\'ultima rata<input id="w-loanEnd" type="month" value="' + esc(W.loanEnd) + '"><span class="help">Dopo quella data la rata sparisce dal piano. Lascia vuoto se non lo sai.</span></label></div>';
     } else if (wStep === 5) {
       h += wf("savedNow", "Quanto hai già messo da parte (€)", "num", W.savedNow, "Conto, deposito, contanti: serve per capire a che punto è il tuo fondo per le emergenze.");
+      h += '<label class="f" for="w-sm">Come preferisci risparmiare?<select id="w-sm">' + [["fisso", "Una cifra fissa ogni mese"], ["resto", "Quello che resta davvero a fine mese"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.sm === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
       if (W.mods.invest) h += wf("pac", "Piano d'accumulo o investimento: quanto versi al mese? (€)", "num", W.pac, "Lascia vuoto se ancora non investi: il piano ti propone un importo.") + wf("pacDay", "Giorno del mese del versamento", "num", W.pacDay) + wf("brName", "Con quale broker o banca? (facoltativo)", "t", W.brName) + wf("brUrl", "Link al loro sito (facoltativo)", "t", W.brUrl);
     } else if (wStep === 6) {
       var p = plan(), sp = S.me.name ? S.me.name + ", ecco" : "Ecco";
@@ -4208,6 +4224,19 @@ create policy "solo i miei dati" on stipendio_pilota
     box.innerHTML = wBody(); $("wiz-err").textContent = "";
     $("wiz-back").hidden = wStep === 0 || wStep === 6; $("wiz-skip").hidden = wStep < 3 || wStep > 5; $("wiz-old").hidden = wStep !== 0;
     $("wiz-next").textContent = wStep === 0 ? "Cominciamo" : wStep === 5 ? "Calcola il mio piano" : wStep === 6 ? "Vai alla Home" : "Avanti";
+    if (wStep === 1) {
+      var jb = $("w-job"), pm = $("w-pm"), wsync = function () {
+        $("w-pm-fixed").hidden = !(pm.value === "fixed" || pm.value === "manual"); $("w-pm-before").hidden = pm.value !== "before"; $("w-pm-w4").hidden = pm.value !== "w4";
+        var r = { m: pm.value, n: Math.round(pnum(($("w-pn") || {}).value)) || 3, ref: ($("w-pref") || {}).value || "" }, t = new Date(NOW.getFullYear(), NOW.getMonth() + 1, 1), a = [];
+        if (pm.value === "manual") { $("w-pm-prev").textContent = "Quando arriva lo stipendio mi dici tu la data: il mese nuovo parte da lì."; return; }
+        if (pm.value === "w4" && !r.ref) { $("w-pm-prev").textContent = ""; return; }
+        for (var q = 0; q < 3; q++) { var d = new Date(t.getFullYear(), t.getMonth() + q, 1); a.push(dfDay.format(payStart(d.getFullYear(), d.getMonth(), "", r, Math.min(31, Math.max(1, Math.round(pnum(($("w-payDay") || {}).value)) || 1))))); }
+        $("w-pm-prev").textContent = "Prossimi arrivi: " + a.join(", ") + ".";
+      };
+      pm.onchange = wsync; ["w-payDay", "w-pn", "w-pref"].forEach(function (id) { $(id).oninput = wsync; $(id).onchange = wsync; });
+      jb.onchange = function () { wCollect(); wRender(); }; wsync();
+    }
+    if (wStep === 3 && $("w-rot")) { var ro = $("w-rot"), rs = function () { $("w-rot-nn").hidden = ro.value !== "nn"; $("w-rot-hint").hidden = ro.value === "nn"; $("w-rot-hint").textContent = ro.value === "giro" ? "Dopo, in Lavoro → Inserisci turni → «Schema che si ripete» costruisci il tuo giro e vedi l'anteprima." : "Nel calendario inserisci i turni quando li sai, o con «Schema che si ripete»."; }; ro.onchange = rs; rs(); }
     if (wStep === 2) { var hs = $("w-hs"); hs.onchange = function () { W.hs = hs.value; var l = document.querySelector('label[for="w-rent"]'); if (l) l.firstChild.textContent = HOUSING[W.hs][1]; }; }
     if (wStep === 3) { var car = $("w-car"), hm = $("w-home"), sync = function () { $("w-carbox").hidden = car.value === "none"; $("w-homebox").hidden = !hm.value.trim() || car.value === "none"; }; car.onchange = sync; hm.oninput = sync; sync(); }
     if (wStep === 4) { var lo = $("w-loanOn"), sl = function () { $("w-loanbox").hidden = !lo.checked; }; lo.onchange = sl; sl(); }
@@ -4216,18 +4245,21 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function wCollect() {
     if (wStep === 0) document.querySelectorAll("#wiz-body input[data-mod]").forEach(function (i) { W.mods[i.getAttribute("data-mod")] = i.checked; });
-    if (wStep === 1) { W.name = wv("name").slice(0, 30); W.salary = wv("salary"); W.payDay = wv("payDay"); }
-    else if (wStep === 2) { W.hs = wv("hs") || "affitto"; W.rent = wv("rent"); W.dueRent = wv("dueRent"); W.bills = wv("bills"); }
-    else if (wStep === 3) { W.live = wv("live").slice(0, 40); W.work = wv("work").slice(0, 40); W.wm = wv("wm"); W.car = wv("car"); W.km = wv("km"); W.toll = wv("toll"); W.wd = wReadDays("w-wd"); W.home = wv("home").slice(0, 40); W.hkm = wv("hkm"); W.htoll = wv("htoll"); W.hwd = wReadDays("w-hwd"); }
+    if (wStep === 1) { W.name = wv("name").slice(0, 30); W.job = wv("job") || "dip_fisso"; W.wm = W.job === "dip_turni" ? "turni" : "fisso"; W.salary = wv("salary"); W.pm = wv("pm") || "fixed"; W.payDay = wv("payDay"); W.pn = wv("pn") || "3"; W.pref = wv("pref"); }
+    else if (wStep === 2) { W.hs = wv("hs") || "affitto"; W.rent = wv("rent"); W.dueRent = wv("dueRent"); W.bills = wv("bills"); W.bm = wv("bm") || "mese"; }
+    else if (wStep === 3) { W.live = wv("live").slice(0, 40); W.work = wv("work").slice(0, 40); if ($("w-rot")) { W.rot = wv("rot"); W.ra = wv("ra"); W.rb = wv("rb"); W.rd = wv("rd"); W.rh1 = wv("rh1"); W.rh2 = wv("rh2"); } W.car = wv("car"); W.km = wv("km"); W.toll = wv("toll"); W.wd = wReadDays("w-wd"); W.home = wv("home").slice(0, 40); W.hkm = wv("hkm"); W.htoll = wv("htoll"); W.hwd = wReadDays("w-hwd"); }
     else if (wStep === 4) { W.ins = wv("ins"); W.dueIns = wv("dueIns"); W.loanOn = $("w-loanOn").checked; W.loanName = wv("loanName"); W.loanAmt = wv("loanAmt"); W.loanDue = wv("loanDue"); W.loanEnd = wv("loanEnd"); }
-    else if (wStep === 5) { W.savedNow = wv("savedNow"); W.pac = wv("pac"); W.pacDay = wv("pacDay"); W.brName = wv("brName"); W.brUrl = wv("brUrl"); }
+    else if (wStep === 5) { W.savedNow = wv("savedNow"); W.sm = wv("sm") || "fisso"; W.pac = wv("pac"); W.pacDay = wv("pacDay"); W.brName = wv("brName"); W.brUrl = wv("brUrl"); }
   }
   function wValidate() {
     if (wStep === 1) {
       var s = pnum(W.salary), d = pnum(W.payDay);
       if (!(s > 0)) return "Scrivi quanto prendi al mese, per esempio 1450.";
-      if (!(d >= 1 && d <= 31)) return "Scrivi il giorno del mese in cui ricevi lo stipendio, da 1 a 31.";
+      if ((W.pm === "fixed") && !(d >= 1 && d <= 31)) return "Scrivi il giorno del mese in cui ricevi lo stipendio, da 1 a 31.";
+      if (W.pm === "before" && !(pnum(W.pn) >= 1 && pnum(W.pn) <= 20)) return "Scrivi quanti giorni prima della fine del mese, da 1 a 20.";
+      if (W.pm === "w4" && !W.pref) return "Scegli la data dell'ultimo stipendio ricevuto, da lì conto 4 settimane.";
     }
+    if (wStep === 3 && W.job === "dip_turni" && W.rot === "nn" && !(pnum(W.ra) >= 1)) return "Scrivi quanti giorni di lavoro fai di fila, per esempio 3.";
     if (wStep === 4 && W.loanOn && !(pnum(W.loanAmt) > 0)) return "Scrivi la rata mensile, oppure togli la spunta.";
     if (wStep === 5 && W.brUrl && !cleanUrl(W.brUrl)) return "Il link non sembra valido. Lascialo vuoto se non ce l'hai.";
     return "";
@@ -4235,7 +4267,9 @@ create policy "solo i miei dati" on stipendio_pilota
   function wApply() {
     var n = function (v) { var x = pnum(v); return isNaN(x) ? 0 : Math.max(0, x); }, dd = function (v, def) { var x = Math.round(pnum(v)); return x >= 1 && x <= 31 ? x : def; };
     S.mods = Object.assign({}, W.mods); S.home = null; S.workMode = W.wm === "turni" ? "turni" : "fisso";
-    S.salary = n(W.salary); S.payDay = dd(W.payDay, 1); applyPay(); S.monthKey = CUR; pending = null;
+    S.salary = n(W.salary); S.payDay = W.pm === "fixed" || W.pm === "manual" ? dd(W.payDay, 1) : 1; S.payDates = {};
+    S.payRule = W.pm === "before" ? { m: "before", n: Math.min(20, Math.max(1, Math.round(pnum(W.pn)) || 3)) } : W.pm === "w4" && W.pref ? { m: "w4", ref: W.pref } : W.pm === "last" || W.pm === "lastwd" || W.pm === "manual" ? { m: W.pm } : null;
+    S.job = W.job; S.billsMode = W.bm; S.saveMode = W.sm; applyPay(); S.monthKey = CUR; pending = null;
     S.me = { name: W.name, live: W.live, work: W.work, home: W.home, housing: W.hs };
     var fl = [
       { id: "rent", name: HOUSING[W.hs][0], amount: n(W.rent), due: dd(W.dueRent, 5), split: true, kind: "casa", end: "" },
@@ -4250,6 +4284,12 @@ create policy "solo i miei dati" on stipendio_pilota
       if (W.home && n(W.hkm) > 0) rt.push({ id: "r2", name: (W.live ? W.live + " → " + W.home : "Casa → " + W.home).slice(0, 40), km: n(W.hkm), toll: n(W.htoll), car: W.car, wd: W.hwd.slice() });
     }
     S.routes = rt; S.dayo = {};
+    if (W.job === "dip_turni" && W.rot === "nn" && pnum(W.ra) >= 1) {
+      var ra = Math.min(30, Math.round(pnum(W.ra))), rb = Math.min(30, Math.max(0, Math.round(pnum(W.rb)) || 0)), r0 = /^\d{4}-\d{2}-\d{2}$/.test(W.rd) ? W.rd : TODAY_KEY, pid = "";
+      if (/^\d{2}:\d{2}$/.test(W.rh1) && /^\d{2}:\d{2}$/.test(W.rh2)) { pid = "wz"; S.shP = (S.shP || []).filter(function (x) { return x.id !== pid; }); S.shP.push({ id: pid, name: "Turno", h1: W.rh1, h2: W.rh2 }); }
+      S.shifts = S.shifts || {};
+      for (var q = 0; q < 90; q++) { var kk = addDaysISO(r0, q); if (q % (ra + rb) < ra) setShift(kk, "L", pid, "", pid ? W.rh1 : undefined, pid ? W.rh2 : undefined); else setShift(kk, "R", "", ""); }
+    }
     S.savedNow = n(W.savedNow); S.adv = Object.assign({}, S.adv, { rata: n(W.pac), day: dd(W.pacDay, 0) === 0 ? 0 : dd(W.pacDay, 0) });
     S.broker = { name: W.brName.slice(0, 40), url: cleanUrl(W.brUrl) };
     S.saved = true; persist(); renderAll(); fillForm(S);
@@ -5712,6 +5752,10 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   window.__cy = function () { return cyBuild(); };
   var CHANGELOG = [
+    { id: "2026-11-25c", date: "25 novembre · nuovo", items: [
+      ["Domande del primo avvio su misura", "Ora l'app ti chiede che lavoro fai (orario fisso, turni, partita IVA, altro) e adatta le domande. Se lavori a turni puoi dire «3 giorni sì, 3 no» con orario e ti riempie i prossimi 3 mesi. Per lo stipendio scegli se arriva sempre lo stesso giorno, a fine mese, qualche giorno prima, ogni 4 settimane o se lo segni tu."],
+      ["Bollette e risparmio", "Dici se le bollette arrivano ogni mese, con importo che cambia o ogni 2-3 mesi, e se preferisci risparmiare una cifra fissa o quello che resta a fine mese."]
+    ] },
     { id: "2026-11-25b", date: "25 novembre · nuovo", items: [
       ["Turni che si ripetono", "In Lavoro → Inserisci turni trovi “Schema che si ripete”: 3 giorni sì e 3 no, un giro di turni (mattina, pomeriggio, notte, riposo) o la ripetizione dei giorni che hai già inserito. Vedi l'anteprima prima di applicare."]
     ] },
