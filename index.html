@@ -777,6 +777,8 @@ html, body { touch-action: pan-x pan-y; }
     <button type="button" id="nm-same" class="link"></button>
     <label class="chk" id="nm-fund-l"><input type="checkbox" id="nm-fund" checked><span id="nm-fund-t"></span></label>
     <button class="primary" id="nm-start" type="button"></button>
+    <div class="btnrow"><button class="link" id="nm-wait" type="button">Non è ancora arrivato</button><button class="link" id="nm-other" type="button">È arrivato un altro giorno</button></div>
+    <input type="date" id="nm-od" hidden aria-label="Giorno in cui è arrivato lo stipendio">
   </section>
 
   <!-- HOME -->
@@ -1517,8 +1519,20 @@ create policy "stipendio pilota documenti" on storage.objects
     <section data-sub="io" class="card" aria-labelledby="t-pay">
       <h2 id="t-pay">Quando arriva lo stipendio</h2>
       <p class="hint">Il tuo mese va dal giorno della paga fino al giorno prima della paga successiva. Se il mese è più corto, vale l'ultimo giorno. Metti 1 per il mese di calendario.</p>
-      <label class="f" for="payDay">Giorno della paga (1–31)<input id="payDay" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label class="f" for="pr-m">Come arriva lo stipendio?<select id="pr-m">
+        <option value="fixed">Sempre lo stesso giorno del mese</option>
+        <option value="last">L'ultimo giorno del mese</option>
+        <option value="lastwd">L'ultimo giorno lavorativo (lunedì-venerdì)</option>
+        <option value="before">Qualche giorno prima della fine del mese</option>
+        <option value="w4">Ogni 4 settimane (ogni 28 giorni)</option>
+        <option value="manual">Cambia ogni mese: lo segno io</option>
+      </select></label>
+      <label class="f" for="payDay" id="pr-dayl">Giorno della paga (1–31)<input id="payDay" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label class="f" for="pr-n" id="pr-nl" hidden>Quanti giorni prima della fine del mese<input id="pr-n" type="text" inputmode="numeric" autocomplete="off"></label>
+      <label class="f" for="pr-ref" id="pr-refl" hidden>Data dell'ultimo stipendio<input id="pr-ref" type="date"></label>
       <p class="small muted" id="pay-prev"></p>
+      <div class="btnrow"><button type="button" id="pr-today">Lo stipendio è arrivato oggi</button></div>
+      <p class="small muted">Se lo stipendio arriva in un giorno diverso dal solito, usa questo tasto: il mese nuovo parte da oggi.</p>
     </section>
     <section data-sub="io" class="card" aria-labelledby="t-nf">
       <h2 id="t-nf">Notifica dello stipendio</h2>
@@ -1885,7 +1899,18 @@ create policy "solo i miei dati" on stipendio_pilota
   function mkOf(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0"); }
   var PAYDAY = 1;
   function dimOf(y, m0) { return new Date(y, m0 + 1, 0).getDate(); }
-  function startOf(key) { var q = key.split("-"), y = +q[0], m = +q[1] - 1; return new Date(y, m, Math.min(PAYDAY, dimOf(y, m))); }
+  function payStart(y, m0, key, rule, base) {
+    var o = (typeof S !== "undefined" && S) ? S : null, dm = dimOf(y, m0); rule = rule === undefined ? (o && o.payRule) : rule; base = base || (o && Math.min(31, Math.max(1, Math.round(+o.payDay) || 1))) || 1;
+    var ov = key && o && o.payDates && o.payDates[key];
+    if (ov && /^\d{4}-\d{2}-\d{2}$/.test(ov)) { var od = new Date(ov + "T00:00:00"); if (od.getFullYear() === y && od.getMonth() === m0) return od; }
+    var md = (rule && rule.m) || "fixed", d;
+    if (md === "last") return new Date(y, m0, dm);
+    if (md === "lastwd") { d = new Date(y, m0, dm); while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1); return d; }
+    if (md === "before") return new Date(y, m0, Math.max(1, dm - Math.min(20, Math.max(1, Math.round(+rule.n) || 3))));
+    if (md === "w4" && /^\d{4}-\d{2}-\d{2}$/.test(rule.ref || "")) { var ref = new Date(rule.ref + "T00:00:00"), k = Math.ceil(Math.round((new Date(y, m0, 1) - ref) / 864e5) / 28); d = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate() + k * 28); if (d.getMonth() === m0 && d.getFullYear() === y) return d; }
+    return new Date(y, m0, Math.min(base, dm));
+  }
+  function startOf(key) { var q = key.split("-"); return payStart(+q[0], +q[1] - 1, key); }
   function nextKey(key) { var q = key.split("-"); return mkOf(new Date(+q[0], +q[1], 1)); }
   function prevKey(key) { var q = key.split("-"); return mkOf(new Date(+q[0], +q[1] - 2, 1)); }
   function endOf(key) { var e = startOf(nextKey(key)); e.setDate(e.getDate() - 1); return e; }
@@ -1898,7 +1923,19 @@ create policy "solo i miei dati" on stipendio_pilota
     var s0 = startOf(CUR), e0 = endOf(CUR), t = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
     DIM = Math.round((e0 - s0) / 864e5) + 1; DAYNUM = Math.round((t - s0) / 864e5) + 1; DAYS_LEFT = DIM - DAYNUM + 1;
   }
-  function applyPay() { PAYDAY = Math.min(31, Math.max(1, Math.round(+S.payDay) || 1)); setPeriod(); }
+  function payMode() { return (S.payRule && S.payRule.m) || "fixed"; }
+  function payCal() { var m = payMode(); return (m === "fixed" || m === "manual") && Math.min(31, Math.max(1, Math.round(+S.payDay) || 1)) === 1 && !Object.keys(S.payDates || {}).length; }
+  function applyPay() { PAYDAY = Math.min(31, Math.max(1, Math.round(+S.payDay) || 1)); setPeriod(); if (payMode() !== "fixed" && payMode() !== "manual") PAYDAY = startOf(CUR).getDate(); if (S.monthKey) pending = S.monthKey < CUR ? CUR : null; }
+  function payWhen() {
+    var m = payMode(), r = S.payRule || {};
+    return { fixed: "il giorno " + Math.round(+S.payDay || 1), manual: "intorno al giorno " + Math.round(+S.payDay || 1), last: "l'ultimo giorno del mese", lastwd: "l'ultimo giorno lavorativo del mese", before: (Math.round(+r.n) || 3) + " giorni prima della fine del mese", w4: "ogni 4 settimane" }[m];
+  }
+  function payCode() { var m = payMode(); return m === "fixed" || m === "manual" ? PAYDAY : 0; }
+  function nextPays(n) {
+    var out = [], t = ymd(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()));
+    for (var i = -1; i < 6 && out.length < n; i++) { var k = mkOf(new Date(NOW.getFullYear(), NOW.getMonth() + i, 1)), ds = ymd(startOf(k)); if (ds >= t) out.push(ds); }
+    return out;
+  }
   setPeriod();
   function mlabel(key) { return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(startOf(key)); }
   function mname(key) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(startOf(key)); }
@@ -1922,7 +1959,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { payRule: null, payDates: {}, tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -2142,7 +2179,7 @@ create policy "solo i miei dati" on stipendio_pilota
     return c;
   }
   function dueInfo(f) {
-    var dd = dueDate(f, S.monthKey), d = PAYDAY > 1 ? dfDay.format(dd) : dd.getDate();
+    var dd = dueDate(f, S.monthKey), d = !payCal() ? dfDay.format(dd) : dd.getDate();
     if (S.monthKey !== CUR) return { t: "Scade il " + d, diff: null };
     var diff = Math.round((dd - new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate())) / 864e5);
     if (diff < 0) return { t: "Scaduta da " + (-diff) + (diff === -1 ? " giorno" : " giorni"), diff: diff };
@@ -2218,7 +2255,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   function renderHome() {
     var p = plan();
-    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (PAYDAY > 1 ? " (" + plabel(S.monthKey) + ")" : "") + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
+    $("sal-label").textContent = "Stipendio di " + mlabel(S.monthKey) + (!payCal() ? " (" + plabel(S.monthKey) + ")" : "") + (p.extra > 0 ? " + extra " + eur.format(p.extra) : "");
     $("sal-big").textContent = eur.format(p.sal);
     $("example").hidden = !!S.saved;
     var nsp = Object.keys(S.spent).reduce(function (a, k) { return a + S.spent[k].length; }, 0);
@@ -2484,7 +2521,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-24.84";
+  var APP_VERSION = "2026-11-25.85";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -2590,7 +2627,7 @@ create policy "solo i miei dati" on stipendio_pilota
   function fillForm(src) {
     FIELDS.forEach(function (f) { $(f[0]).value = txt(src[f[1]]); });
     $("invShare").value = txt(100 - Math.min(100, Math.max(0, +src.saveShare || 0)));
-    if ($("payDay").oninput) $("payDay").oninput();
+    if (typeof payFill === "function") payFill();
     $("couple-on").checked = !!src.couple; coupleUI(!!src.couple);
     var me = src.me || DEFAULTS.me;
     $("me-name").value = me.name || ""; $("me-live").value = me.live || ""; $("me-work").value = me.work || ""; $("me-home").value = me.home || ""; ["surname", "employer", "job", "orgType", "contract", "contractEnd"].forEach(function (k) { $("me-" + k).value = me[k] || ""; });
@@ -3362,7 +3399,11 @@ create policy "solo i miei dati" on stipendio_pilota
     if (!pnf.on || !pnf.mk || !(pnf.mkIds && pnf.mkIds.length)) return [];
     return [{ k: "mkw", date: "2000-01-01", text: "", mk: { ids: pnf.mkIds.slice(0, 20), th: pnf.mkTh || 5 } }];
   }
-  function remList() { var L = annRemList().concat(tredRem(), eveRem(), deadRem(), sunRem(), b80Rem(), invRem(), mkRem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
+  function payRem() {
+    var m = payMode(); if (!pnf.on || m === "fixed" || m === "manual") return [];
+    return nextPays(2).map(function (ds) { return { k: "pay-" + ds, date: ds, text: "Oggi dovrebbe arrivare lo stipendio. Quanto hai preso? Aprila e scrivilo: ti preparo il nuovo mese." }; });
+  }
+  function remList() { var L = annRemList().concat(payRem(), tredRem(), eveRem(), deadRem(), sunRem(), b80Rem(), invRem(), mkRem()); if (pnf.on && pnf.quiet) L = L.map(function (it) { return it.h === undefined ? Object.assign({}, it, { q: [22, 7] }) : it; }); return L; }
   function renderAnnual() {
     var ab = $("annual-list"); if (!ab) return; ab.innerHTML = "";
     var t = annTotals();
@@ -4142,7 +4183,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var p = plan(), sp = S.me.name ? S.me.name + ", ecco" : "Ecco";
       var rows = [["Stipendio", p.sal], ["Spese fisse", p.fixedTot], ["Spesa e tempo libero", p.spesa + p.svago], ["Spostamenti", p.toll + p.fuelB + p.fuelD], ["Da mettere da parte", p.toSave], ["Da investire", p.inv]];
       h += '<p class="wl">' + sp + " come l'app divide il tuo stipendio ogni mese.</p><div class=\"wsum\">" + rows.map(function (r) { return "<div><span>" + r[0] + '</span><b class="num">' + eur.format(r[1]) + "</b></div>"; }).join("") + "</div>";
-      h += '<p class="small muted">Il giorno ' + PAYDAY + " di ogni mese ti chiederò quanto hai preso e aprirò il periodo nuovo. Se vuoi cambiare qualcosa, vai in Profilo.</p>";
+      h += '<p class="small muted">Lo stipendio arriva ' + payWhen() + ": ti chiederò quanto hai preso e aprirò il periodo nuovo. Se vuoi cambiare qualcosa, vai in Profilo.</p>";
     }
     return h;
   }
@@ -4442,10 +4483,10 @@ create policy "solo i miei dati" on stipendio_pilota
   function bellUpd() { var b = $("bell-btn"); if (!b) return; b.classList.toggle("on", !!pnf.on); b.setAttribute("aria-label", pnf.on ? "Notifiche attive: tocca per spegnerle" : "Notifiche spente: tocca per attivarle"); b.title = pnf.on ? "Notifiche attive" : "Notifiche spente"; }
   function nfSupported() { return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window; }
   function b64u(t) { var p = "=".repeat((4 - t.length % 4) % 4), b = atob((t + p).replace(/-/g, "+").replace(/_/g, "/")), a = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
-  function nfSig() { return PAYDAY + "-" + pnf.hour + "-" + JSON.stringify(remList()); }
+  function nfSig() { return payCode() + "-" + pnf.hour + "-" + JSON.stringify(remList()); }
   function nfPost(sub) {
     var tz = "Europe/Rome"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; } catch (e) {}
-    var base = { user_id: sy.uid, sub: sub, payday: PAYDAY, hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }, sig = nfSig();
+    var base = { user_id: sy.uid, sub: sub, payday: payCode(), hour: pnf.hour, tz: tz, updated_at: new Date().toISOString() }, sig = nfSig();
     function post(body) { return syFetch("/rest/v1/sp_push?on_conflict=user_id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(body) }); }
     return post(Object.assign({ rem: remList() }, base)).then(function (r) { if (r.ok) return r; return post(base).then(function (r2) { if (!r2.ok) throw new Error("http " + r2.status); return r2; }); }).then(function () { pnf.sent = sig; pnf.fail = 0; nfSave(); }, function (e) { pnf.fail = Date.now(); nfSave(); throw e; });
   }
@@ -4458,7 +4499,7 @@ create policy "solo i miei dati" on stipendio_pilota
       return navigator.serviceWorker.ready;
     }).then(function (reg) {
       return reg.pushManager.getSubscription().then(function (x) { return x || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_PUB) }); });
-    }).then(function (sub) { return nfPost(sub.toJSON ? sub.toJSON() : sub); }).then(function () { nfMsg("Attiva ✓ Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); }, function (e) { if (!$("nf-msg").textContent || /^Attiva/.test($("nf-msg").textContent)) nfMsg("Non sono riuscito ad attivarla. Controlla di aver eseguito il passaggio su Supabase e riprova."); throw e; });
+    }).then(function (sub) { return nfPost(sub.toJSON ? sub.toJSON() : sub); }).then(function () { nfMsg("Attiva ✓ Ti avviso quando arriva lo stipendio (" + payWhen() + "), alle " + pnf.hour + ":00."); }, function (e) { if (!$("nf-msg").textContent || /^Attiva/.test($("nf-msg").textContent)) nfMsg("Non sono riuscito ad attivarla. Controlla di aver eseguito il passaggio su Supabase e riprova."); throw e; });
   }
   function nfDisable() {
     nfMsg("Notifica spenta.");
@@ -4474,7 +4515,7 @@ create policy "solo i miei dati" on stipendio_pilota
     var eh = $("nf-eveh"); if (!eh.options.length) for (var q = 19; q <= 23; q++) { var o2 = document.createElement("option"); o2.value = q; o2.textContent = q + ":00"; eh.appendChild(o2); }
     $("nf-dead").checked = pnf.dead !== false; $("nf-sun").checked = !!pnf.sun; $("nf-b80").checked = !!pnf.b80; $("nf-q").checked = !!pnf.quiet;
     $("nf-eve").checked = !!pnf.eve; eh.value = String(pnf.eveH || 21); $("nf-eveh-l").hidden = !pnf.eve;
-    if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00.");
+    if (pnf.on && !$("nf-msg").textContent) nfMsg("Ti avviso quando arriva lo stipendio (" + payWhen() + "), alle " + pnf.hour + ":00.");
   }
   function nfTest() {
     if (!nfSupported()) { nfMsg("Questo telefono o browser non supporta le notifiche dell'app. Su iPhone aggiungi prima l'app alla schermata Home."); return; }
@@ -4502,7 +4543,7 @@ create policy "solo i miei dati" on stipendio_pilota
       var want = this.checked, box = this; pnf.on = want; nfSave();
       if (want) nfEnable().catch(function () { pnf.on = false; nfSave(); box.checked = false; }); else nfDisable();
     };
-    $("nf-hour").onchange = function () { pnf.hour = +this.value; nfSave(); if (pnf.on) { nfMsg("Ti avviso il giorno " + PAYDAY + " alle " + pnf.hour + ":00."); nfResync(); } };
+    $("nf-hour").onchange = function () { pnf.hour = +this.value; nfSave(); if (pnf.on) { nfMsg("Ti avviso quando arriva lo stipendio (" + payWhen() + "), alle " + pnf.hour + ":00."); nfResync(); } };
     $("nf-eve").onchange = function () { pnf.eve = this.checked; if (!pnf.eveH) pnf.eveH = 21; nfSave(); $("nf-eveh-l").hidden = !pnf.eve; if (pnf.eve && !pnf.on) { toast("Attiva prima “Avvisami con una notifica”"); } else if (pnf.on) { nfMsg(pnf.eve ? "Ti ricordo di segnare le spese alle " + pnf.eveH + ":00. L'app deve essere aperta almeno una volta a settimana." : "Promemoria serale spento."); nfResync(); } };
     [["nf-dead", "dead", "Avvisi sulle scadenze"], ["nf-sun", "sun", "Riepilogo della domenica"], ["nf-b80", "b80", "Avviso all'80% del budget"], ["nf-q", "quiet", "Orari tranquilli"]].forEach(function (x) {
       $(x[0]).onchange = function () { pnf[x[1]] = this.checked; nfSave(); if (pnf.on) { nfMsg(x[2] + (this.checked ? " attivo." : " spento.")); nfResync(); } else toast("Attiva prima “Avvisami con una notifica”"); };
@@ -5561,8 +5602,51 @@ create policy "solo i miei dati" on stipendio_pilota
     $("mm-al-th").onchange = function () { pnf.mkTh = +this.value; mmAlertSave(); };
     mmAlertUi();
   }
+
+  /* ---------- tappa 5: stipendio flessibile ---------- */
+  function payRuleRead() {
+    var m = $("pr-m").value, r = { m: m };
+    if (m === "before") r.n = Math.min(20, Math.max(1, Math.round(pnum($("pr-n").value)) || 3));
+    if (m === "w4") r.ref = $("pr-ref").value || "";
+    return r;
+  }
+  function payPreview() {
+    var r = payRuleRead(), base = Math.min(31, Math.max(1, Math.round(pnum($("payDay").value)) || 1)), el = $("pay-prev"), k = periodKeyFor(NOW), q = k.split("-");
+    $("pr-dayl").hidden = !(r.m === "fixed" || r.m === "manual"); $("pr-nl").hidden = r.m !== "before"; $("pr-refl").hidden = r.m !== "w4";
+    if (r.m === "w4" && !r.ref) { el.textContent = "Scegli la data dell'ultimo stipendio: da quella conto le 4 settimane."; return; }
+    var fs = function (key) { var p = key.split("-"); return payStart(+p[0], +p[1] - 1, key, r, base); }, s0 = fs(k), nk = nextKey(k), s1 = fs(nk), e0 = new Date(s1); e0.setDate(e0.getDate() - 1);
+    var nx = [nk, nextKey(nk), nextKey(nextKey(nk))].map(function (x) { return dfDay.format(fs(x)); });
+    el.textContent = "Il mese in corso va dal " + dfDay.format(s0) + " al " + dfDay.format(e0) + ". Prossimi arrivi: " + nx.join(", ") + "." + (r.m === "w4" ? " In alcuni mesi arrivano due stipendi: il secondo conta come entrata extra." : "");
+  }
+  function payFill() {
+    var r = S.payRule || { m: "fixed" }; $("pr-m").value = r.m || "fixed"; $("pr-n").value = r.n ? String(r.n) : "3"; $("pr-ref").value = r.ref || ""; payPreview();
+  }
+  function paySaveRule() { var r = payRuleRead(); S.payRule = r.m === "fixed" ? null : r; applyPay(); persist(); renderAll(); payPreview(); if (pnf.on) nfResync(); }
+  function setupT6() {
+    $("pr-m").onchange = function () { payPreview(); var r = payRuleRead(); if (r.m !== "w4" || r.ref) paySaveRule(); };
+    $("pr-n").onchange = function () { paySaveRule(); }; $("pr-ref").onchange = function () { if ($("pr-ref").value) paySaveRule(); };
+    $("pr-today").onclick = function () {
+      var k = mkOf(NOW); S.payDates = S.payDates || {}; S.payDates[k] = ymd(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate()));
+      applyPay(); persist(); renderAll(); payPreview(); toast("Segnato: lo stipendio è arrivato oggi ✓"); location.hash = "#home";
+    };
+    $("nm-wait").onclick = function () {
+      var t = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() + 1); if (!pending) return;
+      if (mkOf(t) !== pending) { toast("È l'ultimo giorno del mese: avvio comunque, puoi correggere dopo"); return; }
+      S.payDates = S.payDates || {}; S.payDates[pending] = ymd(t); applyPay(); persist(); renderAll(); toast("Va bene, te lo richiedo domani");
+    };
+    $("nm-other").onclick = function () { $("nm-od").hidden = false; $("nm-od").focus(); };
+    $("nm-od").onchange = function () {
+      var v = this.value, k = pending; if (!k || !v) return; if (mkOf(new Date(v + "T00:00:00")) !== k || v > ymd(NOW)) { toast("Scegli un giorno di " + mnameCal(k) + ", non nel futuro"); this.value = ""; return; }
+      S.payDates = S.payDates || {}; S.payDates[k] = v; applyPay(); persist(); renderAll(); toast("Data dello stipendio salvata ✓");
+    };
+  }
+  window.__ps = function (y, m0, rule, base) { return ymd(payStart(y, m0, "", rule, base)); };
   var CHANGELOG = [
-    { id: "2026-11-24c", date: "24 novembre · nuovo", items: [
+    { id: "2026-11-25a", date: "25 novembre · nuovo", items: [
+      ["Stipendio che cambia giorno", "In Profilo → Io scegli come arriva lo stipendio: sempre lo stesso giorno, ultimo giorno del mese, ultimo giorno lavorativo, qualche giorno prima della fine, ogni 4 settimane o lo segni tu. Il tasto “Lo stipendio è arrivato oggi” fa partire il mese nuovo da oggi."],
+      ["Quando il mese nuovo è già iniziato", "Se non è ancora arrivato puoi dire “Non è ancora arrivato”, oppure indicare il giorno in cui è arrivato."]
+    ] },
+    { id: "2026-11-24c", date: "24 novembre", items: [
       ["I mercati in Home", "Nella Home trovi un riquadro con il clima della settimana e un tasto per aprire i mercati. Se la sezione era spenta, il tasto la accende."]
     ] },
     { id: "2026-11-24b", date: "24 novembre", items: [
@@ -5870,14 +5954,11 @@ create policy "solo i miei dati" on stipendio_pilota
   $("cal-ics").onclick = icsExport;
   $("wr-go").onclick = function () { calSel = $("wk-remind").getAttribute("data-mon") || calSel; location.hash = "#lavoro/settimana"; renderCalendar(); };
   $("cmp-go").onclick = function () { location.hash = "#profilo/io"; };
-  $("payDay").oninput = function () {
-    var v = Math.min(31, Math.max(1, Math.round(pnum(this.value)) || 1)), keep = PAYDAY, el = $("pay-prev"); PAYDAY = v;
-    var k = periodKeyFor(NOW); el.textContent = "Con il giorno " + v + " il mese in corso va dal " + dfDay.format(startOf(k)) + " al " + dfDay.format(endOf(k)) + "."; PAYDAY = keep;
-  };
+  $("payDay").oninput = function () { if (typeof payPreview === "function") payPreview(); };
   initArchivio(); $("br-save").onclick = saveBroker;
   $("td-date").onchange = function () { if (this.value) { tdDate = this.value; renderToday(); } else this.value = tdDate; };
   document.querySelectorAll("#adv-presets button").forEach(function (b) { b.onclick = function () { S.adv.rata = +this.getAttribute("data-v"); persist(); fillAdvisorInputs(); renderAdvisor(); renderHome(); toast("Rata di " + this.textContent + " al mese: guarda cosa diventa in " + S.adv.years + " anni"); }; });
-  setupBackup(); setupT3(); setupT4(); setupT5();
+  setupBackup(); setupT3(); setupT4(); setupT5(); setupT6();
   setupSync();
   buildAdvisor(); fillAdvisorInputs();
   $("reset").onclick = function () { fillForm(DEFAULTS); toast("Valori di esempio inseriti: premi Salva per confermare"); };
