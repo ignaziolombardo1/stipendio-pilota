@@ -2547,7 +2547,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-25.88";
+  var APP_VERSION = "2026-11-25.89";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -4237,8 +4237,8 @@ create policy "solo i miei dati" on stipendio_pilota
     } else if (wStep === 3) {
       h += wf("live", "Dove vivi?", "t", W.live) + wf("work", "Dove lavori?", "t", W.work);
       if (W.job === "dip_turni") {
-        h += '<label class="f" for="w-rot">Come girano i tuoi turni?<select id="w-rot">' + [["nn", "Un numero di giorni sì e uno no (3 e 3, 5 e 2…)"], ["giro", "Un giro che ruota (mattina, pomeriggio, notte, riposo)"], ["var", "Cambia ogni settimana: li inserisco io"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.rot === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
-        h += '<div id="w-rot-nn">' + wf("ra", "Giorni di lavoro di fila", "num", W.ra) + wf("rb", "Giorni di riposo di fila", "num", W.rb) + '<label class="f" for="w-rd">Primo giorno di lavoro del giro in corso<input id="w-rd" type="date" value="' + esc(W.rd || TODAY_KEY) + '"></label>' + '<label class="f" for="w-rh1">Orario del turno (facoltativo)<span class="row2"><input id="w-rh1" type="time" value="' + esc(W.rh1) + '"><input id="w-rh2" type="time" value="' + esc(W.rh2) + '"></span><span class="help">Ti riempio i prossimi 3 mesi: li correggi dal calendario quando serve.</span></label></div>';
+        h += '<label class="f" for="w-rot">Come girano i tuoi turni?<select id="w-rot">' + [["nn", "Giorni sì e giorni no (3 e 3…)"], ["giro", "Giro che ruota (mattina, notte…)"], ["var", "Cambia ogni settimana"]].map(function (o) { return '<option value="' + o[0] + '"' + (W.rot === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+        h += '<div id="w-rot-nn">' + wf("ra", "Giorni di lavoro di fila", "num", W.ra) + wf("rb", "Giorni di riposo di fila", "num", W.rb) + '<label class="f" for="w-rd">Primo giorno di lavoro del giro in corso<input id="w-rd" type="date" value="' + esc(W.rd || TODAY_KEY) + '"></label>' + '<label class="f" for="w-rh1">Orario del turno: da, a (facoltativo)<span class="row2"><input id="w-rh1" type="time" value="' + esc(W.rh1) + '"><input id="w-rh2" type="time" value="' + esc(W.rh2) + '"></span><span class="help">Ti riempio i prossimi 3 mesi: li correggi dal calendario quando serve.</span></label></div>';
         h += '<p class="hint" id="w-rot-hint"></p>';
       } else if (W.job === "dip_fisso") h += '<p class="hint">Scegli sotto in che giorni vai al lavoro: nel calendario poi segni i giorni in cui lavori davvero.</p>';
       else h += '<p class="hint">Nel calendario segni i giorni in cui lavori davvero e ti tieni un registro tuo.</p>';
