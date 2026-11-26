@@ -817,6 +817,11 @@ html, body { touch-action: pan-x pan-y; }
       <div id="todo-list"></div>
       <button type="button" class="link" id="todo-off" hidden>Nascondi i consigli</button>
     </section>
+    <section data-sub="home" class="card" id="mr" aria-labelledby="t-mr" hidden>
+      <h2 id="t-mr">Com'è andato il mese</h2>
+      <div id="mr-list"></div>
+      <div class="btnrow"><button type="button" class="primary" id="mr-ok">Ho letto</button><button type="button" id="mr-st">Vedi lo storico</button></div>
+    </section>
     <section data-sub="home" class="hero" aria-labelledby="t-pk">
       <p class="hello" id="hero-hi" hidden></p>
       <h2 id="t-pk" class="sr-only">Quanto puoi spendere oggi</h2>
@@ -1891,9 +1896,26 @@ create policy "solo i miei dati" on stipendio_pilota
           <label class="f" for="sy-pw">Password (almeno 6 caratteri)<input id="sy-pw" type="password" autocomplete="current-password"></label>
         </div>
         <div class="btnrow"><button type="button" class="primary" id="sy-login">Accedi</button><button type="button" id="sy-signup">Crea account</button></div>
-        <p class="small muted">Prima volta? Premi "Crea account". Sugli altri telefoni usa "Accedi" con la stessa email e password.</p>
+        <p class="small muted">Prima volta? Premi "Crea account": non devi confermare l'email e ti do un codice di recupero da copiare. Sugli altri telefoni usa "Accedi" con la stessa email e password.</p>
+        <p class="small"><button type="button" class="link" id="sy-forgot">Password dimenticata?</button></p>
+        <div id="sy-reset" hidden>
+          <div class="fields">
+            <label class="f" for="sy-code">Codice di recupero<input id="sy-code" type="text" autocomplete="off" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX"></label>
+            <label class="f" for="sy-newpw">Nuova password<input id="sy-newpw" type="password" autocomplete="new-password"></label>
+          </div>
+          <p class="small muted">Scrivi anche l'email qui sopra.</p>
+          <button type="button" class="primary" id="sy-reset-go">Cambia password</button>
+        </div>
       </div>
-      <div class="btnrow"><button type="button" id="sy-now" hidden>Sincronizza ora</button><button type="button" id="sy-out" hidden>Esci</button></div>
+      <div id="sy-codebox" hidden>
+        <h3>Il tuo codice di recupero</h3>
+        <p class="small">Se dimentichi la password ti serve questo codice. Copialo e tienilo al sicuro (Note, password manager). Dopo non lo rivedi più.</p>
+        <pre id="sy-codeval" style="user-select:all;font-size:18px;letter-spacing:1px;white-space:pre-wrap"></pre>
+        <div class="btnrow"><button type="button" id="sy-codecopy">Copia il codice</button></div>
+        <label class="chk"><input type="checkbox" id="sy-codeok"><span>L'ho salvato</span></label>
+        <button type="button" class="primary" id="sy-codedone" disabled>Fatto</button>
+      </div>
+      <div class="btnrow"><button type="button" id="sy-now" hidden>Sincronizza ora</button><button type="button" id="sy-newcode" hidden>Crea un codice di recupero</button><button type="button" id="sy-out" hidden>Esci</button></div>
       <div id="sy-choice" hidden><p class="small" id="sy-choice-text"></p><div class="btnrow"><button type="button" id="sy-use-cloud">Usa i dati del cloud</button><button type="button" id="sy-use-local">Tieni quelli di questo telefono</button></div></div>
       <p class="small" id="sy-status" role="status"></p>
     </section>
@@ -1981,10 +2003,11 @@ create policy "solo i miei dati" on stipendio_pilota
     return out;
   }
   setPeriod();
-  function mlabel(key) { return new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }).format(startOf(key)); }
-  function mname(key) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(startOf(key)); }
-  function mnameCal(key) { var p = key.split("-"); return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(new Date(+p[0], +p[1] - 1, 1)); }
-  function mnameD(d) { return new Intl.DateTimeFormat("it-IT", { month: "long" }).format(d); }
+  var dfML = new Intl.DateTimeFormat("it-IT", { month: "long", year: "numeric" }), dfMN = new Intl.DateTimeFormat("it-IT", { month: "long" });
+  function mlabel(key) { return dfML.format(startOf(key)); }
+  function mname(key) { return dfMN.format(startOf(key)); }
+  function mnameCal(key) { var p = key.split("-"); return dfMN.format(new Date(+p[0], +p[1] - 1, 1)); }
+  function mnameD(d) { return dfMN.format(d); }
   function plabel(key) { return dfDay.format(startOf(key)) + " – " + dfDay.format(endOf(key)); }
 
   var TABS = [["home", "Home", "Il riepilogo di oggi."], ["spese", "Spese", "Segna e guarda le spese."], ["lavoro", "Lavoro", "Calendario, turni e prospetto del mese."], ["archivio", "Archivio", "Scadenze e documenti."], ["piano", "Piano", "Mese, investire, obiettivi."], ["storico", "Storico", "I mesi passati."], ["profilo", "Altro", "Le altre sezioni e le impostazioni."]];
@@ -2003,7 +2026,7 @@ create policy "solo i miei dati" on stipendio_pilota
     ["tile-inv", "Investimento", "Quanto hai versato questo mese.", false],
     ["tile-goals", "Obiettivo", "Il tuo primo obiettivo di risparmio.", false]
   ];
-  var DEFAULTS = { seenPlan: false, guide: true, sweep: {}, saveMode: "", payRule: null, payDates: {}, tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
+  var DEFAULTS = { mrSeen: {}, seenPlan: false, guide: true, sweep: {}, saveMode: "", payRule: null, payDates: {}, tabsLv: false, leave: null, tred: null, xmas: null, workMode: "fisso", shifts: {}, shP: null, normH: 8, slip: {}, tabs: null, mods: null, skin: "grafite", home: null, couple: null, catRules: {}, deadlines: [], docs: [], broker: { name: "", url: "" }, payDay: 1, salary: 1800, rent: 550, bills: 120, ins: 65, sal2: 0, share: 100, dueRent: 5, dueBills: 10, dueIns: 20, taxPct: 26, costPct: 0.4, dv: 2, theme: "auto", lastBackup: 0, adv: { q: {}, years: 20, rata: 0, init: 0, step: 2, target: 0, day: 0, entry: 3, mgmt: 1.9 }, spesaPct: 15, svagoPct: 8,
     conf: {}, m13: 0, m14: 0, me: { name: "", surname: "", live: "", work: "", home: "", housing: "affitto", job: "", employer: "", orgType: "", contract: "", contractEnd: "" }, contacts: [], routes: [{ id: "r1", name: "Casa → lavoro", km: 70, toll: 3.3, car: "diesel", wd: [1, 2, 3, 4, 5] }], dayo: {},
     kmlB: 15, priceB: 2.01, extraB: 300, kmlD: 20, priceD: 2.24, extraD: 200,
     saveShare: 40, savedNow: 1000, months: 6, profile: "bilanciato", years: 20, saved: false };
@@ -2570,7 +2593,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-26.90";
+  var APP_VERSION = "2026-11-26.91";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3422,6 +3445,32 @@ create policy "solo i miei dati" on stipendio_pilota
     var d = INFO[b.getAttribute("data-info")]; if (!d) return; $("ip-t").textContent = d[0]; $("ip-x").textContent = d[1]; $("infopop").hidden = false; $("ip-ok").focus();
   }, true);
   $("ip-ok").onclick = $("ip-bg").onclick = function () { $("infopop").hidden = true; };
+  function mrLines(m) {
+    var L = [], older = Object.keys(S.history).filter(function (k) { return k < m.key && k !== S.monthKey && S.history[k].n > 0; }).sort().reverse().slice(0, 3).map(function (k) { return S.history[k]; });
+    if (m.A <= m.V) L.push("Hai rispettato il budget" + (m.realSaved >= 1 ? ": ti sono avanzati circa " + eur.format(Math.round(m.realSaved)) + "." : "."));
+    else L.push("Hai superato il budget di " + eur.format(Math.round(m.A - m.V)) + ".");
+    if (older.length) {
+      var avg = older.reduce(function (a, x) { return a + x.A; }, 0) / older.length, pc = avg > 0 ? Math.round((m.A - avg) / avg * 100) : 0;
+      if (Math.abs(pc) >= 5) L.push("Hai speso " + eur.format(Math.round(m.A)) + ", il " + Math.abs(pc) + "% " + (pc > 0 ? "in più" : "in meno") + " del solito (di solito " + eur.format(Math.round(avg)) + ").");
+      else L.push("Hai speso " + eur.format(Math.round(m.A)) + ", in linea con il solito.");
+      var best = null; CATS.slice(0, 3).forEach(function (c) { var av = older.reduce(function (a, x) { return a + (x.by[c.id] || 0); }, 0) / older.length, d = (m.by[c.id] || 0) - av; if (d >= 10 && (!best || d > best.d)) best = { n: c.name, d: d }; });
+      if (best) L.push("È cresciuta soprattutto la voce «" + best.n + "» (+" + eur.format(Math.round(best.d)) + ").");
+    } else L.push("Hai speso " + eur.format(Math.round(m.A)) + ". Dal prossimo mese ti dico anche come va rispetto al solito.");
+    var over = CATS.slice(0, 3).filter(function (c) { return (m.bud[c.id] || 0) > 0 && (m.by[c.id] || 0) > m.bud[c.id]; });
+    if (over.length) L.push("Per il mese nuovo: tieni «" + over[0].name + "» sotto " + eur.format(Math.round(m.bud[over[0].id])) + ".");
+    else if (m.realSaved >= 1 && (S.goals || []).length) L.push("Per il mese nuovo: metti da parte quello che avanza, un tocco in Obiettivi.");
+    else L.push("Per il mese nuovo: vai avanti così.");
+    return L;
+  }
+  function renderMR() {
+    var box = $("mr"); if (!box) return; box.hidden = true;
+    if (!S.saved || pending || S.monthKey !== CUR) return;
+    var ks = Object.keys(S.history).filter(function (k) { return k < S.monthKey && S.history[k].n > 0; }).sort(), k = ks[ks.length - 1]; if (!k || (S.mrSeen || {})[k]) return;
+    var m = S.history[k], L = $("mr-list"); L.innerHTML = ""; $("t-mr").textContent = "Com'è andato " + mlabel(k);
+    mrLines(m).forEach(function (t) { var p = document.createElement("p"); p.textContent = t; L.appendChild(p); });
+    $("mr-ok").onclick = function () { S.mrSeen = S.mrSeen || {}; S.mrSeen[k] = true; persist(); renderMR(); }; $("mr-st").onclick = function () { S.mrSeen = S.mrSeen || {}; S.mrSeen[k] = true; persist(); location.hash = "#storico"; };
+    box.hidden = false;
+  }
   function renderTodo() {
     var box = $("todo"), L = $("todo-list"); if (!box) return; L.innerHTML = ""; box.hidden = true;
     if (!S.saved || pending || S.monthKey !== CUR) return;
@@ -3455,7 +3504,7 @@ create policy "solo i miei dati" on stipendio_pilota
     gs.forEach(function (g, i) { var a = each + (i === 0 ? rest : 0); if (a > 0) { g.saved += a; g.hist = (g.hist || []).concat([{ d: TODAY_KEY, a: a }]); } });
     S.sweep = S.sweep || {}; S.sweep[pk.key] = gs.length ? pk.amt : -1; persist(); renderAll(); toast(gs.length ? "Messi da parte " + eur.format(pk.amt) + " ✓" : "Va bene, li tieni tu");
   }
-  function renderSweep() { renderSweep0(); renderTodo(); }
+  function renderSweep() { renderSweep0(); renderTodo(); renderMR(); }
   function renderSweep0() {
     var on = $("sw-on"); if (!on) return;
     on.checked = S.saveMode === "resto"; on.onchange = function () { S.saveMode = this.checked ? "resto" : ""; persist(); renderAll(); };
@@ -3712,7 +3761,7 @@ create policy "solo i miei dati" on stipendio_pilota
   }
 
   /* ---------- cloud (Supabase) ---------- */
-  var SYNC_URL = "https://ajahyezbyqbbodukwpzy.supabase.co", SYNC_KEY = "sb_publishable_oGKHkRiiqqf4g6gaeNwOaQ_k8aW0Ukr", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "";
+  var SYNC_URL = "https://ajahyezbyqbbodukwpzy.supabase.co", SYNC_KEY = "sb_publishable_oGKHkRiiqqf4g6gaeNwOaQ_k8aW0Ukr", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "", syCode = "", syForgot = false;
   try { var sraw = JSON.parse(localStorage.getItem(SK)); if (sraw && typeof sraw === "object") sy = Object.assign(sy, sraw); } catch (e) {}
   function sySave() { try { localStorage.setItem(SK, JSON.stringify(sy)); } catch (e) {} }
   function syCfg() { return { url: String(sy.url || SYNC_URL).trim().replace(/\/+$/, ""), key: String(sy.key || SYNC_KEY).trim() }; }
@@ -3730,6 +3779,29 @@ create policy "solo i miei dati" on stipendio_pilota
       opt = opt || {}; opt.headers = Object.assign({ apikey: c.key, Authorization: "Bearer " + t, "Content-Type": "application/json" }, opt.headers || {});
       return fetch(c.url + path, opt);
     });
+  }
+  function syGenCode() { var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", b = new Uint8Array(20), o = ""; crypto.getRandomValues(b); for (var i = 0; i < 20; i++) o += A[b[i] & 31]; return o; }
+  function syFmt(c) { return c.replace(/(.{4})(?=.)/g, "$1-"); }
+  function syNorm(c) { return String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+  function syMakeCode() {
+    var c = syGenCode();
+    return syFetch("/rest/v1/rpc/sp_set_recovery", { method: "POST", body: JSON.stringify({ p_code: c }) })
+      .then(function (r) { if (!r.ok) throw new Error("rpc"); return r.json(); })
+      .then(function (ok) { if (ok !== true) throw new Error("no"); syCode = c; syMsg = ""; renderSync(); })
+      .catch(function () { syMsg = "Account pronto, ma il codice di recupero non è attivo nel progetto: serve incollare una volta il testo SQL del recupero in Supabase."; renderSync(); });
+  }
+  function syReset() {
+    var c = syCfg(), email = $("sy-mail").value.trim(), code = syNorm($("sy-code").value), np = $("sy-newpw").value;
+    if (!/^\S+@\S+\.\S+$/.test(email)) { toast("Scrivi la tua email"); $("sy-mail").focus(); return; }
+    if (code.length < 16) { toast("Scrivi il codice di recupero"); $("sy-code").focus(); return; }
+    if (np.length < 6) { toast("La nuova password deve avere almeno 6 caratteri"); $("sy-newpw").focus(); return; }
+    syMsg = "Cambio la password…"; renderSync();
+    fetch(c.url + "/rest/v1/rpc/sp_reset_pw", { method: "POST", headers: { apikey: c.key, "Content-Type": "application/json" }, body: JSON.stringify({ p_email: email, p_code: code, p_new: np }) })
+      .then(function (r) { if (!r.ok) throw new Error("rpc"); return r.json(); })
+      .then(function (ok) {
+        if (ok !== true) { syMsg = "Email o codice non corretti."; renderSync(); return; }
+        $("sy-pw").value = np; $("sy-newpw").value = ""; $("sy-code").value = ""; syForgot = false; syAuth(false);
+      }).catch(function () { syMsg = "Non riesco a cambiare la password: il recupero non è attivo nel progetto."; renderSync(); });
   }
   function syErr(j) {
     var m = String((j && (j.error_description || j.msg || j.message || j.error)) || "").toLowerCase();
@@ -3751,9 +3823,9 @@ create policy "solo i miei dati" on stipendio_pilota
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (x) {
         if (!x.ok) { syMsg = syErr(x.j); renderSync(); return; }
-        if (!x.j.access_token) { syMsg = "Ti ho scritto un'email: apri il link per confermare, poi premi Accedi."; renderSync(); return; }
+        if (!x.j.access_token) { syMsg = "La conferma dell'email è ancora attiva nel progetto: spegnila in Authentication → Sign In / Providers → Email (Confirm email), poi riprova."; renderSync(); return; }
         sy.at = x.j.access_token; sy.rt = x.j.refresh_token || ""; sy.exp = Date.now() + (x.j.expires_in || 3600) * 1000; sy.uid = (x.j.user || {}).id || ""; sy.email = (x.j.user || {}).email || email; sy.last = 0; sySave();
-        $("sy-pw").value = ""; syMsg = ""; renderSync(); syncNow(true);
+        $("sy-pw").value = ""; syMsg = ""; renderSync(); syncNow(true); if (signup) syMakeCode();
       }).catch(function () { syMsg = "Non riesco a collegarmi: controlla indirizzo e chiave del progetto."; renderSync(); });
   }
   function queueSync() { if (!syOn() || !sy.uid) return; clearTimeout(syTimer); syTimer = setTimeout(function () { syncNow(false); }, 2500); }
@@ -3785,6 +3857,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-auth").hidden = on || !has; $("sy-now").hidden = !on; $("sy-out").hidden = !on;
     $("sy-status").textContent = on ? "Collegato come " + (sy.email || "il tuo account") + ". " + syMsg : (has ? syMsg || "Inserisci email e password per collegare questo telefono." : "Prima inserisci i due dati del tuo progetto Supabase (passi qui sopra).");
     $("sy-choice").hidden = !syChoice;
+    $("sy-codebox").hidden = !syCode || !on; $("sy-codeval").textContent = syCode ? syFmt(syCode) : ""; $("sy-newcode").hidden = !on || !!syCode; $("sy-reset").hidden = !syForgot || on; $("sy-forgot").parentNode.hidden = on;
     if (syChoice) $("sy-choice-text").textContent = "Nel cloud ci sono già dei dati (salvati " + new Intl.DateTimeFormat("it-IT", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(syChoice.rt)) + "). Quali vuoi tenere?";
   }
   function setupSync() {
@@ -3794,7 +3867,13 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-login").onclick = function () { syAuth(false); }; $("sy-signup").onclick = function () { syAuth(true); };
     $("sy-pw").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); syAuth(false); } };
     $("sy-now").onclick = function () { syncNow(true); };
-    $("sy-out").onclick = function () { sy.at = ""; sy.rt = ""; sy.exp = 0; sy.uid = ""; sy.email = ""; sy.last = 0; sySave(); syChoice = null; syMsg = ""; renderSync(); toast("Scollegato. I dati restano in questo telefono."); };
+    $("sy-forgot").onclick = function () { syForgot = !syForgot; renderSync(); if (syForgot) $("sy-code").focus(); };
+    $("sy-reset-go").onclick = syReset;
+    $("sy-newcode").onclick = function () { syMsg = "Creo il codice…"; renderSync(); syMakeCode(); };
+    $("sy-codeok").onchange = function () { $("sy-codedone").disabled = !this.checked; };
+    $("sy-codedone").onclick = function () { syCode = ""; $("sy-codeok").checked = false; $("sy-codedone").disabled = true; renderSync(); toast("Ricordati di tenerlo al sicuro ✓"); };
+    $("sy-codecopy").onclick = function () { var t = syFmt(syCode); try { navigator.clipboard.writeText(t).then(function () { toast("Codice copiato ✓"); }, function () { toast("Tieni premuto sul codice e copialo"); }); } catch (e) { toast("Tieni premuto sul codice e copialo"); } };
+    $("sy-out").onclick = function () { sy.at = ""; sy.rt = ""; sy.exp = 0; sy.uid = ""; sy.email = ""; sy.last = 0; sySave(); syChoice = null; syMsg = ""; syCode = ""; renderSync(); toast("Scollegato. I dati restano in questo telefono."); };
     $("sy-use-cloud").onclick = function () { var ch = syChoice; syChoice = null; adoptState(ch.data, true); S.ts = ch.rt; persist(true); sy.last = ch.rt; sySave(); syMsg = "Dati del cloud caricati"; renderSync(); toast("Dati del cloud caricati ✓"); };
     $("sy-use-local").onclick = function () { syChoice = null; sy.last = 1; sySave(); S.ts = Date.now(); persist(true); syncNow(true); };
     $("sy-sql-copy").onclick = function () { var t = $("sy-sql").textContent; try { navigator.clipboard.writeText(t).then(function () { toast("Copiato ✓"); }, function () { toast("Seleziona il testo e copialo"); }); } catch (e) { toast("Seleziona il testo e copialo"); } };
@@ -5879,6 +5958,12 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   window.__cy = function () { return cyBuild(); };
   var CHANGELOG = [
+    { id: "2026-11-26b", date: "26 novembre · nuovo", items: [
+      ["Account senza conferma email", "Crei l'account con email e password e sei dentro, senza aprire nessun link."],
+      ["Codice di recupero", "Alla creazione dell'account ti do un codice da copiare. Se dimentichi la password, scrivi email, codice e nuova password: «Password dimenticata?» nella pagina Dati."],
+      ["Com'è andato il mese", "Quando si chiude un mese compare in Home un riepilogo in parole semplici: hai rispettato il budget, quanto hai speso rispetto al solito, cosa è cresciuto e cosa fare il mese dopo."],
+      ["Un po' più veloce", "Piccola ottimizzazione nel caricamento delle date."]
+    ] },
     { id: "2026-11-26a", date: "26 novembre · nuovo", items: [
       ["Da fare oggi", "In Home, in alto, poche cose utili: turni da segnare, soldi avanzati, bolletta arrivata, backup. Spariscono quando le hai fatte."],
       ["Scrivi la spesa come parli", "Nel «+» scrivi per esempio «caffè 1,20 ieri» o «benzina 35»: l'app capisce importo, categoria e giorno."],
