@@ -1896,7 +1896,8 @@ create policy "solo i miei dati" on stipendio_pilota
           <label class="f" for="sy-pw">Password (almeno 6 caratteri)<input id="sy-pw" type="password" autocomplete="current-password"></label>
         </div>
         <div class="btnrow"><button type="button" class="primary" id="sy-login">Accedi</button><button type="button" id="sy-signup">Crea account</button></div>
-        <p class="small muted">Prima volta? Premi "Crea account": non devi confermare l'email e ti do un codice di recupero da copiare. Sugli altri telefoni usa "Accedi" con la stessa email e password.</p>
+        <div class="btnrow"><button type="button" id="sy-google">Continua con Google</button></div>
+        <p class="small muted">Puoi anche entrare con il tuo account Google (basta un tocco). Oppure premi "Crea account": non devi confermare l'email e ti do un codice di recupero da copiare. Sugli altri telefoni usa "Accedi" con la stessa email e password.</p>
         <p class="small"><button type="button" class="link" id="sy-forgot">Password dimenticata?</button></p>
         <div id="sy-reset" hidden>
           <div class="fields">
@@ -2593,7 +2594,7 @@ create policy "solo i miei dati" on stipendio_pilota
     });
   }
   var editId = null;
-  var APP_VERSION = "2026-11-26.91";
+  var APP_VERSION = "2026-11-27.92";
   function fillNotes() {
     var cnt = {}, last = {};
     Object.keys(S.spent).sort().forEach(function (k) { S.spent[k].forEach(function (e) { var n = (e.note || "").trim(); if (n && !/^Rifornimento /.test(n)) { cnt[n] = (cnt[n] || 0) + 1; last[n] = e.cat; } }); });
@@ -3764,6 +3765,16 @@ create policy "solo i miei dati" on stipendio_pilota
   var SYNC_URL = "https://ajahyezbyqbbodukwpzy.supabase.co", SYNC_KEY = "sb_publishable_oGKHkRiiqqf4g6gaeNwOaQ_k8aW0Ukr", SK = "sp-sync-v1", sy = { url: "", key: "", at: "", rt: "", exp: 0, uid: "", email: "", last: 0 }, syBusy = false, syTimer = 0, syChoice = null, syMsg = "", syCode = "", syForgot = false;
   try { var sraw = JSON.parse(localStorage.getItem(SK)); if (sraw && typeof sraw === "object") sy = Object.assign(sy, sraw); } catch (e) {}
   function sySave() { try { localStorage.setItem(SK, JSON.stringify(sy)); } catch (e) {} }
+  (function syOAuthReturn() {
+    var h = location.hash; if (!/access_token=/.test(h)) return; var q = {};
+    h.replace(/^#/, "").split("&").forEach(function (x) { var i = x.indexOf("="); if (i > 0) q[x.slice(0, i)] = decodeURIComponent(x.slice(i + 1)); });
+    if (!q.access_token || !q.refresh_token) return;
+    try {
+      var pl = JSON.parse(atob(q.access_token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      sy.at = q.access_token; sy.rt = q.refresh_token; sy.exp = Date.now() + (+q.expires_in || 3600) * 1000; sy.uid = pl.sub || ""; sy.email = pl.email || ""; sy.last = 0; sySave();
+    } catch (e) {}
+    try { history.replaceState(null, "", location.pathname + location.search + "#profilo/dati"); } catch (e) { location.hash = "#profilo/dati"; }
+  })();
   function syCfg() { return { url: String(sy.url || SYNC_URL).trim().replace(/\/+$/, ""), key: String(sy.key || SYNC_KEY).trim() }; }
   function syOn() { var c = syCfg(); return !!(c.url && c.key && sy.rt); }
   function syToken() {
@@ -3867,6 +3878,7 @@ create policy "solo i miei dati" on stipendio_pilota
     $("sy-login").onclick = function () { syAuth(false); }; $("sy-signup").onclick = function () { syAuth(true); };
     $("sy-pw").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); syAuth(false); } };
     $("sy-now").onclick = function () { syncNow(true); };
+    $("sy-google").onclick = function () { var c = syCfg(); location.href = c.url + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(location.origin + location.pathname); };
     $("sy-forgot").onclick = function () { syForgot = !syForgot; renderSync(); if (syForgot) $("sy-code").focus(); };
     $("sy-reset-go").onclick = syReset;
     $("sy-newcode").onclick = function () { syMsg = "Creo il codice…"; renderSync(); syMakeCode(); };
@@ -5958,6 +5970,9 @@ create policy "solo i miei dati" on stipendio_pilota
   }
   window.__cy = function () { return cyBuild(); };
   var CHANGELOG = [
+    { id: "2026-11-27a", date: "27 novembre · nuovo", items: [
+      ["Accedi con Google", "Nella pagina Dati c'è «Continua con Google»: un tocco e i tuoi dati sono al sicuro nel cloud, senza password da ricordare."]
+    ] },
     { id: "2026-11-26b", date: "26 novembre · nuovo", items: [
       ["Account senza conferma email", "Crei l'account con email e password e sei dentro, senza aprire nessun link."],
       ["Codice di recupero", "Alla creazione dell'account ti do un codice da copiare. Se dimentichi la password, scrivi email, codice e nuova password: «Password dimenticata?» nella pagina Dati."],
